@@ -1,0 +1,15 @@
+name: Showdown2
+version: '${project.version}'
+main: me.chazzagram.showdown2.Showdown2
+api-version: '1.21'
+depend: [PlaceholderAPI]
+authors: [Chazzagram]
+description: Plugin.
+commands:
+  mcevent:
+    description: Main command.
+    usage: /<command>
+    permission: mcevent.admin
+    permission-message: You don't have permission to run this command.
+    aliases:
+      - mce
