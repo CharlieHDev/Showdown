@@ -4,6 +4,7 @@ import me.chazzagram.showdown2.Showdown2;
 import me.chazzagram.showdown2.files.PlayerConfig;
 import me.chazzagram.showdown2.files.SpectatorConfig;
 import me.chazzagram.showdown2.files.TeamsConfig;
+import me.chazzagram.showdown2.files.TeleportConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -34,6 +35,7 @@ public class MainCommand implements CommandExecutor {
                             if (TeamsConfig.get().getConfigurationSection("teams") == null) {
                                 plugin.messagePlayer(p, "Team '§6" + args[1] + "§7' has been created.");
                                 TeamsConfig.get().set("teams." + args[1] + ".name", args[1]);
+                                TeamsConfig.get().set("teams." + args[1] + ".icon", "0");
                                 TeamsConfig.save();
                             } else {
                                 boolean teamExists = false;
@@ -156,7 +158,60 @@ public class MainCommand implements CommandExecutor {
                             plugin.messagePlayer(players, "Test.");
                         }
                         break;
-
+                    case "settp":
+                        if(args.length > 2) {
+                            switch(args[1]){
+                                case "players":
+                                    TeleportConfig.get().set("players." + args[2], p.getLocation());
+                                    TeleportConfig.save();
+                                    plugin.messagePlayer(p, "Location " + args[2] + " has been set for players!");
+                                    break;
+                                case "spectators":
+                                    TeleportConfig.get().set("spectators." + args[2], p.getLocation());
+                                    TeleportConfig.save();
+                                    plugin.messagePlayer(p, "Location " + args[2] + " has been set for spectators!");
+                                    break;
+                                default:
+                                    plugin.messagePlayer(p, "Invalid argument (spectators/players).");
+                                    break;
+                            }
+                        }
+                        break;
+                    case "deltp":
+                        if(args.length > 2) {
+                            boolean teleportFound = false;
+                            switch(args[1]){
+                                case "players":
+                                    for(String key : TeleportConfig.get().getConfigurationSection("players").getKeys(false)) {
+                                        if(args[2].equals(key)) {
+                                            TeleportConfig.get().set("players." + args[2], null);
+                                            TeleportConfig.save();
+                                            plugin.messagePlayer(p, "Location " + args[2] + " has been deleted from players!");
+                                            teleportFound = true;
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                case "spectators":
+                                    for(String key : TeleportConfig.get().getConfigurationSection("spectators").getKeys(false)) {
+                                        if(args[2].equals(key)) {
+                                            TeleportConfig.get().set("spectators." + args[2], null);
+                                            TeleportConfig.save();
+                                            plugin.messagePlayer(p, "Location " + args[2] + " has been deleted from spectators!");
+                                            teleportFound = true;
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                default:
+                                    plugin.messagePlayer(p, "Invalid argument (spectators/players).");
+                                    break;
+                            }
+                            if(!teleportFound) {
+                                plugin.messagePlayer(p, "Teleport location " + args[2] + " doesn't exist!");
+                            }
+                        }
+                        break;
                     default:
                         plugin.messagePlayer(p, "Missing Args.");
                         break;

@@ -6,6 +6,7 @@ import me.chazzagram.showdown2.expansions.SpigotExpansion;
 import me.chazzagram.showdown2.files.PlayerConfig;
 import me.chazzagram.showdown2.files.SpectatorConfig;
 import me.chazzagram.showdown2.files.TeamsConfig;
+import me.chazzagram.showdown2.files.TeleportConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -49,6 +50,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         SpectatorConfig.setup();
         SpectatorConfig.get().options().copyDefaults(true);
         SpectatorConfig.save();
+
+        TeleportConfig.setup();
+        TeleportConfig.get().options().copyDefaults(true);
+        TeleportConfig.save();
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             Bukkit.getPluginManager().registerEvents(this, this);
@@ -130,6 +135,16 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             }
         }
         return players;
+    }
+
+    public List<Player> getSpectators(){
+        List<Player> spectators = new ArrayList<>();
+        for(String spectator : SpectatorConfig.get().getStringList("spectators")){
+            if(Bukkit.getServer().getPlayer(spectator) != null) {
+                spectators.add(Bukkit.getPlayer(spectator));
+            }
+        }
+        return spectators;
     }
 
     public void startTimer(int seconds, String name){
