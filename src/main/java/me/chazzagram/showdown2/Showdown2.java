@@ -4,11 +4,14 @@ import com.sun.tools.javac.Main;
 import me.chazzagram.showdown2.commands.MainCommand;
 import me.chazzagram.showdown2.expansions.SpigotExpansion;
 import me.chazzagram.showdown2.files.PlayerConfig;
+import me.chazzagram.showdown2.files.SpectatorConfig;
 import me.chazzagram.showdown2.files.TeamsConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -43,6 +46,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         PlayerConfig.get().options().copyDefaults(true);
         PlayerConfig.save();
 
+        SpectatorConfig.setup();
+        SpectatorConfig.get().options().copyDefaults(true);
+        SpectatorConfig.save();
+
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             Bukkit.getPluginManager().registerEvents(this, this);
             new SpigotExpansion(this).register();
@@ -55,6 +62,37 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public void onDisable() {
         // Plugin shutdown logic
         messageConsole("Plugin Unloaded.");
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent e) {
+        boolean playerFound = false;
+        Player p = e.getPlayer();
+        for(String player : PlayerConfig.get().getConfigurationSection("players").getKeys(false)){
+            if(p.getName().equals(player)){
+                playerFound = true;
+                break;
+            }
+        }
+        if(!playerFound){
+            if(!SpectatorConfig.get().getStringList("spectators").isEmpty()) {
+                for (String player : SpectatorConfig.get().getStringList("spectators")) {
+                    if (p.getName().equals(player)) {
+                        playerFound = true;
+                        break;
+                    }
+                }
+            }
+            if(!playerFound){
+                List<String> spectators = SpectatorConfig.get().getStringList("spectators");
+                spectators.add(p.getName());
+                SpectatorConfig.get().set("spectators", spectators);
+                SpectatorConfig.save();
+            }
+        }
+
+
+
     }
 
     public static Showdown2 getPlugin() {

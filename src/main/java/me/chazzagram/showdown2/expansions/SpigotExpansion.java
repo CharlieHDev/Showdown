@@ -2,6 +2,7 @@ package me.chazzagram.showdown2.expansions;
 
 import me.chazzagram.showdown2.Showdown2;
 import me.chazzagram.showdown2.files.PlayerConfig;
+import me.chazzagram.showdown2.files.SpectatorConfig;
 import me.chazzagram.showdown2.files.TeamsConfig;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.entity.Player;
@@ -53,8 +54,12 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "player":
                 return p.getName();
             case "team":
-                String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
-                return Objects.requireNonNullElse(team, "No Team.");
+                if(SpectatorConfig.get().getStringList("spectators").contains(p.getName())){
+                    return "Spectator";
+                } else {
+                    String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
+                    return Objects.requireNonNullElse(team, "No Team.");
+                }
             case "points":
                 String points = PlayerConfig.get().getString("players." + p.getName() + ".points");
                 return Objects.requireNonNullElse(points, "N/A");

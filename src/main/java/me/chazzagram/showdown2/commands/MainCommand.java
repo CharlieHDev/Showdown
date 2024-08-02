@@ -2,6 +2,7 @@ package me.chazzagram.showdown2.commands;
 
 import me.chazzagram.showdown2.Showdown2;
 import me.chazzagram.showdown2.files.PlayerConfig;
+import me.chazzagram.showdown2.files.SpectatorConfig;
 import me.chazzagram.showdown2.files.TeamsConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -93,6 +94,17 @@ public class MainCommand implements CommandExecutor {
                                             PlayerConfig.get().set("players." + args[2] + ".team", TeamsConfig.get().getString("teams." + args[1] + ".name"));
                                             PlayerConfig.save();
                                             TeamsConfig.save();
+                                            if(!SpectatorConfig.get().getStringList("spectators").isEmpty()) {
+                                                for (String player : SpectatorConfig.get().getStringList("spectators")) {
+                                                    if (args[2].equals(player)) {
+                                                        List<String> newSpectators = SpectatorConfig.get().getStringList("spectators");
+                                                        newSpectators.remove(args[2]);
+                                                        SpectatorConfig.get().set("spectators", newSpectators);
+                                                        SpectatorConfig.save();
+                                                        break;
+                                                    }
+                                                }
+                                            }
                                         }
                                         teamExists = true;
                                     }
@@ -117,6 +129,10 @@ public class MainCommand implements CommandExecutor {
                                     teamPlayers.remove(args[1]);
                                     TeamsConfig.get().set("teams." + team + ".players", teamPlayers);
                                     TeamsConfig.save();
+                                    List<String> newSpectators = SpectatorConfig.get().getStringList("spectators");
+                                    newSpectators.add(args[1]);
+                                    SpectatorConfig.get().set("spectators", newSpectators);
+                                    SpectatorConfig.save();
                                 } else {
                                     plugin.messagePlayer(p, "This player is not on a team!");
                                 }
