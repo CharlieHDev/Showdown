@@ -8,6 +8,7 @@ import me.chazzagram.showdown2.files.SpectatorConfig;
 import me.chazzagram.showdown2.files.TeamsConfig;
 import me.chazzagram.showdown2.files.TeleportConfig;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -164,10 +165,6 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                 }
             }
 
-            public int getTimeLeft(){
-                return timeLeft;
-            }
-
         }.runTaskTimer(this, 0L, 20L);
 
         runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, seconds));
@@ -182,6 +179,82 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             messageConsole("Timer not found.");
         }
 
+    }
+
+    public void teleportPlayers(Location location){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 6;
+            @Override
+            public void run() {
+                runningTimers.get("teleporttimer").setValue(timeLeft);
+                timeLeft--;
+                if(timeLeft == 0) {
+                    for(Player player : getPlayers()) {
+                        player.teleport(location);
+                    }
+                    runningTimers.remove("teleporttimer");
+                    cancel();
+                } else {
+                    for(Player player : getPlayers()) {
+                        player.sendTitle("", "§6Teleporting in §c" + timeLeft + "...", 0, 20, 20);
+                    }
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("teleporttimer", new AbstractMap.SimpleEntry<>(task, 6));
+    }
+
+    public void teamTeleport(String location){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 6;
+            @Override
+            public void run() {
+                runningTimers.get("teleporttimerteam").setValue(timeLeft);
+                timeLeft--;
+                if(timeLeft == 0) {
+                    for(Player player : getPlayers()){
+                        Location tplocation = TeleportConfig.get().getLocation("teams." + PlayerConfig.get().getString("players." + player.getName() + ".team") + "." + location);
+                        player.teleport(tplocation);
+                    }
+                    runningTimers.remove("teleporttimerteam");
+                    cancel();
+                } else {
+                    for(Player player : getPlayers()) {
+                        player.sendTitle("", "§6Teleporting in §c" + timeLeft + "...", 0, 20, 20);
+                    }
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("teleporttimerteam", new AbstractMap.SimpleEntry<>(task, 6));
+    }
+
+    public void teleportSpectators(Location location){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 6;
+            @Override
+            public void run() {
+                runningTimers.get("teleporttimerspec").setValue(timeLeft);
+                timeLeft--;
+                if(timeLeft == 0) {
+                    for(Player player : getSpectators()) {
+                        player.teleport(location);
+                    }
+                    runningTimers.remove("teleporttimerspec");
+                    cancel();
+                } else {
+                    for(Player player : getPlayers()) {
+                        player.sendTitle("", "§7§oTeleporting in " + timeLeft + "...", 0, 20, 20);
+                    }
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("teleporttimerspec", new AbstractMap.SimpleEntry<>(task, 6));
     }
 
 //    public void playerMedal(Player p) {

@@ -73,12 +73,16 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return teampoints;
                 }
             case "teamicon":
-                String playersTeam = PlayerConfig.get().getString("players." + p.getName() + ".team");
-                String teamicon = String.valueOf(TeamsConfig.get().getInt("teams." + playersTeam + ".icon"));
-                if (playersTeam == null) {
-                    return "N/A";
+                if(SpectatorConfig.get().getStringList("spectators").contains(p.getName())){
+                    return "SP";
                 } else {
-                    return teamicon;
+                    String playersTeam = PlayerConfig.get().getString("players." + p.getName() + ".team");
+                    String teamicon = String.valueOf(TeamsConfig.get().getInt("teams." + playersTeam + ".icon"));
+                    if (playersTeam == null) {
+                        return "N/A";
+                    } else {
+                        return teamicon;
+                    }
                 }
             case "timer_sumo":
                 if (plugin.runningTimers.containsKey("sumo")) {

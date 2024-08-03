@@ -160,7 +160,7 @@ public class MainCommand implements CommandExecutor {
                         break;
                     case "settp":
                         if(args.length > 2) {
-                            switch(args[1]){
+                            switch (args[1]) {
                                 case "players":
                                     TeleportConfig.get().set("players." + args[2], p.getLocation());
                                     TeleportConfig.save();
@@ -172,7 +172,19 @@ public class MainCommand implements CommandExecutor {
                                     plugin.messagePlayer(p, "Location " + args[2] + " has been set for spectators!");
                                     break;
                                 default:
-                                    plugin.messagePlayer(p, "Invalid argument (spectators/players).");
+                                    boolean teamTpFound = false;
+                                    for (String key : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)) {
+                                        if (args[1].equals(key)) {
+                                            teamTpFound = true;
+                                            TeleportConfig.get().set("teams." + args[1] + "." + args[2], p.getLocation());
+                                            TeleportConfig.save();
+                                            plugin.messagePlayer(p, "Location " + args[2] + " has been set for " + args[1] + "!");
+                                            break;
+                                        }
+                                    }
+                                    if(!teamTpFound) {
+                                        plugin.messagePlayer(p, "Invalid argument (spectators/players/teamname).");
+                                    }
                                     break;
                             }
                         }
@@ -204,7 +216,25 @@ public class MainCommand implements CommandExecutor {
                                     }
                                     break;
                                 default:
-                                    plugin.messagePlayer(p, "Invalid argument (spectators/players).");
+                                    boolean teamTpFound = false;
+                                    for(String key : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)) {
+                                        if(args[1].equals(key)) {
+                                            teamTpFound = true;
+                                            for(String key2 : TeleportConfig.get().getConfigurationSection("teams." + args[1]).getKeys(false)) {
+                                                if(args[2].equals(key2)) {
+                                                    TeleportConfig.get().set("teams." + args[1] + "." + args[2], null);
+                                                    TeleportConfig.save();
+                                                    plugin.messagePlayer(p, "Location " + args[2] + " has been deleted from " + args[1] + "!");
+                                                    teleportFound = true;
+                                                    break;
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                    if (!teamTpFound) {
+                                        plugin.messagePlayer(p, "Invalid argument (spectators/players/teamname).");
+                                    }
                                     break;
                             }
                             if(!teleportFound) {
@@ -212,6 +242,17 @@ public class MainCommand implements CommandExecutor {
                             }
                         }
                         break;
+                    case "tpp":
+                        if(args.length > 1) {
+                            plugin.teleportPlayers(TeleportConfig.get().getLocation("players." + args[1]));
+                        }
+                        break;
+                    case "tpt":
+                        if(args.length > 1) {
+                            plugin.teamTeleport(args[1]);
+                        }
+                        break;
+
                     default:
                         plugin.messagePlayer(p, "Missing Args.");
                         break;
