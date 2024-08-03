@@ -119,11 +119,15 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     }
 
 //    Awarding points.
-    public void earnPoints(Player p, int points, boolean individual){
-        String playerTeam = PlayerConfig.get().getString("players." + p + ".team");
-        TeamsConfig.get().set("teams." + playerTeam + ".points", multiplyPoints(points));
+    public void earnPoints(String player, int points, boolean individual){
+        String playerTeam = PlayerConfig.get().getString("players." + player + ".team");
+        int currentTeamPoints = TeamsConfig.get().getInt("teams." + playerTeam + ".points");
+        TeamsConfig.get().set("teams." + playerTeam + ".points", currentTeamPoints+multiplyPoints(points));
+        TeamsConfig.save();
         if(individual) {
-            PlayerConfig.get().set("players." + p + ".points", multiplyPoints(points));
+            int currentPoints = PlayerConfig.get().getInt("players." + player + ".points");
+            PlayerConfig.get().set("players." + player + ".points", currentPoints+multiplyPoints(points));
+            PlayerConfig.save();
         }
     }
 
