@@ -32,6 +32,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<Integer, Integer> slimeCheckpoints = new HashMap<>();
 
+    public HashMap<String, String> slimeFinishers = new HashMap<>();
+
 
     @Override
     public void onEnable() {
@@ -138,6 +140,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             PlayerConfig.get().set("players." + player + ".points", currentPoints+multiplyPoints(points));
             PlayerConfig.save();
         }
+    }
+
+    public void earnTeamPoints(String team, int points){
+        int currentTeamPoints = TeamsConfig.get().getInt("teams." + team + ".points");
+        TeamsConfig.get().set("teams." + team + ".points", currentTeamPoints+multiplyPoints(points));
+        TeamsConfig.save();
     }
 
 //    Get all players
