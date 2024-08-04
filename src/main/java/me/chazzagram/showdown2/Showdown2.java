@@ -72,6 +72,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             slimeCheckpoints.put(i, 1);
         }
 
+
         messageConsole("Plugin Loaded.");
     }
 
@@ -307,6 +308,28 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 0L, 20L);
 
         runningTimers.put("teleporttimerspec", new AbstractMap.SimpleEntry<>(task, 6));
+    }
+
+    public String getTeamDisplayName(String team){
+
+        return TeamsConfig.get().getString("teams." + team + ".colour") + TeamsConfig.get().getString("teams." + team + ".icon") + team;
+    }
+
+    public void slimeGolfTimes(){
+        int placement = 1;
+        for(Player p : getPlayers()) {
+            messagePlayer(p, "=== Hole Times ===");
+            for (String team : slimeFinishers.keySet()) {
+                messagePlayer(p, placement + ". §e§l⏱§e" + slimeFinishers.get(team) + " §f- " + getTeamDisplayName(team));
+            }
+            for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)) {
+                if(!slimeFinishers.containsKey(team)) {
+                    messagePlayer(p, "DNF. " + getTeamDisplayName(team));
+                }
+            }
+            messagePlayer(p, "================");
+
+        }
     }
 
 //    public void playerMedal(Player p) {
