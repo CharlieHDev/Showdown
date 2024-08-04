@@ -6,6 +6,7 @@ import me.chazzagram.showdown2.files.SpectatorConfig;
 import me.chazzagram.showdown2.files.TeamsConfig;
 import me.chazzagram.showdown2.files.TeleportConfig;
 import org.bukkit.Bukkit;
+import org.bukkit.command.BlockCommandSender;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -255,6 +256,69 @@ public class MainCommand implements CommandExecutor {
 
                     default:
                         plugin.messagePlayer(p, "Missing Args.");
+                        break;
+                }
+            }
+        } else if (commandSender instanceof BlockCommandSender){
+            if (args.length == 0) {
+                plugin.messageConsole("Invalid command.");
+            } else {
+                switch (args[0].toLowerCase()) {
+                    case "slimecp":
+                        if (args.length > 2) {
+                            Integer placement = plugin.slimeCheckpoints.get(Integer.parseInt(args[1]));
+                            switch(placement) {
+                                case 1:
+                                    for(Player p : plugin.getPlayers()){
+                                        plugin.messagePlayer(p, "Team " + args[2] + " was 1st to reach checkpoint " + args[1] + "!");
+                                    }
+                                    break;
+                                case 2:
+                                    for(Player p : plugin.getPlayers()){
+                                        plugin.messagePlayer(p, "Team " + args[2] + " was 2nd to reach checkpoint " + args[1] + "!");
+                                    }
+                                    break;
+                                case 3:
+                                    for(Player p : plugin.getPlayers()){
+                                        plugin.messagePlayer(p, "Team " + args[2] + " was 3rd to reach checkpoint " + args[1] + "!");
+                                    }
+                                    break;
+                                default:
+                                    for(Player p : plugin.getPlayers()){
+                                        plugin.messagePlayer(p, "Team " + args[2] + " was " + placement + "th to reach checkpoint " + args[1] + "!");
+                                    }
+                                    break;
+                            }
+                            plugin.slimeCheckpoints.replace(Integer.parseInt(args[1]), placement+1);
+                        }
+                        break;
+                    case "slimefinish":
+                        if(args.length > 1) {
+                            Integer placement = plugin.slimeCheckpoints.get(plugin.slimeCheckpoints.size());
+                            switch(placement) {
+                                case 1:
+                                    for(Player p : plugin.getPlayers()){
+                                        plugin.messagePlayer(p, "Team " + args[1] + " was 1st to finish!");
+                                    }
+                                    break;
+                                case 2:
+                                    for(Player p : plugin.getPlayers()){
+                                        plugin.messagePlayer(p, "Team " + args[1] + " was 2nd to finish!");
+                                    }
+                                    break;
+                                case 3:
+                                    for(Player p : plugin.getPlayers()){
+                                        plugin.messagePlayer(p, "Team " + args[1] + " was 3rd to finish!");
+                                    }
+                                    break;
+                                default:
+                                    for(Player p : plugin.getPlayers()){
+                                        plugin.messagePlayer(p, "Team " + args[1] + " was " + placement + "th to finish!");
+                                    }
+                                    break;
+                            }
+                            plugin.slimeCheckpoints.replace(plugin.slimeCheckpoints.size(), placement+1);
+                        }
                         break;
                 }
             }

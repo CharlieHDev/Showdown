@@ -1,11 +1,14 @@
 package me.chazzagram.showdown2.listeners;
 
 import me.chazzagram.showdown2.Showdown2;
+import me.chazzagram.showdown2.files.DeathMessagesConfig;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.PlayerDeathEvent;
 
 import java.util.EventListener;
+import java.util.List;
+import java.util.Random;
 
 public class PlayerDeath implements EventListener {
 
@@ -19,9 +22,14 @@ public class PlayerDeath implements EventListener {
     public void onPlayerDeath(PlayerDeathEvent e) {
         Player player = e.getEntity();
         Player killer = e.getEntity().getKiller();
+        if(killer != null) {
+            List<String> deathMessages = DeathMessagesConfig.get().getStringList("kills");
+            Random rand = new Random();
+            String message = deathMessages.get(rand.nextInt(deathMessages.size()));
 
-        for(Player p : plugin.getServer().getOnlinePlayers()) {
-            plugin.messagePlayer(p, player + " was eliminated by " + killer);
+            for (Player p : plugin.getServer().getOnlinePlayers()) {
+                plugin.messagePlayer(p, String.format(message, player.getName(), killer.getName()));
+            }
         }
     }
 }

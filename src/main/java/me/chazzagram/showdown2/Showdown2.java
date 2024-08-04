@@ -3,10 +3,7 @@ package me.chazzagram.showdown2;
 import com.sun.tools.javac.Main;
 import me.chazzagram.showdown2.commands.MainCommand;
 import me.chazzagram.showdown2.expansions.SpigotExpansion;
-import me.chazzagram.showdown2.files.PlayerConfig;
-import me.chazzagram.showdown2.files.SpectatorConfig;
-import me.chazzagram.showdown2.files.TeamsConfig;
-import me.chazzagram.showdown2.files.TeleportConfig;
+import me.chazzagram.showdown2.files.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -30,6 +27,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     private double multiplier = 1.0;
 
     public HashMap<String, Map.Entry<BukkitTask, Integer>> runningTimers = new HashMap<>();
+
+    public HashMap<Integer, Integer> slimeCheckpoints = new HashMap<>();
 
 
     @Override
@@ -56,9 +55,17 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         TeleportConfig.get().options().copyDefaults(true);
         TeleportConfig.save();
 
+        DeathMessagesConfig.setup();
+        DeathMessagesConfig.get().options().copyDefaults(true);
+        DeathMessagesConfig.save();
+
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             Bukkit.getPluginManager().registerEvents(this, this);
             new SpigotExpansion(this).register();
+        }
+
+        for(int i = 1; i <= 5; i++){
+            slimeCheckpoints.put(i, 1);
         }
 
         messageConsole("Plugin Loaded.");
@@ -142,6 +149,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         return players;
     }
 
+//    Get all spectators
     public List<Player> getSpectators(){
         List<Player> spectators = new ArrayList<>();
         for(String spectator : SpectatorConfig.get().getStringList("spectators")){
@@ -152,6 +160,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         return spectators;
     }
 
+//    Start a timer
     public void startTimer(int seconds, String name){
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = seconds;
@@ -174,6 +183,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, seconds));
     }
 
+//    Stop a timer
     public void stopTimer(String name){
         if(runningTimers.containsKey(name)){
             runningTimers.get(name).getKey().cancel();
@@ -185,6 +195,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     }
 
+//    Teleport all players
     public void teleportPlayers(Location location){
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 6;
@@ -210,6 +221,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         runningTimers.put("teleporttimer", new AbstractMap.SimpleEntry<>(task, 6));
     }
 
+//    Teleport all players (teleports all players to their team teleports)
     public void teamTeleport(String location){
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 6;
@@ -236,6 +248,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         runningTimers.put("teleporttimerteam", new AbstractMap.SimpleEntry<>(task, 6));
     }
 
+//    Teleports all spectators
     public void teleportSpectators(Location location){
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 6;
