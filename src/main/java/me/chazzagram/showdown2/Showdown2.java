@@ -16,6 +16,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static org.bukkit.util.NumberConversions.round;
@@ -181,6 +183,31 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 0L, 20L);
 
         runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, seconds));
+    }
+
+    public void startStopwatch(int seconds, String name){
+        BukkitTask task = new BukkitRunnable() {
+            int timeElapsed = 0;
+            @Override
+            public void run() {
+                runningTimers.get(name).setValue(timeElapsed);
+                timeElapsed++;
+                if(timeElapsed == seconds) {
+                    messageConsole("Timer finished.");
+                    runningTimers.remove(name);
+                    cancel();
+                } else {
+
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, 0));
+    }
+
+    public String getTimer(String timer) {
+        return LocalTime.of(0, plugin.runningTimers.get(timer).getValue() / 60, plugin.runningTimers.get(timer).getValue() % 60).format(DateTimeFormatter.ofPattern("mm:ss"));
     }
 
 //    Stop a timer

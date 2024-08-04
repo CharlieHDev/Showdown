@@ -86,22 +86,24 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 }
             case "timer_sumo":
                 if (plugin.runningTimers.containsKey("sumo")) {
-                    return getTimer("sumo");
+                    return plugin.getTimer("sumo");
                 } else {
                     return "Waiting..";
                 }
             case "timer_craftalot":
                 if (plugin.runningTimers.containsKey("craftalot")) {
-                    return getTimer("craftalot");
+                    return plugin.getTimer("craftalot");
+                } else {
+                    return "Waiting..";
+                }
+            case "stopwatch":
+                if (plugin.runningTimers.containsKey("stopwatch")) {
+                    return plugin.getTimer("stopwatch");
                 } else {
                     return "Waiting..";
                 }
             default:
                 return null;
         }
-    }
-
-    public String getTimer(String timer) {
-        return LocalTime.of(0, plugin.runningTimers.get(timer).getValue() / 60, plugin.runningTimers.get(timer).getValue() % 60).format(DateTimeFormatter.ofPattern("mm:ss"));
     }
 }

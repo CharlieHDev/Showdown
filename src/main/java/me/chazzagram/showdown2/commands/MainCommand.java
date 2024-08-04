@@ -148,6 +148,11 @@ public class MainCommand implements CommandExecutor {
                             plugin.startTimer(Integer.parseInt(args[1]), args[2]);
                         }
                         break;
+                    case "startstopwatch":
+                        if(args.length > 2) {
+                            plugin.startStopwatch(Integer.parseInt(args[1]), "stopwatch");
+                        }
+                        break;
                     case "stoptimer":
                         if(args.length > 1) {
                             plugin.stopTimer(args[1]);
@@ -289,6 +294,13 @@ public class MainCommand implements CommandExecutor {
                                     }
                                     break;
                             }
+                            for(String player : TeamsConfig.get().getStringList("teams." + args[2] + ".players")){
+                                if(Bukkit.getServer().getPlayer(player) != null) {
+                                    Player p = Bukkit.getServer().getPlayer(player);
+                                    p.sendTitle("§a[✔] \uD83D\uDDFB-" + args[1], "§8[§f§l⏱§8] §e§o" + plugin.getTimer("stopwatch"), 0, 100, 5);
+                                    plugin.messagePlayer(p, "Checkpoint reached!");
+                                }
+                            }
                             plugin.slimeCheckpoints.replace(Integer.parseInt(args[1]), placement+1);
                         }
                         break;
@@ -316,6 +328,12 @@ public class MainCommand implements CommandExecutor {
                                         plugin.messagePlayer(p, "Team " + args[1] + " was " + placement + "th to finish!");
                                     }
                                     break;
+                            }
+                            for(String player : TeamsConfig.get().getStringList("teams." + args[1] + ".players")){
+                                if(Bukkit.getServer().getPlayer(player) != null) {
+                                    Player p = Bukkit.getServer().getPlayer(player);
+                                    p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("stopwatch"), 0, 100, 5);
+                                }
                             }
                             plugin.slimeCheckpoints.replace(plugin.slimeCheckpoints.size(), placement+1);
                         }
