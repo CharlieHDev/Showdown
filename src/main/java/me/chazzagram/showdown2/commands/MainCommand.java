@@ -250,16 +250,19 @@ public class MainCommand implements CommandExecutor {
                         break;
                     case "tpp":
                         if(args.length > 1) {
-                            plugin.teleportPlayers(TeleportConfig.get().getLocation("players." + args[1]));
+                            plugin.teleportPlayers(TeleportConfig.get().getLocation("players." + args[1]), 5);
                         }
                         break;
                     case "tpt":
                         if(args.length > 1) {
-                            plugin.teamTeleport(args[1]);
+                            plugin.teamTeleport(args[1], 5);
                         }
                         break;
                     case "slimefinishers":
                         plugin.slimeGolfTimes();
+                        break;
+                    case "startslimegolf":
+                        plugin.startSlimeGolf();
                         break;
                     default:
                         plugin.messagePlayer(p, "Missing Args.");
@@ -274,27 +277,14 @@ public class MainCommand implements CommandExecutor {
                     case "slimecp":
                         if (args.length > 2) {
                             Integer placement = plugin.slimeCheckpoints.get(Integer.parseInt(args[1]));
-                            switch(placement) {
-                                case 1:
-                                    for(Player p : plugin.getPlayers()){
-                                        plugin.messagePlayer(p, "Team " + plugin.getTeamDisplayName(args[2]) + " was 1st to reach checkpoint " + args[1] + "!");
-                                    }
-                                    break;
-                                case 2:
-                                    for(Player p : plugin.getPlayers()){
-                                        plugin.messagePlayer(p, "Team " + plugin.getTeamDisplayName(args[2]) + " was 2nd to reach checkpoint " + args[1] + "!");
-                                    }
-                                    break;
-                                case 3:
-                                    for(Player p : plugin.getPlayers()){
-                                        plugin.messagePlayer(p, "Team " + plugin.getTeamDisplayName(args[2]) + " was 3rd to reach checkpoint " + args[1] + "!");
-                                    }
-                                    break;
-                                default:
-                                    for(Player p : plugin.getPlayers()){
-                                        plugin.messagePlayer(p, "Team " + plugin.getTeamDisplayName(args[2]) + " was " + placement + "th to reach checkpoint " + args[1] + "!");
-                                    }
-                                    break;
+                            if (placement == 1) {
+                                for (Player p : plugin.getPlayers()) {
+                                    plugin.messagePlayer(p, "§8| §b★ §8| " + plugin.getTeamDisplayName(args[2]) + "§e was 1st to reach §a\uD83D\uDDFB-" + args[1] + "§7!");
+                                }
+                            } else {
+                                for (Player p : plugin.getPlayers()) {
+                                    plugin.messagePlayer(p, "§8| §a§l⏱ §8| " + plugin.getTeamDisplayName(args[2]) + "§7 has reached §a\uD83D\uDDFB-" + args[1] + "§7!");
+                                }
                             }
 
                             int pointsEarned = 21 - placement;
@@ -304,7 +294,7 @@ public class MainCommand implements CommandExecutor {
                                 if(Bukkit.getServer().getPlayer(player) != null) {
                                     Player p = Bukkit.getServer().getPlayer(player);
                                     p.sendTitle("§a[✔] \uD83D\uDDFB-" + args[1], "§8[§f§l⏱§8] §e§o" + plugin.getTimer("stopwatch"), 0, 100, 5);
-                                    plugin.messagePlayer(p, "Checkpoint reached!");
+                                    plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Checkpoint reached!");
                                 }
                             }
                             plugin.slimeCheckpoints.replace(Integer.parseInt(args[1]), placement+1);
@@ -316,22 +306,22 @@ public class MainCommand implements CommandExecutor {
                             switch(placement) {
                                 case 1:
                                     for(Player p : plugin.getPlayers()){
-                                        plugin.messagePlayer(p, "Team " + plugin.getTeamDisplayName(args[1]) + " was 1st to finish!");
+                                        plugin.messagePlayer(p, "§8| §e\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(args[1]) + "§e was §e§l1st §eto finish!");
                                     }
                                     break;
                                 case 2:
                                     for(Player p : plugin.getPlayers()){
-                                        plugin.messagePlayer(p, "Team " + plugin.getTeamDisplayName(args[1]) + " was 2nd to finish!");
+                                        plugin.messagePlayer(p, "§8| §7\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(args[1]) + "§e was §7§l2nd §eto finish!");
                                     }
                                     break;
                                 case 3:
                                     for(Player p : plugin.getPlayers()){
-                                        plugin.messagePlayer(p, "Team " + plugin.getTeamDisplayName(args[1]) + " was 3rd to finish!");
+                                        plugin.messagePlayer(p, "§8| §6\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(args[1]) + "§e was §6§l3rd §eto finish!");
                                     }
                                     break;
                                 default:
                                     for(Player p : plugin.getPlayers()){
-                                        plugin.messagePlayer(p, "Team " + plugin.getTeamDisplayName(args[1]) + " was " + placement + "th to finish!");
+                                        plugin.messagePlayer(p, "§8| §f\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(args[1]) + "§e was §f§l" + placement + "th §eto finish!");
                                     }
                                     break;
                             }

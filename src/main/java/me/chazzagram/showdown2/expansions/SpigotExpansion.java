@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -48,6 +50,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
 
     @Override
     public String onPlaceholderRequest(Player p, String params) {
+        List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
+        List<Integer> leaderteampoints = new ArrayList<>(plugin.sortByValue().values());
         if(p == null){
             return "";
         }
@@ -96,11 +100,41 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "Waiting..";
                 }
+            case "timer_slimegolfstart":
+                if (plugin.runningTimers.containsKey("slimegolfstart")) {
+                    return plugin.getTimer("slimegolfstart");
+                } else {
+                    return "Waiting..";
+                }
             case "stopwatch":
                 if (plugin.runningTimers.containsKey("stopwatch")) {
                     return plugin.getTimer("stopwatch");
                 } else {
                     return "Waiting..";
+                }
+            case "topteam_1":
+                if(leaderteams.getFirst() != null) {
+                    return plugin.getTeamDisplayName(leaderteams.getFirst());
+                } else {
+                    return "§8N/A";
+                }
+            case "toppoints_1":
+                if(leaderteampoints.getFirst() != null) {
+                    return "§e§l\uD83D\uDCB0" + leaderteampoints.getFirst();
+                } else {
+                    return "§8N/A";
+                }
+            case "topteam_2":
+                if(leaderteams.get(1) != null) {
+                    return plugin.getTeamDisplayName(leaderteams.get(1));
+                } else {
+                    return "§8N/A";
+                }
+            case "toppoints_2":
+                if(leaderteampoints.get(1) != null) {
+                    return "§e§l\uD83D\uDCB0" + leaderteampoints.get(1);
+                } else {
+                    return "§8N/A";
                 }
             default:
                 return null;

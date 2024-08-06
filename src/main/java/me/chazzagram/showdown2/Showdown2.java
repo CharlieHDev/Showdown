@@ -13,6 +13,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -122,7 +124,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     }
 
     public void messagePlayer(Player p, String message){
-        p.sendMessage("[ME24] " + message);
+        p.sendMessage("§8" + message);
     }
 
 //    Point multiplier.
@@ -196,13 +198,14 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void startStopwatch(int seconds, String name){
         BukkitTask task = new BukkitRunnable() {
-            int timeElapsed = 0;
+            int timeElapsed = -1;
             @Override
             public void run() {
-                runningTimers.get(name).setValue(timeElapsed);
                 timeElapsed++;
+                runningTimers.get(name).setValue(timeElapsed);
                 if(timeElapsed == seconds) {
                     messageConsole("Timer finished.");
+                    gameEnd();
                     runningTimers.remove(name);
                     cancel();
                 } else {
@@ -232,13 +235,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     }
 
 //    Teleport all players
-    public void teleportPlayers(Location location){
+    public void teleportPlayers(Location location, int countdown){
         BukkitTask task = new BukkitRunnable() {
-            int timeLeft = 6;
+            int timeLeft = countdown+1;
             @Override
             public void run() {
-                runningTimers.get("teleporttimer").setValue(timeLeft);
                 timeLeft--;
+                runningTimers.get("teleporttimer").setValue(timeLeft);
                 if(timeLeft == 0) {
                     for(Player player : getPlayers()) {
                         player.teleport(location);
@@ -258,13 +261,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     }
 
 //    Teleport all players (teleports all players to their team teleports)
-    public void teamTeleport(String location){
+    public void teamTeleport(String location, int countdown){
         BukkitTask task = new BukkitRunnable() {
-            int timeLeft = 6;
+            int timeLeft = countdown+1;
             @Override
             public void run() {
-                runningTimers.get("teleporttimerteam").setValue(timeLeft);
                 timeLeft--;
+                runningTimers.get("teleporttimerteam").setValue(timeLeft);
                 if(timeLeft == 0) {
                     for(Player player : getPlayers()){
                         Location tplocation = TeleportConfig.get().getLocation("teams." + PlayerConfig.get().getString("players." + player.getName() + ".team") + "." + location);
@@ -290,8 +293,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             int timeLeft = 6;
             @Override
             public void run() {
-                runningTimers.get("teleporttimerspec").setValue(timeLeft);
                 timeLeft--;
+                runningTimers.get("teleporttimerspec").setValue(timeLeft);
                 if(timeLeft == 0) {
                     for(Player player : getSpectators()) {
                         player.teleport(location);
@@ -314,6 +317,141 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
         return TeamsConfig.get().getString("teams." + team + ".colour") + TeamsConfig.get().getString("teams." + team + ".icon") + team;
     }
+
+
+    public void startSlimeGolf(){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 61;
+            @Override
+            public void run() {
+                timeLeft--;
+                runningTimers.get("slimegolfstart").setValue(timeLeft);
+                switch(timeLeft){
+                    case 60:
+                        teamTeleport("slimegolf", 5);
+                        break;
+                    case 55:
+                        for(Player player : getPlayers()) {
+                            PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
+                            player.addPotionEffect(PotionEffect);
+                        }
+                        break;
+
+                    case 50:
+                        for(Player player : getPlayers()) {
+                            plugin.messagePlayer(player, """
+                                    §8
+                                    §8
+                                    §8[§e§l?§8] §eWelcome to §a§lSlime Golf§e! The aim of the game is to hit your slimey ball into the hole at the end of the course as quickly as possible!
+                                    §8
+                                    """);
+                        }
+                        break;
+                    case 30:
+                        for(Player player : getPlayers()) {
+                            plugin.messagePlayer(player, """
+                                    §8
+                                    §8
+                                    §8[§e§l?§8] §eUse your §aknockback stick §eand work as a team, jump ahead and plan out your strategy, player-sized shortcuts will help you get ahead of the slime for strategic putting strategies!
+                                    §8
+                                    """);
+                        }
+                        break;
+                    case 10:
+                        for(Player player : getPlayers()) {
+                            plugin.messagePlayer(player, """
+                                    §8
+                                    §8
+                                    §8[§c§l!§8] §7Game Starting in §c§l10 seconds...
+                                    §8
+                                    """);
+                        }
+                        break;
+                    case 5, 4, 3, 2, 1:
+                        for(Player player : getPlayers()) {
+                            player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
+                        }
+                        break;
+                    case 0:
+                        for(Player player : getPlayers()) {
+                            player.sendTitle("§a§l▶ GO! ◀", "", 0, 40, 0);
+                        }
+                        runningTimers.remove("slimegolfstart");
+                        cancel();
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("slimegolfstart", new AbstractMap.SimpleEntry<>(task, 61));
+    }
+
+    public LinkedHashMap<String, Integer> sortByValue() {
+
+        HashMap<String, Integer> teamPoints = new HashMap<>();
+
+        for (String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){
+            teamPoints.put(team, TeamsConfig.get().getInt("teams." + team + ".points"));
+        }
+
+        List<Map.Entry<String, Integer>> list = new LinkedList<>(teamPoints.entrySet());
+
+        list.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+
+        LinkedHashMap<String, Integer> sortedMap = new LinkedHashMap<>();
+        for (Map.Entry<String, Integer> entry : list) {
+            sortedMap.put(entry.getKey(), entry.getValue());
+        }
+
+        return sortedMap;
+    }
+
+    public void getTeamPoints(){
+        for(Player player : getPlayers()) {
+            messagePlayer(player, "=== Overall Placements ===");
+            int placement = 0;
+            for (String key : sortByValue().keySet()) {
+                placement++;
+                messagePlayer(player, placement + ". " + getTeamDisplayName(key) + " §8- §e§l\uD83D\uDCB0" + sortByValue().get(key));
+            }
+            messagePlayer(player, "======================");
+        }
+    }
+
+    public void gameEnd(){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 61;
+            @Override
+            public void run() {
+                timeLeft--;
+                runningTimers.get("backtolobby").setValue(timeLeft);
+                switch(timeLeft){
+                    case 50:
+                        slimeGolfTimes();
+                        break;
+                    case 45:
+                        getTeamPoints();
+                        break;
+                    case 40:
+                        teleportPlayers(TeleportConfig.get().getLocation("players.lobby"), 6);
+                        break;
+                    case 0:
+                        runningTimers.remove("slimegolfstart");
+                        cancel();
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("backtolobby", new AbstractMap.SimpleEntry<>(task, 61));
+    }
+
 
     public void slimeGolfTimes(){
         int placement = 1;
