@@ -315,7 +315,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public String getTeamDisplayName(String team){
 
-        return TeamsConfig.get().getString("teams." + team + ".colour") + TeamsConfig.get().getString("teams." + team + ".icon") + team;
+        return TeamsConfig.get().getString("teams." + team + ".colour") + TeamsConfig.get().getString("teams." + team + ".icon") + TeamsConfig.get().getString("teams." + team + ".colour") + "§l" + team;
     }
 
 
@@ -409,15 +409,16 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         return sortedMap;
     }
 
+
     public void getTeamPoints(){
         for(Player player : getPlayers()) {
             messagePlayer(player, "=== Overall Placements ===");
             int placement = 0;
             for (String key : sortByValue().keySet()) {
                 placement++;
-                messagePlayer(player, placement + ". " + getTeamDisplayName(key) + " §8- §e§l\uD83D\uDCB0" + sortByValue().get(key));
+                messagePlayer(player, String.format("%-15s%15s", placement + ". " + getTeamDisplayName(key), "§e§l\uD83D\uDCB0" + sortByValue().get(key)));
             }
-            messagePlayer(player, "======================");
+            messagePlayer(player, "=======================");
         }
     }
 
@@ -429,6 +430,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                 timeLeft--;
                 runningTimers.get("backtolobby").setValue(timeLeft);
                 switch(timeLeft){
+                    case 60:
+                        for(Player player : getPlayers()) {
+                            player.sendTitle("§c§lGAME OVER!", "", 0, 60, 40);
+                        }
+                        break;
                     case 50:
                         slimeGolfTimes();
                         break;
@@ -436,7 +442,15 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         getTeamPoints();
                         break;
                     case 40:
-                        teleportPlayers(TeleportConfig.get().getLocation("players.lobby"), 6);
+                        for(Player player : getPlayers()) {
+                            plugin.messagePlayer(player, """
+                                    §8
+                                    §8
+                                    §8[§c§l🛫§8] §cTeleporting back to the lobby..
+                                    §8
+                                    """);
+                        }
+                        teleportPlayers(TeleportConfig.get().getLocation("players.lobby"), 5);
                         break;
                     case 0:
                         runningTimers.remove("slimegolfstart");
@@ -454,11 +468,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
 
     public void slimeGolfTimes(){
-        int placement = 1;
         for(Player p : getPlayers()) {
             messagePlayer(p, "=== Hole Times ===");
             for (String team : slimeFinishers.keySet()) {
-                messagePlayer(p, placement + ". §e§l⏱§e" + slimeFinishers.get(team) + " §f- " + getTeamDisplayName(team));
+                messagePlayer(p, "§e§l⏱§e" + slimeFinishers.get(team) + " §f- " + getTeamDisplayName(team));
             }
             for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)) {
                 if(!slimeFinishers.containsKey(team)) {
