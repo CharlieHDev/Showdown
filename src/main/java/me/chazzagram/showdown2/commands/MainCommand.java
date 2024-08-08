@@ -150,7 +150,7 @@ public class MainCommand implements CommandExecutor {
                         break;
                     case "startstopwatch":
                         if(args.length > 2) {
-                            plugin.startStopwatch(Integer.parseInt(args[1]), "stopwatch");
+                            plugin.startStopwatch(Integer.parseInt(args[1]), args[2]);
                         }
                         break;
                     case "stoptimer":
@@ -289,11 +289,12 @@ public class MainCommand implements CommandExecutor {
 
                             int pointsEarned = 21 - placement;
                             plugin.earnTeamPoints(args[2], pointsEarned);
+                            plugin.teamCheckpoints.put(args[2], Integer.parseInt(args[1]));
 
                             for(String player : TeamsConfig.get().getStringList("teams." + args[2] + ".players")){
                                 if(Bukkit.getServer().getPlayer(player) != null) {
                                     Player p = Bukkit.getServer().getPlayer(player);
-                                    p.sendTitle("§a[✔] \uD83D\uDDFB-" + args[1], "§8[§f§l⏱§8] §e§o" + plugin.getTimer("stopwatch"), 0, 100, 5);
+                                    p.sendTitle("§a[✔] \uD83D\uDDFB-" + args[1], "§8[§f§l⏱§8] §e§o" + plugin.getTimer("slimegolf"), 0, 100, 5);
                                     plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Checkpoint reached!");
                                 }
                             }
@@ -328,14 +329,15 @@ public class MainCommand implements CommandExecutor {
 
                             int pointsEarned = 155 - (5*placement);
                             plugin.earnTeamPoints(args[1], pointsEarned);
-                            plugin.slimeFinishers.put(args[1], plugin.getTimer("stopwatch"));
+                            plugin.teamCheckpoints.put(args[1], 6);
+                            plugin.slimeFinishers.put(args[1], plugin.getTimer("slimegolf"));
 
                             for(String player : TeamsConfig.get().getStringList("teams." + args[1] + ".players")){
                                 if(Bukkit.getServer().getPlayer(player) != null) {
                                     Player p = Bukkit.getServer().getPlayer(player);
-                                    p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("stopwatch"), 0, 100, 5);
+                                    p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("slimegolf"), 0, 100, 5);
                                     plugin.messagePlayer(p, "§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lHole Completed!");
-                                    plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("stopwatch"));
+                                    plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("slimegolf"));
                                 }
                             }
                             plugin.slimeCheckpoints.replace(plugin.slimeCheckpoints.size(), placement+1);

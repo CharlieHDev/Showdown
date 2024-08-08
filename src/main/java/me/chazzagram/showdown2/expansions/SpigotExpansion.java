@@ -279,6 +279,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "§8N/A";
                 }
+            case "checkpoints_Team1":
+                return plugin.getTeamProgress("TestTeam1").toString();
             default:
                 return null;
         }

@@ -7,6 +7,7 @@ import me.chazzagram.showdown2.files.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -17,6 +18,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.scoreboard.Team;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -35,6 +37,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public HashMap<Integer, Integer> slimeCheckpoints = new HashMap<>();
 
     public HashMap<String, String> slimeFinishers = new HashMap<>();
+
+    public HashMap<String, Integer> teamCheckpoints = new HashMap<>();
 
 
     @Override
@@ -72,6 +76,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
         for(int i = 1; i <= 5; i++){
             slimeCheckpoints.put(i, 1);
+        }
+
+        for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){
+            teamCheckpoints.put(team, 0);
         }
 
 
@@ -358,7 +366,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         }
                         break;
                     case 10:
+                        ItemStack knockbackStick = new ItemStack(Material.STICK);
+                        knockbackStick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 3);
                         for(Player player : getPlayers()) {
+                            player.getInventory().addItem(knockbackStick);
                             plugin.messagePlayer(player, """
                                     §8
                                     §8
@@ -376,6 +387,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         for(Player player : getPlayers()) {
                             player.sendTitle("§a§l▶ GO! ◀", "", 0, 40, 0);
                         }
+                        startStopwatch(90, "slimegolf");
                         runningTimers.remove("slimegolfstart");
                         cancel();
                         break;
@@ -481,6 +493,22 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             messagePlayer(p, "================");
 
         }
+    }
+
+    public StringBuilder getTeamProgress(String team){
+        StringBuilder progressBar = new StringBuilder();
+        progressBar.append(TeamsConfig.get().getString("teams." + team + ".colour")).append(TeamsConfig.get().getString("teams." + team + ".icon"));
+        if(runningTimers.containsKey("slimegolf")) {
+            if (teamCheckpoints.get(team) > 5) {
+                progressBar.append(TeamsConfig.get().getString("teams." + team + ".colour")).append("⬛".repeat(5)).append("§e⬛");
+            } else {
+                progressBar.append("⬛".repeat(Math.max(0, teamCheckpoints.get(team))));
+                progressBar.append("§0⬛".repeat(6 - teamCheckpoints.get(team)));
+            }
+        } else {
+            progressBar.append("§0⬛");
+        }
+        return progressBar;
     }
 
 //    public void playerMedal(Player p) {
