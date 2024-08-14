@@ -1,6 +1,7 @@
 me\chazzagram\showdown2\expansions\SpigotExpansion.class
 me\chazzagram\showdown2\files\PlayerConfig.class
 me\chazzagram\showdown2\listeners\PlayerDeath.class
+me\chazzagram\showdown2\listeners\VoteWalkEvent.class
 me\chazzagram\showdown2\Showdown2$3.class
 me\chazzagram\showdown2\Showdown2.class
 me\chazzagram\showdown2\Showdown2$5.class

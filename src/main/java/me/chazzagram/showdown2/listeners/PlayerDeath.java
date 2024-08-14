@@ -4,13 +4,14 @@ import me.chazzagram.showdown2.Showdown2;
 import me.chazzagram.showdown2.files.DeathMessagesConfig;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 
 import java.util.EventListener;
 import java.util.List;
 import java.util.Random;
 
-public class PlayerDeath implements EventListener {
+public class PlayerDeath implements Listener {
 
     private static Showdown2 plugin;
 

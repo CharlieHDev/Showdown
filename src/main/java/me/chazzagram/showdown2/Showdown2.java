@@ -4,6 +4,8 @@ import com.sun.tools.javac.Main;
 import me.chazzagram.showdown2.commands.MainCommand;
 import me.chazzagram.showdown2.expansions.SpigotExpansion;
 import me.chazzagram.showdown2.files.*;
+import me.chazzagram.showdown2.listeners.PlayerDeath;
+import me.chazzagram.showdown2.listeners.VoteWalkEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -40,6 +42,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<String, Integer> teamCheckpoints = new HashMap<>();
 
+    public HashMap<Player, Material> playerVote = new HashMap<>();
+
+    public HashMap<Material, String> woolModes = new HashMap<>();
+
+    public HashMap<String, Integer> modeVotes = new HashMap<>();
 
     @Override
     public void onEnable() {
@@ -48,6 +55,17 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         plugin = this;
 
         this.getCommand("mcevent").setExecutor(new MainCommand(this));
+
+
+        woolModes.put(Material.WHITE_WOOL, "Race");
+        woolModes.put(Material.PURPLE_WOOL, "Gub Game");
+        woolModes.put(Material.LIME_WOOL, "Slime Golf");
+        woolModes.put(Material.ORANGE_WOOL, "Zoomo Go!");
+        woolModes.put(Material.RED_WOOL, "Bridge Builders");
+        woolModes.put(Material.YELLOW_WOOL, "Craftalot");
+
+        getServer().getPluginManager().registerEvents(new PlayerDeath(this), this);
+        getServer().getPluginManager().registerEvents(new VoteWalkEvent(this), this);
 
         TeamsConfig.setup();
         TeamsConfig.get().options().copyDefaults(true);
@@ -410,6 +428,20 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }
 
         List<Map.Entry<String, Integer>> list = new LinkedList<>(teamPoints.entrySet());
+
+        list.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+
+        LinkedHashMap<String, Integer> sortedMap = new LinkedHashMap<>();
+        for (Map.Entry<String, Integer> entry : list) {
+            sortedMap.put(entry.getKey(), entry.getValue());
+        }
+
+        return sortedMap;
+    }
+
+    public LinkedHashMap<String, Integer> sortModeVotes() {
+
+        List<Map.Entry<String, Integer>> list = new LinkedList<>(plugin.modeVotes.entrySet());
 
         list.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
 
