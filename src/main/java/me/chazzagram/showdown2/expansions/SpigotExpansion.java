@@ -113,6 +113,12 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "Waiting..";
                 }
+            case "timer_voting":
+                if (plugin.runningTimers.containsKey("voting")) {
+                    return plugin.getTimer("voting");
+                } else {
+                    return "Waiting..";
+                }
             case "stopwatch":
                 if (plugin.runningTimers.containsKey("stopwatch")) {
                     return plugin.getTimer("stopwatch");

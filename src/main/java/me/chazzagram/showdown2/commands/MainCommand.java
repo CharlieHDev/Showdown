@@ -268,32 +268,7 @@ public class MainCommand implements CommandExecutor {
                         plugin.startSlimeGolf();
                         break;
                     case "countvotes":
-                        plugin.modeVotes.clear();
-                        int totalvotes = 0;
-                        for(int i = 356; i <= 360; i++){
-                            for(int j = -400; j <= -396; j++){
-                                totalvotes++;
-                                Material block = Bukkit.getServer().getWorld("world").getBlockAt(j, 62, i).getType();
-                                if(plugin.woolModes.containsKey(block)) {
-                                    if (plugin.modeVotes.containsKey(plugin.woolModes.get(block))) {
-                                        plugin.modeVotes.put(plugin.woolModes.get(block), plugin.modeVotes.get(plugin.woolModes.get(block)) + 1);
-                                    } else {
-                                        plugin.modeVotes.put(plugin.woolModes.get(block), 1);
-                                    }
-                                }
-                            }
-                        }
-                        List<String> leaderMode = new ArrayList<>(plugin.sortModeVotes().keySet());
-                        List<Integer> leaderModeVotes = new ArrayList<>(plugin.sortModeVotes().values());
-                        for(Player player : plugin.getPlayers()) {
-                            plugin.messagePlayer(p, "=== Hole Times ===");
-                            int placement = 0;
-                            for (String key : leaderMode) {
-                                placement++;
-                                float percentage = ((float) leaderModeVotes.get(placement - 1) /totalvotes)*100;
-                                plugin.messagePlayer(player, placement + ". " + key + ": §e§l" + leaderModeVotes.get(placement-1) + " spaces §e§o(" + percentage + "%)");
-                            }
-                        }
+                        plugin.startVoting();
                         break;
                     default:
                         plugin.messagePlayer(p, "Missing Args.");

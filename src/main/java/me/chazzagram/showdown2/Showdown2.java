@@ -34,6 +34,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     private double multiplier = 1.0;
 
+    public boolean votingEnabled = false;
+
     public HashMap<String, Map.Entry<BukkitTask, Integer>> runningTimers = new HashMap<>();
 
     public HashMap<Integer, Integer> slimeCheckpoints = new HashMap<>();
@@ -464,6 +466,112 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             }
             messagePlayer(player, "=======================");
         }
+    }
+
+    public void countVotes(){
+        modeVotes.clear();
+        int totalvotes = 0;
+        for(int i = 356; i <= 360; i++){
+            for(int j = -400; j <= -396; j++){
+                totalvotes++;
+                Material block = Bukkit.getServer().getWorld("world").getBlockAt(j, 62, i).getType();
+                if(woolModes.containsKey(block)) {
+                    if (modeVotes.containsKey(woolModes.get(block))) {
+                        modeVotes.put(woolModes.get(block), modeVotes.get(woolModes.get(block)) + 1);
+                    } else {
+                        modeVotes.put(woolModes.get(block), 1);
+                    }
+                }
+            }
+        }
+        List<String> leaderMode = new ArrayList<>(sortModeVotes().keySet());
+        List<Integer> leaderModeVotes = new ArrayList<>(sortModeVotes().values());
+        for(Player player : plugin.getPlayers()) {
+            player.sendTitle("§e§l" + leaderMode.getFirst(), "", 0, 60, 40);
+            messagePlayer(player, "=== Voting Results ===");
+            int placement = 0;
+            for (String key : leaderMode) {
+                placement++;
+                float percentage = ((float) leaderModeVotes.get(placement - 1) /totalvotes)*100;
+                messagePlayer(player, placement + ". " + key + ": §e§l" + leaderModeVotes.get(placement-1) + " spaces §e§o(" + percentage + "%)");
+            }
+        }
+    }
+
+    public void startVoting(){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 91;
+            @Override
+            public void run() {
+                timeLeft--;
+                runningTimers.get("voting").setValue(timeLeft);
+                switch(timeLeft){
+                    case 90:
+                        for(int i = 356; i <= 360; i++){
+                            for(int j = -400; j <= -396; j++){
+                                Bukkit.getServer().getWorld("world").getBlockAt(j, 62, i).setType(Material.BLACK_WOOL);
+                            }
+                        }
+                        for(Player player : getPlayers()) {
+                            player.sendTitle("§e§lVoting Time!", "", 0, 60, 40);
+                        }
+                        break;
+                    case 75:
+                        teleportPlayers(TeleportConfig.get().getLocation("players.votearena"), 0);
+                        for(Player player : getPlayers()) {
+                            plugin.messagePlayer(player, """
+                                    §8
+                                    §8
+                                    §e§lVoting Time!
+                                    §fWalk into your mode of choice and paint the floor with as many blocks as possible by running around! If you change your mind simply run back to the mode selection and get painting!
+                                    §8
+                                    """);
+                        }
+                        break;
+                    case 60:
+                        votingEnabled = true;
+                        for(Player player : getPlayers()) {
+                            plugin.messagePlayer(player, """
+                                    §8
+                                    §8
+                                    §6§lVoting Enabled.
+                                    §fVotes will be counted in 30 seconds!
+                                    §8
+                                    """);
+                        }
+                        break;
+                    case 30:
+                        votingEnabled = false;
+                        for(Player player : getPlayers()) {
+                            plugin.messagePlayer(player, """
+                                    §8
+                                    §8
+                                    §c§lVoting Period Ended.
+                                    §fVotes will now be calculated!
+                                    §8
+                                    """);
+                        }
+                        break;
+                    case 25:
+                        for(Player player : getPlayers()) {
+                            player.sendTitle("§7§k000000000", "", 0, 100, 40);
+                        }
+                        break;
+                    case 20:
+                        countVotes();
+                        break;
+                    case 0:
+                        runningTimers.remove("voting");
+                        cancel();
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("voting", new AbstractMap.SimpleEntry<>(task, 91));
     }
 
     public void gameEnd(){

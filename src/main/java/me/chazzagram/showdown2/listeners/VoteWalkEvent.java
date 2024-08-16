@@ -29,10 +29,12 @@ public class VoteWalkEvent implements Listener {
                     plugin.playerVote.put(event.getPlayer(), wool);
                 }
             }
-            for(Material wool : getWoolColors()) {
-                if (event.getTo().getBlock().getRelative(BlockFace.DOWN).getType().equals(wool)) {
-                    if(plugin.playerVote.containsKey(event.getPlayer())) {
-                        event.getTo().getBlock().getRelative(BlockFace.DOWN).setType(plugin.playerVote.get(event.getPlayer()));
+            if(plugin.votingEnabled) {
+                for (Material wool : getWoolColors()) {
+                    if (event.getTo().getBlock().getRelative(BlockFace.DOWN).getType().equals(wool)) {
+                        if (plugin.playerVote.containsKey(event.getPlayer())) {
+                            event.getTo().getBlock().getRelative(BlockFace.DOWN).setType(plugin.playerVote.get(event.getPlayer()));
+                        }
                     }
                 }
             }
