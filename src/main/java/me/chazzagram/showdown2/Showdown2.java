@@ -50,6 +50,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<String, Integer> modeVotes = new HashMap<>();
 
+    public HashMap<String, Integer> colourDashCheckpoints = new HashMap<>();
+
     @Override
     public void onEnable() {
         // Plugin startup logic
@@ -421,6 +423,82 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         runningTimers.put("slimegolfstart", new AbstractMap.SimpleEntry<>(task, 61));
     }
 
+    public void startColourDash(){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 61;
+            @Override
+            public void run() {
+                timeLeft--;
+                runningTimers.get("colourdashstart").setValue(timeLeft);
+                switch(timeLeft){
+                    case 60:
+                        teamTeleport("colourdash", 5);
+                        break;
+                    case 55:
+                        for(Player player : getPlayers()) {
+                            PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
+                            player.addPotionEffect(PotionEffect);
+                        }
+                        break;
+
+                    case 50:
+                        for(Player player : getPlayers()) {
+                            plugin.messagePlayer(player, """
+                                    §8
+                                    §8
+                                    §8[§e§l?§8] §eWelcome to §a§lColour Dash§e! This is a race to the finish, the map is bigger, and there's multiple routes for your team to take so make the right choice!
+                                    §8
+                                    """);
+                        }
+                        break;
+                    case 30:
+                        for(Player player : getPlayers()) {
+                            plugin.messagePlayer(player, """
+                                    §8
+                                    §8
+                                    §8[§e§l?§8] §eIn this mode speed is the most important factor! The faster you reach each checkpoint, the more points you earn, so get dashing!
+                                    §8
+                                    """);
+                        }
+                        break;
+                    case 10:
+
+                        for(Player player : getPlayers()) {
+                            ItemStack infiniteBlocks = new ItemStack(Material.getMaterial(TeamsConfig.get().getString("teams." + PlayerConfig.get().getString("players." + player.getName() + ".team") + ".colourname") + "_CONCRETE"));
+                            infiniteBlocks.setAmount(64);
+                            player.getInventory().addItem(infiniteBlocks);
+                            plugin.messagePlayer(player, """
+                                    §8
+                                    §8
+                                    §8[§c§l!§8] §7Game Starting in §c§l10 seconds...
+                                    §8
+                                    """);
+                        }
+                        break;
+                    case 5, 4, 3, 2, 1:
+                        for(Player player : getPlayers()) {
+                            player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
+                        }
+                        break;
+                    case 0:
+                        for(Player player : getPlayers()) {
+                            player.sendTitle("§a§l▶ DASH! ◀", "", 0, 40, 0);
+                        }
+                        startTimer(90, "colourdash");
+                        startStopwatch(90, "colourdashwatch");
+                        runningTimers.remove("colourdashstart");
+                        cancel();
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("colourdashstart", new AbstractMap.SimpleEntry<>(task, 61));
+    }
+
     public LinkedHashMap<String, Integer> sortByValue() {
 
         HashMap<String, Integer> teamPoints = new HashMap<>();
@@ -605,7 +683,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         teleportPlayers(TeleportConfig.get().getLocation("players.lobby"), 5);
                         break;
                     case 0:
-                        runningTimers.remove("slimegolfstart");
+                        runningTimers.remove("backtolobby");
                         cancel();
                         break;
                     default:
