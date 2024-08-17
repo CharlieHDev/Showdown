@@ -43,7 +43,7 @@ public class MainCommand implements CommandExecutor {
                                     placement++;
                                 }
                             }
-                            int pointsEarned = 40 - placement;
+                            int pointsEarned = 41 - placement;
                             plugin.earnPoints(args[2], pointsEarned, true);
                             Player p = Bukkit.getServer().getPlayer(args[2]);
                             p.sendTitle("§a[✔] \uD83C\uDFC3-" + args[1], "§8[§f§l⏱§8] §e§o" + plugin.getTimer("colourdashwatch"), 0, 100, 5);
@@ -66,7 +66,7 @@ public class MainCommand implements CommandExecutor {
                                     placement++;
                                 }
                             }
-                            int pointsEarned = 100 - (2 * placement);
+                            int pointsEarned = 102 - (2 * placement);
                             plugin.earnPoints(args[1], pointsEarned, true);
 
                             Player p = Bukkit.getServer().getPlayer(args[1]);
@@ -330,6 +330,12 @@ public class MainCommand implements CommandExecutor {
                     break;
                 case "countvotes":
                     plugin.startVoting();
+                    break;
+                case "pause":
+                    plugin.pauseEvent();
+                    break;
+                case "unpause":
+                    plugin.resumeEvent();
                     break;
                 default:
                     plugin.messagePlayer(p, "Missing Args.");
