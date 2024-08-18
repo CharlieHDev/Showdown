@@ -70,6 +70,8 @@ public class MainCommand implements CommandExecutor {
                             plugin.earnPoints(args[1], pointsEarned, true);
 
                             Player p = Bukkit.getServer().getPlayer(args[1]);
+                            String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
+                            plugin.modeCompletions.put(team, (plugin.modeCompletions.get(team) + 1));
                             p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("colourdashwatch"), 0, 100, 5);
                             plugin.messagePlayer(p, "§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lCourse Completed!");
                             plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("colourdashwatch"));

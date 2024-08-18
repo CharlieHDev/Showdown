@@ -57,6 +57,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<String, Integer> colourDashCheckpoints = new HashMap<>();
 
+    public HashMap<String, Integer> modeCompletions = new HashMap<>();
+
     @Override
     public void onEnable() {
         // Plugin startup logic
@@ -107,6 +109,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
         for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){
             teamCheckpoints.put(team, 0);
+        }
+
+        for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){
+            modeCompletions.put(team, 0);
         }
 
 
@@ -480,6 +486,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 60:
                             teamTeleport("colourdash", 5);
+                            resetTeamCompletions();
                             break;
                         case 55:
                             for (Player player : getPlayers()) {
@@ -785,6 +792,22 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             progressBar.append("§0⬛");
         }
         return progressBar;
+    }
+
+    public StringBuilder getCompletionProgress(String team){
+        StringBuilder teamProgressBar = new StringBuilder();
+        String colouredTeamIcon = TeamsConfig.get().getString("teams." + team + ".colour") + TeamsConfig.get().getString("teams." + team + ".icon");
+        String teamIcon = "§0" + TeamsConfig.get().getString("teams." + team + ".icon");
+        teamProgressBar.append(colouredTeamIcon.repeat(modeCompletions.get(team)));
+        teamProgressBar.append(teamIcon.repeat(4-modeCompletions.get(team)));
+        return teamProgressBar;
+    }
+
+    public void resetTeamCompletions(){
+        modeCompletions.clear();
+        for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){
+            modeCompletions.put(team, 0);
+        }
     }
 
 //    public void playerMedal(Player p) {
