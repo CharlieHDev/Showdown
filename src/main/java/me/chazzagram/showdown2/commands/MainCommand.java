@@ -50,7 +50,7 @@ public class MainCommand implements CommandExecutor {
                             plugin.messagePlayer(p, "§a[\uD83C\uDFC3-" + args[1] + "] Dashpoint reached!");
                             plugin.colourDashCheckpoints.put(args[2], Integer.parseInt(args[1]));
                             for (Player player : plugin.getPlayers()) {
-                                plugin.messagePlayer(player, "§8| §a§l⏱ §8| " + p.getName() + "§7 has reached §a\uD83C\uDFC3-" + args[1] + "§7!");
+                                plugin.messagePlayer(player, "§8| §a§l⏱ §8| " + plugin.getPlayerDisplayName(p.getName()) + "§7 has reached §a\uD83C\uDFC3-" + args[1] + "§7!");
                             }
 
                         }
@@ -78,7 +78,7 @@ public class MainCommand implements CommandExecutor {
                             plugin.colourDashCheckpoints.put(args[1], 10);
                             p.setGameMode(GameMode.SPECTATOR);
                             for (Player player : plugin.getPlayers()) {
-                                plugin.messagePlayer(player, "§8| §f\uD83D\uDC51 §8| " + p.getName() + "§e was §f§l#" + placement + " §eto finish!");
+                                plugin.messagePlayer(player, "§8| §f\uD83D\uDC51 §8| " + plugin.getPlayerDisplayName(p.getName()) + "§e was §f§l#" + placement + " §eto finish!");
                             }
                         }
                     }

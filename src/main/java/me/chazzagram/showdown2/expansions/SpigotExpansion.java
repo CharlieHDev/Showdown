@@ -58,6 +58,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
         switch (params) {
             case "player":
                 return p.getName();
+            case "playerdisplay":
+                return plugin.getPlayerDisplayName(p.getName());
             case "team":
                 if (SpectatorConfig.get().getStringList("spectators").contains(p.getName())) {
                     return "Spectator";

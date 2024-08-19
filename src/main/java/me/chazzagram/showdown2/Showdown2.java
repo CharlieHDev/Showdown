@@ -397,6 +397,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         return TeamsConfig.get().getString("teams." + team + ".colour") + TeamsConfig.get().getString("teams." + team + ".icon") + TeamsConfig.get().getString("teams." + team + ".colour") + "§l" + team;
     }
 
+    public String getPlayerDisplayName(String player){
+        String team = PlayerConfig.get().getString("players." + player + ".team");
+        return TeamsConfig.get().getString("teams." + team + ".colour") + TeamsConfig.get().getString("teams." + team + ".icon") + player;
+    }
+
 
     public void startSlimeGolf(){
         BukkitTask task = new BukkitRunnable() {
