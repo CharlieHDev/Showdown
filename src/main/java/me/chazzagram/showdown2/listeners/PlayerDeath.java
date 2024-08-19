@@ -29,7 +29,7 @@ public class PlayerDeath implements Listener {
             String message = deathMessages.get(rand.nextInt(deathMessages.size()));
 
             for (Player p : plugin.getServer().getOnlinePlayers()) {
-                plugin.messagePlayer(p, String.format(message, player.getName(), killer.getName()));
+                plugin.messagePlayer(p, String.format(message, plugin.getPlayerDisplayName(player.getName()), plugin.getPlayerDisplayName(killer.getName())));
             }
         }
     }

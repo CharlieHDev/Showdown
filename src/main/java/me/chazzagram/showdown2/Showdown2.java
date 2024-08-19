@@ -4,6 +4,7 @@ import com.sun.tools.javac.Main;
 import me.chazzagram.showdown2.commands.MainCommand;
 import me.chazzagram.showdown2.expansions.SpigotExpansion;
 import me.chazzagram.showdown2.files.*;
+import me.chazzagram.showdown2.listeners.CraftalotEvent;
 import me.chazzagram.showdown2.listeners.PlayerDeath;
 import me.chazzagram.showdown2.listeners.VoteWalkEvent;
 import net.md_5.bungee.api.ChatMessageType;
@@ -39,6 +40,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public boolean votingEnabled = false;
 
+    public String currentMode = "Craftalot";
+
     public HashMap<String, Map.Entry<BukkitTask, Integer>> runningTimers = new HashMap<>();
 
     public ArrayList<String> pausedTimers = new ArrayList<>();
@@ -59,6 +62,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<String, Integer> modeCompletions = new HashMap<>();
 
+    public HashMap<String, String> itemToCraft = new HashMap<>();
+
     @Override
     public void onEnable() {
         // Plugin startup logic
@@ -77,6 +82,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
         getServer().getPluginManager().registerEvents(new PlayerDeath(this), this);
         getServer().getPluginManager().registerEvents(new VoteWalkEvent(this), this);
+        getServer().getPluginManager().registerEvents(new CraftalotEvent(this), this);
 
         TeamsConfig.setup();
         TeamsConfig.get().options().copyDefaults(true);
@@ -730,7 +736,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 50:
-                            slimeGolfTimes();
+                            if(currentMode.equals("Slime Golf")) {
+                                slimeGolfTimes();
+                            }
                             break;
                         case 45:
                             getTeamPoints();
