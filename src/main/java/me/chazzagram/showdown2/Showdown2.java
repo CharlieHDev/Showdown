@@ -62,6 +62,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<String, Integer> modeCompletions = new HashMap<>();
 
+    public HashMap<String, Integer> modeTeamPoints = new HashMap<>();
+
+    public HashMap<String, Integer> modePoints = new HashMap<>();
+
     public HashMap<String, String> itemToCraft = new HashMap<>();
 
     @Override
@@ -103,6 +107,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         DeathMessagesConfig.setup();
         DeathMessagesConfig.get().options().copyDefaults(true);
         DeathMessagesConfig.save();
+
+        CraftalotConfig.setup();
+        CraftalotConfig.get().options().copyDefaults(true);
+        CraftalotConfig.save();
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             Bukkit.getPluginManager().registerEvents(this, this);
@@ -185,10 +193,15 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         int currentTeamPoints = TeamsConfig.get().getInt("teams." + playerTeam + ".points");
         TeamsConfig.get().set("teams." + playerTeam + ".points", currentTeamPoints+multiplyPoints(points));
         TeamsConfig.save();
+
+        modeTeamPoints.put(playerTeam, modeTeamPoints.get(playerTeam) + multiplyPoints(points));
+
         if(individual) {
             int currentPoints = PlayerConfig.get().getInt("players." + player + ".points");
             PlayerConfig.get().set("players." + player + ".points", currentPoints+multiplyPoints(points));
             PlayerConfig.save();
+
+            modePoints.put(player, modePoints.get(player) + multiplyPoints(points));
         }
     }
 
@@ -196,6 +209,20 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         int currentTeamPoints = TeamsConfig.get().getInt("teams." + team + ".points");
         TeamsConfig.get().set("teams." + team + ".points", currentTeamPoints+multiplyPoints(points));
         TeamsConfig.save();
+
+        modeTeamPoints.put(team, modeTeamPoints.get(team) + multiplyPoints(points));
+    }
+
+    public void resetModePoints(){
+        modePoints.clear();
+        modeTeamPoints.clear();
+
+        for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){
+            for(String player : TeamsConfig.get().getStringList("teams." + team + ".players")){
+                modePoints.put(player, 0);
+            }
+            modeTeamPoints.put(team, 0);
+        }
     }
 
 //    Get all players
@@ -586,9 +613,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         return sortedMap;
     }
 
-    public LinkedHashMap<String, Integer> sortModeVotes() {
+    public LinkedHashMap<String, Integer> sortMap(HashMap map) {
 
-        List<Map.Entry<String, Integer>> list = new LinkedList<>(modeVotes.entrySet());
+        List<Map.Entry<String, Integer>> list = new LinkedList<>(map.entrySet());
 
         list.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
 
@@ -601,13 +628,25 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     }
 
 
-    public void getTeamPoints(){
+    public void getTeamModePoints(){
         for(Player player : getPlayers()) {
-            messagePlayer(player, "=== Overall Placements ===");
+            messagePlayer(player, "=== Mode Team Leaderboard ===");
             int placement = 0;
-            for (String key : sortByValue().keySet()) {
+            for (String key : sortMap(modeTeamPoints).keySet()) {
                 placement++;
-                messagePlayer(player, String.format("%-15s%15s", placement + ". " + getTeamDisplayName(key), "§e§l\uD83D\uDCB0" + sortByValue().get(key)));
+                messagePlayer(player, String.format("%-15s%15s", placement + ". " + getTeamDisplayName(key), "§e§l\uD83D\uDCB0" + sortMap(modeTeamPoints).get(key)));
+            }
+            messagePlayer(player, "=======================");
+        }
+    }
+
+    public void getPlayerModePoints(){
+        for(Player player : getPlayers()) {
+            messagePlayer(player, "=== Mode Indiv Leaderboard ===");
+            List<String> players = new ArrayList<>(sortMap(modePoints).keySet());
+            List<Integer> points = new ArrayList<>(sortMap(modePoints).values());
+            for (int i = 1; i <= 8; i++) {
+                messagePlayer(player, String.format("%-15s%15s", i + ". " + getPlayerDisplayName(players.get(i)), "§e§l\uD83D\uDCB0" + points.get(i)));
             }
             messagePlayer(player, "=======================");
         }
@@ -629,8 +668,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                 }
             }
         }
-        List<String> leaderMode = new ArrayList<>(sortModeVotes().keySet());
-        List<Integer> leaderModeVotes = new ArrayList<>(sortModeVotes().values());
+        List<String> leaderMode = new ArrayList<>(sortMap(modeVotes).keySet());
+        List<Integer> leaderModeVotes = new ArrayList<>(sortMap(modeVotes).values());
         for(Player player : getPlayers()) {
             player.sendTitle("§e§l" + leaderMode.getFirst(), "", 0, 60, 40);
             messagePlayer(player, "=== Voting Results ===");
@@ -738,10 +777,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         case 50:
                             if(currentMode.equals("Slime Golf")) {
                                 slimeGolfTimes();
+                            } else {
+                                getPlayerModePoints();
                             }
                             break;
                         case 45:
-                            getTeamPoints();
+                            getTeamModePoints();
                             break;
                         case 40:
                             for (Player player : getPlayers()) {

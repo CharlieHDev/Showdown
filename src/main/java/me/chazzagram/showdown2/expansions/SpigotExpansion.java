@@ -293,6 +293,12 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 return plugin.woolModes.getOrDefault(plugin.playerVote.get(p), "Selecting...");
             case "completions_Team1":
                 return plugin.getCompletionProgress("TestTeam1").toString();
+            case "itemtocraft":
+                if(plugin.itemToCraft.containsKey(p.getName())){
+                    return plugin.itemToCraft.get(p.getName()).replaceAll("_", " ");
+                } else {
+                    return "§8Waiting..";
+                }
             default:
                 return null;
         }
