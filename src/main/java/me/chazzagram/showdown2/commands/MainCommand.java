@@ -330,6 +330,9 @@ public class MainCommand implements CommandExecutor {
                 case "startcolourdash":
                     plugin.startColourDash();
                     break;
+                case "startcraftalot":
+                    plugin.startCraftalot();
+                    break;
                 case "countvotes":
                     plugin.startVoting();
                     break;

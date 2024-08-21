@@ -11,6 +11,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,10 +43,15 @@ public class CraftalotEvent implements Listener {
                         }
                     }
                     if(items.contains(plugin.itemToCraft.get(p.getName()))){
+                        String currentItem = plugin.itemToCraft.get(p.getName()).replaceAll("_", " ");
+                        plugin.earnPoints(p.getName(), 35, true);
                         Random r = new Random();
                         List<String> craftList = CraftalotConfig.get().getStringList("craftlist");
                         plugin.itemToCraft.put(p.getName(), craftList.get(r.nextInt(craftList.size())));
                         String newItem = plugin.itemToCraft.get(p.getName()).replaceAll("_", " ");
+                        for(Player players : plugin.getPlayers()){
+                            plugin.messagePlayer(players, "§8[§c§l!§8] " + plugin.getPlayerDisplayName(players.getName()) + " §7has crafted an item! (§e" + currentItem + "§7)");
+                        }
                         plugin.messagePlayer(p, """
                                         §8
                                         §8
@@ -53,6 +59,11 @@ public class CraftalotEvent implements Listener {
                                         §7Next item to craft: §e§l""" + newItem + """
                                         §8
                                         """);
+                        p.getInventory().clear();
+                        for(int i = 0; i <= 3; i++){
+                            p.getInventory().addItem(plugin.craftalotKit()[i]);
+                        }
+                        p.getInventory().setItemInOffHand(plugin.craftalotKit()[4]);
                     } else {
                         String currentItem = plugin.itemToCraft.get(p.getName()).replaceAll("_", " ");
                         plugin.messagePlayer(p, """
@@ -70,7 +81,7 @@ public class CraftalotEvent implements Listener {
                                         §8
                                         §8
                                         §8[§e§l!§8] §eHello Traveller! The king has new orders..
-                                        §7You are required to bring me: §e§l""" + currentItem + """
+                                        §7The first item you are required to bring me is: §e§l""" + currentItem + """
                                         §8
                                         """);
                 }

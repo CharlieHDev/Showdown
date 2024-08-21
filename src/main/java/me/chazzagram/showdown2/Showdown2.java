@@ -4,6 +4,7 @@ import com.sun.tools.javac.Main;
 import me.chazzagram.showdown2.commands.MainCommand;
 import me.chazzagram.showdown2.expansions.SpigotExpansion;
 import me.chazzagram.showdown2.files.*;
+import me.chazzagram.showdown2.listeners.ColourDashEvent;
 import me.chazzagram.showdown2.listeners.CraftalotEvent;
 import me.chazzagram.showdown2.listeners.PlayerDeath;
 import me.chazzagram.showdown2.listeners.VoteWalkEvent;
@@ -40,7 +41,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public boolean votingEnabled = false;
 
-    public String currentMode = "Craftalot";
+    public String currentMode = "Lobby";
 
     public HashMap<String, Map.Entry<BukkitTask, Integer>> runningTimers = new HashMap<>();
 
@@ -82,11 +83,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         woolModes.put(Material.LIME_WOOL, "Slime Golf");
         woolModes.put(Material.ORANGE_WOOL, "Zoomo Go!");
         woolModes.put(Material.RED_WOOL, "Bridge Builders");
+        woolModes.put(Material.LIGHT_BLUE_WOOL, "Colour Dash");
         woolModes.put(Material.YELLOW_WOOL, "Craftalot");
 
         getServer().getPluginManager().registerEvents(new PlayerDeath(this), this);
         getServer().getPluginManager().registerEvents(new VoteWalkEvent(this), this);
         getServer().getPluginManager().registerEvents(new CraftalotEvent(this), this);
+        getServer().getPluginManager().registerEvents(new ColourDashEvent(this), this);
 
         TeamsConfig.setup();
         TeamsConfig.get().options().copyDefaults(true);
@@ -449,6 +452,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             teamTeleport("slimegolf", 5);
                             break;
                         case 55:
+                            currentMode = "Slime Golf";
                             for (Player player : getPlayers()) {
                                 PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
                                 player.addPotionEffect(PotionEffect);
@@ -527,6 +531,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             resetTeamCompletions();
                             break;
                         case 55:
+                            currentMode = "Colour Dash";
                             for (Player player : getPlayers()) {
                                 PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
                                 player.addPotionEffect(PotionEffect);
@@ -593,6 +598,89 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         runningTimers.put("colourdashstart", new AbstractMap.SimpleEntry<>(task, 61));
     }
 
+
+    public void startCraftalot(){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 61;
+            @Override
+            public void run() {
+                if(!pausedTimers.contains("craftalotstart")) {
+                    timeLeft--;
+                    runningTimers.get("craftalotstart").setValue(timeLeft);
+                    switch (timeLeft) {
+                        case 60:
+                            teleportPlayers(TeleportConfig.get().getLocation("players.craftalot"), 5);
+                            resetModePoints();
+                            break;
+                        case 55:
+                            currentMode = "Craftalot";
+                            for (Player player : getPlayers()) {
+                                PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
+                                player.addPotionEffect(PotionEffect);
+                                player.setGameMode(GameMode.SURVIVAL);
+                            }
+                            break;
+
+                        case 50:
+                            for (Player player : getPlayers()) {
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§e§l?§8] §eWelcome to §a§lCraftalot§e! We hope you've memorised your crafting recipes! Because this mode is all about retrieving the right materials and crafting what Edguard asks to earn points!
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 30:
+                            for (Player player : getPlayers()) {
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§e§l?§8] §eRun to Edguard and right-click him to get your orders, then retrieve the needed materials through the pipes marked on the map, and craft as many items as possible before the time runs out!
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 10:
+
+                            for (Player player : getPlayers()) {
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§c§l!§8] §7Game Starting in §c§l10 seconds...
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 5, 4, 3, 2, 1:
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
+                            }
+                            break;
+                        case 0:
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("§a§l▶ CRAFT! ◀", "§7Speak to Edguard.", 0, 40, 0);
+                                player.getInventory().clear();
+                                for(int i = 0; i <= 3; i++){
+                                    player.getInventory().addItem(craftalotKit()[i]);
+                                }
+                                player.getInventory().setItemInOffHand(craftalotKit()[4]);
+                            }
+                            startTimer(90, "craftalot");
+                            runningTimers.remove("craftalotstart");
+                            cancel();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("craftalotstart", new AbstractMap.SimpleEntry<>(task, 61));
+    }
+
     public LinkedHashMap<String, Integer> sortByValue() {
 
         HashMap<String, Integer> teamPoints = new HashMap<>();
@@ -646,7 +734,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             List<String> players = new ArrayList<>(sortMap(modePoints).keySet());
             List<Integer> points = new ArrayList<>(sortMap(modePoints).values());
             for (int i = 1; i <= 8; i++) {
-                messagePlayer(player, String.format("%-15s%15s", i + ". " + getPlayerDisplayName(players.get(i)), "§e§l\uD83D\uDCB0" + points.get(i)));
+                if(players.get(i) != null && points.get(i) != null) {
+                    messagePlayer(player, String.format("%-15s%15s", i + ". " + getPlayerDisplayName(players.get(i)), "§e§l\uD83D\uDCB0" + points.get(i)));
+                }
             }
             messagePlayer(player, "=======================");
         }
@@ -862,6 +952,17 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){
             modeCompletions.put(team, 0);
         }
+    }
+
+    public ItemStack[] craftalotKit(){
+
+        ItemStack sword = new ItemStack(Material.IRON_SWORD);
+        ItemStack pickaxe = new ItemStack(Material.IRON_PICKAXE);
+        ItemStack axe = new ItemStack(Material.IRON_AXE);
+        ItemStack shovel = new ItemStack(Material.IRON_SHOVEL);
+        ItemStack trident = new ItemStack(Material.TRIDENT);
+
+        return new ItemStack[]{sword, pickaxe, axe, shovel, trident};
     }
 
 //    public void playerMedal(Player p) {
