@@ -51,6 +51,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<String, String> slimeFinishers = new HashMap<>();
 
+    public HashMap<Integer, Integer> bridgeCheckpoints = new HashMap<>();
+
+    public HashMap<String, Integer> bridgeFinishers = new HashMap<>();
+
     public HashMap<String, Integer> teamCheckpoints = new HashMap<>();
 
     public HashMap<Player, Material> playerVote = new HashMap<>();
@@ -679,6 +683,86 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 0L, 20L);
 
         runningTimers.put("craftalotstart", new AbstractMap.SimpleEntry<>(task, 61));
+    }
+
+    public void startBridgeBuilders(){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 61;
+            @Override
+            public void run() {
+                if(!pausedTimers.contains("bridgebuildersstart")) {
+                    timeLeft--;
+                    runningTimers.get("bridgebuildersstart").setValue(timeLeft);
+                    switch (timeLeft) {
+                        case 60:
+                            teamTeleport("bridgebuilders", 5);
+                            resetTeamCompletions();
+                            break;
+                        case 55:
+                            currentMode = "Bridge Builders";
+                            for (Player player : getPlayers()) {
+                                PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
+                                player.addPotionEffect(PotionEffect);
+                                player.setGameMode(GameMode.ADVENTURE);
+                            }
+                            break;
+
+                        case 50:
+                            for (Player player : getPlayers()) {
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§e§l?§8] §eWelcome to §a§lBridge Builders§e! Creative mode is your ally! In this mode you build the course which you will race across! A mix of building and parkour skills!
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 30:
+                            for (Player player : getPlayers()) {
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§e§l?§8] §eEach segment has a different set of jumps to build, replicate the build and it will construct itself on the bridge for you to complete. First to the finish wins!
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 10:
+
+                            for (Player player : getPlayers()) {
+                                ItemStack infiniteBlocks = new ItemStack(Material.getMaterial(TeamsConfig.get().getString("teams." + PlayerConfig.get().getString("players." + player.getName() + ".team") + ".colourname") + "_CONCRETE"));
+                                infiniteBlocks.setAmount(64);
+                                player.getInventory().addItem(infiniteBlocks);
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§c§l!§8] §7Game Starting in §c§l10 seconds...
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 5, 4, 3, 2, 1:
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
+                            }
+                            break;
+                        case 0:
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("§a§l▶ BUILD! ◀", "", 0, 40, 0);
+                            }
+                            startTimer(90, "bridgebuilders");
+                            runningTimers.remove("bridgebuildersstart");
+                            cancel();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("bridgebuildersstart", new AbstractMap.SimpleEntry<>(task, 61));
     }
 
     public LinkedHashMap<String, Integer> sortByValue() {
