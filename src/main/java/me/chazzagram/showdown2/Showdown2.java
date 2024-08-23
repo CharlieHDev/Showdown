@@ -265,6 +265,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     timeLeft--;
                     if (timeLeft == 0) {
                         messageConsole("Timer finished.");
+                        gameEnd();
                         runningTimers.remove(name);
                         cancel();
                     } else {
@@ -289,7 +290,6 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     runningTimers.get(name).setValue(timeElapsed);
                     if (timeElapsed == seconds) {
                         messageConsole("Timer finished.");
-                        gameEnd();
                         runningTimers.remove(name);
                         cancel();
                     }
@@ -808,7 +808,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                 placement++;
                 messagePlayer(player, String.format("%-15s%15s", placement + ". " + getTeamDisplayName(key), "§e§l\uD83D\uDCB0" + sortMap(modeTeamPoints).get(key)));
             }
-            messagePlayer(player, "=======================");
+            messagePlayer(player, "===========================");
         }
     }
 
@@ -817,12 +817,14 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             messagePlayer(player, "=== Mode Indiv Leaderboard ===");
             List<String> players = new ArrayList<>(sortMap(modePoints).keySet());
             List<Integer> points = new ArrayList<>(sortMap(modePoints).values());
-            for (int i = 1; i <= 8; i++) {
-                if(players.get(i) != null && points.get(i) != null) {
-                    messagePlayer(player, String.format("%-15s%15s", i + ". " + getPlayerDisplayName(players.get(i)), "§e§l\uD83D\uDCB0" + points.get(i)));
+            for (int i = 0; i <= 7; i++) {
+                if(players.size() >= i+1) {
+                    if (players.get(i) != null && points.get(i) != null) {
+                        messagePlayer(player, String.format("%-15s%15s", i+1 + ". " + getPlayerDisplayName(players.get(i)), "§e§l\uD83D\uDCB0" + points.get(i)));
+                    }
                 }
             }
-            messagePlayer(player, "=======================");
+            messagePlayer(player, "===========================");
         }
     }
 
