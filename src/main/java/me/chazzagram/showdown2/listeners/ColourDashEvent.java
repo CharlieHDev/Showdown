@@ -24,9 +24,17 @@ public class ColourDashEvent implements Listener {
         Material item = e.getBlock().getType();
         Inventory inventory = p.getInventory();
         if(plugin.currentMode.equals("Colour Dash")){
-            ItemStack itemstack = new ItemStack(item);
-            itemstack.setAmount(1);
-            inventory.addItem(itemstack);
+            ItemStack sixtyfour = new ItemStack(item);
+            sixtyfour.setAmount(64);
+            if(!inventory.contains(sixtyfour)) {
+                if(p.getInventory().getItemInOffHand().getType().equals(item) && !p.getInventory().getItemInOffHand().equals(sixtyfour)) {
+                    p.getInventory().setItemInOffHand(sixtyfour);
+                } else {
+                    ItemStack itemstack = new ItemStack(item);
+                    itemstack.setAmount(1);
+                    inventory.addItem(itemstack);
+                }
+            }
         }
     }
 }

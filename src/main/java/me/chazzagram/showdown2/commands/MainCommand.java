@@ -52,7 +52,7 @@ public class MainCommand implements CommandExecutor {
                             plugin.messagePlayer(p, "§a[\uD83C\uDFC3-" + args[1] + "] Dashpoint reached!");
                             plugin.colourDashCheckpoints.put(args[2], Integer.parseInt(args[1]));
                             for (Player player : plugin.getPlayers()) {
-                                plugin.messagePlayer(player, "§8| §a§l⏱ §8| " + plugin.getPlayerDisplayName(p.getName()) + "§7 has reached §a\uD83C\uDFC3-" + args[1] + "§7!");
+                                plugin.messagePlayer(player, "§a§l⏱ §8| " + plugin.getPlayerDisplayName(p.getName()) + "§7 has reached §a\uD83C\uDFC3-" + args[1] + "§7!");
                             }
 
                         }
@@ -75,12 +75,12 @@ public class MainCommand implements CommandExecutor {
                             String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
                             plugin.modeCompletions.put(team, (plugin.modeCompletions.get(team) + 1));
                             p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("colourdashwatch"), 0, 100, 5);
-                            plugin.messagePlayer(p, "§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lCourse Completed!");
-                            plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("colourdashwatch"));
+                            plugin.messagePlayer(p, "\n§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lCourse Completed!");
+                            plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("colourdashwatch") + "\n");
                             plugin.colourDashCheckpoints.put(args[1], 10);
                             p.setGameMode(GameMode.SPECTATOR);
                             for (Player player : plugin.getPlayers()) {
-                                plugin.messagePlayer(player, "§8| §f\uD83D\uDC51 §8| " + plugin.getPlayerDisplayName(p.getName()) + "§e was §f§l#" + placement + " §eto finish!");
+                                plugin.messagePlayer(player, "§f\uD83D\uDC51 §8| " + plugin.getPlayerDisplayName(p.getName()) + "§e was §f§l#" + placement + " §eto finish!");
                             }
                         }
                     }

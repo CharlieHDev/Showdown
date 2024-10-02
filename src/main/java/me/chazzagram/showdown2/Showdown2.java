@@ -136,6 +136,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             modeCompletions.put(team, 0);
         }
 
+        for(Player player : getPlayers()){
+            modePoints.put(player.getName(), 0);
+        }
+
+        for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){
+            modeTeamPoints.put(team, 0);
+        }
 
         messageConsole("Plugin Loaded.");
     }
@@ -454,6 +461,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 60:
                             teamTeleport("slimegolf", 5);
+                            resetModePoints();
                             break;
                         case 55:
                             currentMode = "Slime Golf";
@@ -533,6 +541,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         case 60:
                             teamTeleport("colourdash", 5);
                             resetTeamCompletions();
+                            resetModePoints();
                             break;
                         case 55:
                             currentMode = "Colour Dash";
@@ -697,6 +706,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         case 60:
                             teamTeleport("bridgebuilders", 5);
                             resetTeamCompletions();
+                            resetModePoints();
                             break;
                         case 55:
                             currentMode = "Bridge Builders";
@@ -802,19 +812,19 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void getTeamModePoints(){
         for(Player player : getPlayers()) {
-            messagePlayer(player, "=== Mode Team Leaderboard ===");
+            messagePlayer(player, " §f-  §eMode Team Leaderboard  §f-");
             int placement = 0;
             for (String key : sortMap(modeTeamPoints).keySet()) {
                 placement++;
                 messagePlayer(player, String.format("%-15s%15s", placement + ". " + getTeamDisplayName(key), "§e§l\uD83D\uDCB0" + sortMap(modeTeamPoints).get(key)));
             }
-            messagePlayer(player, "===========================");
+            messagePlayer(player, "§f--------------------------");
         }
     }
 
     public void getPlayerModePoints(){
         for(Player player : getPlayers()) {
-            messagePlayer(player, "=== Mode Indiv Leaderboard ===");
+            messagePlayer(player, " §f-  §eMode Indiv Leaderboard  §f-");
             List<String> players = new ArrayList<>(sortMap(modePoints).keySet());
             List<Integer> points = new ArrayList<>(sortMap(modePoints).values());
             for (int i = 0; i <= 7; i++) {
@@ -824,7 +834,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     }
                 }
             }
-            messagePlayer(player, "===========================");
+            messagePlayer(player, "§f--------------------------");
         }
     }
 
@@ -848,13 +858,15 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         List<Integer> leaderModeVotes = new ArrayList<>(sortMap(modeVotes).values());
         for(Player player : getPlayers()) {
             player.sendTitle("§e§l" + leaderMode.getFirst(), "", 0, 60, 40);
-            messagePlayer(player, "=== Voting Results ===");
+            messagePlayer(player, " §f-  §eVoting Results  §f-");
             int placement = 0;
             for (String key : leaderMode) {
                 placement++;
                 float percentage = ((float) leaderModeVotes.get(placement - 1) /totalvotes)*100;
                 messagePlayer(player, placement + ". " + key + ": §e§l" + leaderModeVotes.get(placement-1) + " spaces §e§o(" + percentage + "%)");
             }
+            messagePlayer(player, "§f--------------------");
+
         }
     }
 
@@ -994,7 +1006,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void slimeGolfTimes(){
         for(Player p : getPlayers()) {
-            messagePlayer(p, "=== Hole Times ===");
+            messagePlayer(p, " §f-  §eHole Times  §f-");
             for (String team : slimeFinishers.keySet()) {
                 messagePlayer(p, "§e§l⏱§e" + slimeFinishers.get(team) + " §f- " + getTeamDisplayName(team));
             }
@@ -1003,7 +1015,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     messagePlayer(p, "DNF. " + getTeamDisplayName(team));
                 }
             }
-            messagePlayer(p, "================");
+            messagePlayer(p, "§f------------------");
+
 
         }
     }
