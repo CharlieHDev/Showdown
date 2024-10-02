@@ -338,6 +338,9 @@ public class MainCommand implements CommandExecutor {
                 case "countvotes":
                     plugin.startVoting();
                     break;
+                case "readycheck":
+                    plugin.getReadyPlayers();
+                    break;
                 case "pause":
                     plugin.pauseEvent();
                     break;

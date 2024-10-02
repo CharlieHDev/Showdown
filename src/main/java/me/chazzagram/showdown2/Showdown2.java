@@ -4,10 +4,7 @@ import com.sun.tools.javac.Main;
 import me.chazzagram.showdown2.commands.MainCommand;
 import me.chazzagram.showdown2.expansions.SpigotExpansion;
 import me.chazzagram.showdown2.files.*;
-import me.chazzagram.showdown2.listeners.ColourDashEvent;
-import me.chazzagram.showdown2.listeners.CraftalotEvent;
-import me.chazzagram.showdown2.listeners.PlayerDeath;
-import me.chazzagram.showdown2.listeners.VoteWalkEvent;
+import me.chazzagram.showdown2.listeners.*;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -73,6 +70,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<String, String> itemToCraft = new HashMap<>();
 
+    public HashMap<String, Integer> readyPlayers = new HashMap<>();
+
     @Override
     public void onEnable() {
         // Plugin startup logic
@@ -94,6 +93,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(new VoteWalkEvent(this), this);
         getServer().getPluginManager().registerEvents(new CraftalotEvent(this), this);
         getServer().getPluginManager().registerEvents(new ColourDashEvent(this), this);
+        getServer().getPluginManager().registerEvents(new ReadyEvent(this), this);
 
         TeamsConfig.setup();
         TeamsConfig.get().options().copyDefaults(true);
@@ -142,6 +142,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
         for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){
             modeTeamPoints.put(team, 0);
+        }
+
+        for(Player player : getPlayers()){
+            readyPlayers.put(player.getName(), 0);
         }
 
         messageConsole("Plugin Loaded.");
@@ -1062,6 +1066,43 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         ItemStack trident = new ItemStack(Material.TRIDENT);
 
         return new ItemStack[]{sword, pickaxe, axe, shovel, trident};
+    }
+
+    public void getReadyPlayers(){
+        resetReady();
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 31;
+            @Override
+            public void run() {
+                if(!pausedTimers.contains("readytimer")) {
+                    timeLeft--;
+                    runningTimers.get("readytimer").setValue(timeLeft);
+                    switch (timeLeft) {
+                        case 30:
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("§b§lReady to play?", "Spam Crouch!", 0, 560, 40);
+                            }
+                            break;
+                        case 0:
+                            runningTimers.remove("readytimer");
+                            cancel();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("readytimer", new AbstractMap.SimpleEntry<>(task, 31));
+    }
+
+    public void resetReady(){
+        readyPlayers.clear();
+        for(Player player : getPlayers()){
+            readyPlayers.put(player.getName(), 1);
+        }
     }
 
 //    public void playerMedal(Player p) {
