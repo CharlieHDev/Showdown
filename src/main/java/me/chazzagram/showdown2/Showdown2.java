@@ -47,7 +47,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<Integer, Integer> bridgeCheckpoints = new HashMap<>();
 
-    public HashMap<String, Integer> bridgeFinishers = new HashMap<>();
+    public HashMap<Integer, Integer> bridgeJumpCheckpoints = new HashMap<>();
+
+    public HashMap<Integer, List<String>> bridgeJumpRegister = new HashMap<>();
 
     public HashMap<String, Integer> teamCheckpoints = new HashMap<>();
 
@@ -134,6 +136,19 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
         for(int i = 1; i <= 5; i++){
             slimeCheckpoints.put(i, 1);
+        }
+
+        for(int i = 1; i <= 5; i++){
+            bridgeCheckpoints.put(i, 1);
+        }
+
+        for(int i = 1; i <= 5; i++){
+            bridgeJumpCheckpoints.put(i, 1);
+        }
+
+        List<String> list = new ArrayList<>();
+        for(int i = 1; i <= 5; i++){
+            bridgeJumpRegister.put(i, list);
         }
 
         for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){

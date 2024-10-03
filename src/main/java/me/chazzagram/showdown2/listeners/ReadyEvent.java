@@ -45,25 +45,20 @@ public class ReadyEvent implements Listener {
     public void summonFirework(Location location, String team){
         World world = location.getWorld();
 
-        // Spawn a firework entity
         Firework firework = (Firework) world.spawnEntity(location, EntityType.FIREWORK_ROCKET);
 
-        // Get the firework meta data
         FireworkMeta fireworkMeta = firework.getFireworkMeta();
 
-        // Create a firework effect (star shape with a trail and flicker)
         FireworkEffect effect = FireworkEffect.builder()
                 .withColor(plugin.teamColors.get(team))
                 .withFade(plugin.teamColors.get(team))
                 .with(FireworkEffect.Type.BURST)
                 .build();
 
-        // Add the effect to the firework
         fireworkMeta.addEffect(effect);
-        fireworkMeta.setPower(0); // Set firework power (1 = short duration)
+        fireworkMeta.setPower(0);
         firework.setFireworkMeta(fireworkMeta);
 
-        // Detonate the firework immediately
         firework.detonate();
     }
 }
