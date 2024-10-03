@@ -7,10 +7,7 @@ import me.chazzagram.showdown2.files.*;
 import me.chazzagram.showdown2.listeners.*;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -72,6 +69,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<String, Integer> readyPlayers = new HashMap<>();
 
+    public HashMap<String, Color> teamColors = new HashMap<>();
+
+
     @Override
     public void onEnable() {
         // Plugin startup logic
@@ -80,6 +80,14 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
         this.getCommand("mcevent").setExecutor(new MainCommand(this));
 
+        teamColors.put("TestTeam1", Color.RED);
+        teamColors.put("TestTeam2", Color.ORANGE);
+        teamColors.put("TestTeam3", Color.YELLOW);
+        teamColors.put("TestTeam4", Color.LIME);
+        teamColors.put("TestTeam5", Color.AQUA);
+        teamColors.put("TestTeam6", Color.NAVY);
+        teamColors.put("TestTeam7", Color.FUCHSIA);
+        teamColors.put("TestTeam8", Color.WHITE);
 
         woolModes.put(Material.WHITE_WOOL, "Race");
         woolModes.put(Material.PURPLE_WOOL, "Gub Game");
@@ -1083,6 +1091,29 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 player.sendTitle("§b§lReady to play?", "Spam Crouch!", 0, 560, 40);
                             }
                             break;
+                        case 1:
+                            StringBuilder notReady = new StringBuilder();
+                            for (String player : readyPlayers.keySet()){
+                                if(readyPlayers.get(player) < 10) {
+                                    if(notReady.isEmpty()){
+                                        notReady.append("§fNot Ready: ").append(getPlayerDisplayName(player));
+                                    } else {
+                                        notReady.append("§f, ").append(getPlayerDisplayName(player));
+                                    }
+                                    Player p = Bukkit.getPlayer(player);
+                                    p.sendTitle("§c§lNot Ready.", "We'll try again soon.", 0, 60, 40);
+
+                                }
+                            }
+                            if(!notReady.isEmpty()) {
+                                for (Player player : getPlayers()) {
+                                    messagePlayer(player, notReady.toString());
+                                }
+                            } else {
+                                for (Player player : getPlayers()) {
+                                    messagePlayer(player, "Everyone is ready!");
+                                }
+                            }
                         case 0:
                             runningTimers.remove("readytimer");
                             cancel();
