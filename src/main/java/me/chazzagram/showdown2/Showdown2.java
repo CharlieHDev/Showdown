@@ -146,8 +146,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             bridgeJumpCheckpoints.put(i, 1);
         }
 
-        List<String> list = new ArrayList<>();
         for(int i = 1; i <= 5; i++){
+            List<String> list = new ArrayList<>();
             bridgeJumpRegister.put(i, list);
         }
 
@@ -732,7 +732,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 60:
                             teamTeleport("bridgebuilders", 5);
-                            resetTeamCompletions();
+                            resetBridgeBuilders();
                             resetModePoints();
                             break;
                         case 55:
@@ -800,6 +800,25 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 0L, 20L);
 
         runningTimers.put("bridgebuildersstart", new AbstractMap.SimpleEntry<>(task, 61));
+    }
+
+    public void resetBridgeBuilders(){
+        bridgeCheckpoints.clear();
+        bridgeJumpCheckpoints.clear();
+        bridgeJumpRegister.clear();
+
+        for(int i = 1; i <= 5; i++){
+            bridgeCheckpoints.put(i, 1);
+        }
+
+        for(int i = 1; i <= 5; i++){
+            bridgeJumpCheckpoints.put(i, 1);
+        }
+
+        for(int i = 1; i <= 5; i++){
+            List<String> list = new ArrayList<>();
+            bridgeJumpRegister.put(i, list);
+        }
     }
 
     public LinkedHashMap<String, Integer> sortByValue() {

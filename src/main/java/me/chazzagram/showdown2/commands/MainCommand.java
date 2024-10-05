@@ -98,16 +98,16 @@ public class MainCommand implements CommandExecutor {
                                         Integer placement = plugin.bridgeJumpCheckpoints.get(Integer.parseInt(args[1]));
                                         if (placement == 1) {
                                             for (Player p : plugin.getPlayers()) {
-                                                plugin.messagePlayer(p, "§b★ §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[2] + ".team")) + "§e was 1st to cross §a\uD83C\uDF09-" + args[1] + "§7!");
+                                                plugin.messagePlayer(p, "§e§l⏱ §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[2] + ".team")) + "§7 crossed §a\uD83C\uDF09-" + args[1] + "§7!");
                                             }
                                         } else {
                                             for (Player p : plugin.getPlayers()) {
-                                                plugin.messagePlayer(p, "§a§l⏱ §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[2] + ".team")) + "§7 has crossed §a\uD83C\uDF09-" + args[1] + "§7!");
+                                                plugin.messagePlayer(p, "§f§l⏱ §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[2] + ".team")) + "§7 crossed §a\uD83C\uDF09-" + args[1] + "§7!");
                                             }
                                         }
 
                                         int pointsEarned = 51 - placement;
-                                        plugin.earnTeamPoints(args[2], pointsEarned);
+                                        plugin.earnTeamPoints(PlayerConfig.get().getString("players." + args[2] + ".team"), pointsEarned);
 
                                         for (String player2 : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
                                             if (Bukkit.getServer().getPlayer(player2) != null) {
@@ -168,7 +168,7 @@ public class MainCommand implements CommandExecutor {
                                         }
 
                                         int pointsEarned = 155 - (5 * placement);
-                                        plugin.earnTeamPoints(args[1], pointsEarned);
+                                        plugin.earnTeamPoints(PlayerConfig.get().getString("players." + args[1] + ".team"), pointsEarned);
 
                                         for (String player2 : TeamsConfig.get().getStringList("teams." + args[1] + ".players")) {
                                             if (Bukkit.getServer().getPlayer(player2) != null) {
@@ -543,11 +543,11 @@ public class MainCommand implements CommandExecutor {
                         Integer placement = plugin.bridgeCheckpoints.get(Integer.parseInt(args[1]));
                         if (placement == 1) {
                             for (Player p : plugin.getPlayers()) {
-                                plugin.messagePlayer(p, "§b★ §8| " + plugin.getTeamDisplayName(args[2]) + "§e was 1st to build §a\uD83C\uDF09-" + args[1] + "§7!");
+                                plugin.messagePlayer(p, "§e⏱ §8| " + plugin.getTeamDisplayName(args[2]) + "§7 built §a\uD83C\uDF09-" + args[1] + "§7!");
                             }
                         } else {
                             for (Player p : plugin.getPlayers()) {
-                                plugin.messagePlayer(p, "§a§l⏱ §8| " + plugin.getTeamDisplayName(args[2]) + "§7 has built §a\uD83C\uDF09-" + args[1] + "§7!");
+                                plugin.messagePlayer(p, "§f§l⏱ §8| " + plugin.getTeamDisplayName(args[2]) + "§7 built §a\uD83C\uDF09-" + args[1] + "§7!");
                             }
                         }
 
