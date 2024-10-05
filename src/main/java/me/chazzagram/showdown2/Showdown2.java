@@ -104,6 +104,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(new CraftalotEvent(this), this);
         getServer().getPluginManager().registerEvents(new ColourDashEvent(this), this);
         getServer().getPluginManager().registerEvents(new ReadyEvent(this), this);
+        getServer().getPluginManager().registerEvents(new VoteSneakBombEvent(this), this);
 
         TeamsConfig.setup();
         TeamsConfig.get().options().copyDefaults(true);
@@ -858,7 +859,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void getTeamModePoints(){
         for(Player player : getPlayers()) {
-            messagePlayer(player, " §f-  §eMode Team Leaderboard  §f-");
+            messagePlayer(player, " §f-  §e§l   ᴍᴏᴅᴇ ᴛᴇᴀᴍ ʟᴇᴀᴅᴇʀs  §f-");
             int placement = 0;
             for (String key : sortMap(modeTeamPoints).keySet()) {
                 placement++;
@@ -870,7 +871,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void getPlayerModePoints(){
         for(Player player : getPlayers()) {
-            messagePlayer(player, " §f-  §eMode Indiv Leaderboard  §f-");
+            messagePlayer(player, " §f-  §e§lᴍᴏᴅᴇ ɪɴᴅɪᴠ ʟᴇᴀᴅᴇʀs  §f-");
             List<String> players = new ArrayList<>(sortMap(modePoints).keySet());
             List<Integer> points = new ArrayList<>(sortMap(modePoints).values());
             for (int i = 0; i <= 7; i++) {
@@ -904,7 +905,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         List<Integer> leaderModeVotes = new ArrayList<>(sortMap(modeVotes).values());
         for(Player player : getPlayers()) {
             player.sendTitle("§e§l" + leaderMode.getFirst(), "", 0, 60, 40);
-            messagePlayer(player, " §f-  §eVoting Results  §f-");
+            messagePlayer(player, " §f-  §e§lᴠᴏᴛɪɴɢ ʀᴇsᴜʟᴛs  §f-");
             int placement = 0;
             for (String key : leaderMode) {
                 placement++;
@@ -1052,7 +1053,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void slimeGolfTimes(){
         for(Player p : getPlayers()) {
-            messagePlayer(p, " §f-  §eHole Times  §f-");
+            messagePlayer(p, " §f-  §e§lʜᴏʟᴇ ᴛɪᴍᴇs  §f-");
             for (String team : slimeFinishers.keySet()) {
                 messagePlayer(p, "§e§l⏱§e" + slimeFinishers.get(team) + " §f- " + getTeamDisplayName(team));
             }

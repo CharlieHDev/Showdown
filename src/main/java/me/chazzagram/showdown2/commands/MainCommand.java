@@ -109,7 +109,7 @@ public class MainCommand implements CommandExecutor {
                                         int pointsEarned = 51 - placement;
                                         plugin.earnTeamPoints(PlayerConfig.get().getString("players." + args[2] + ".team"), pointsEarned);
 
-                                        for (String player2 : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
+                                        for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")) {
                                             if (Bukkit.getServer().getPlayer(player2) != null) {
                                                 Player p = Bukkit.getServer().getPlayer(player2);
                                                 p.sendTitle("§a[✔] \uD83C\uDF09-" + args[1], "§7Now build!", 0, 40, 0);
@@ -170,11 +170,11 @@ public class MainCommand implements CommandExecutor {
                                         int pointsEarned = 155 - (5 * placement);
                                         plugin.earnTeamPoints(PlayerConfig.get().getString("players." + args[1] + ".team"), pointsEarned);
 
-                                        for (String player2 : TeamsConfig.get().getStringList("teams." + args[1] + ".players")) {
+                                        for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players")) {
                                             if (Bukkit.getServer().getPlayer(player2) != null) {
                                                 Player p = Bukkit.getServer().getPlayer(player2);
                                                 p.sendTitle("§aFINISH", "", 0, 100, 5);
-                                                plugin.messagePlayer(p, "§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lHole Completed!");
+                                                plugin.messagePlayer(p, "§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lCourse Completed!");
                                                 p.setGameMode(GameMode.SPECTATOR);
                                             }
                                         }
@@ -543,7 +543,7 @@ public class MainCommand implements CommandExecutor {
                         Integer placement = plugin.bridgeCheckpoints.get(Integer.parseInt(args[1]));
                         if (placement == 1) {
                             for (Player p : plugin.getPlayers()) {
-                                plugin.messagePlayer(p, "§e⏱ §8| " + plugin.getTeamDisplayName(args[2]) + "§7 built §a\uD83C\uDF09-" + args[1] + "§7!");
+                                plugin.messagePlayer(p, "§e§l⏱ §8| " + plugin.getTeamDisplayName(args[2]) + "§7 built §a\uD83C\uDF09-" + args[1] + "§7!");
                             }
                         } else {
                             for (Player p : plugin.getPlayers()) {
