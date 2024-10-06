@@ -57,6 +57,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<Material, String> woolModes = new HashMap<>();
 
+    public HashMap<Material, Color> woolColors = new HashMap<>();
+
     public HashMap<String, Integer> modeVotes = new HashMap<>();
 
     public HashMap<String, Integer> colourDashCheckpoints = new HashMap<>();
@@ -98,6 +100,14 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         woolModes.put(Material.RED_WOOL, "Bridge Builders");
         woolModes.put(Material.LIGHT_BLUE_WOOL, "Colour Dash");
         woolModes.put(Material.YELLOW_WOOL, "Craftalot");
+
+        woolColors.put(Material.WHITE_WOOL, Color.WHITE);
+        woolColors.put(Material.PURPLE_WOOL, Color.PURPLE);
+        woolColors.put(Material.LIME_WOOL, Color.LIME);
+        woolColors.put(Material.ORANGE_WOOL, Color.ORANGE);
+        woolColors.put(Material.RED_WOOL, Color.RED);
+        woolColors.put(Material.LIGHT_BLUE_WOOL, Color.AQUA);
+        woolColors.put(Material.YELLOW_WOOL, Color.YELLOW);
 
         getServer().getPluginManager().registerEvents(new PlayerDeath(this), this);
         getServer().getPluginManager().registerEvents(new VoteWalkEvent(this), this);
