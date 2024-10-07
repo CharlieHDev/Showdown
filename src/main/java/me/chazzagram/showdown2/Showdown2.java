@@ -913,18 +913,47 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }
         List<String> leaderMode = new ArrayList<>(sortMap(modeVotes).keySet());
         List<Integer> leaderModeVotes = new ArrayList<>(sortMap(modeVotes).values());
+        int totalOutOfTwenty = round((double) leaderModeVotes.getFirst() /totalvotes*20);
+        float percentageFirst = ((float) leaderModeVotes.getFirst() /totalvotes)*100;
+        BukkitTask task = new BukkitRunnable() {
+            int percentElapsed = 0;
+            @Override
+            public void run() {
+                percentElapsed++;
+                if(percentElapsed <= totalOutOfTwenty) {
+                    for(Player player : getPlayers()) {
+                        StringBuilder percentprogress = new StringBuilder();
+                        percentprogress.append("§e|".repeat(percentElapsed));
+                        percentprogress.append("§8|".repeat(20 - percentElapsed));
+                        if(percentElapsed != totalOutOfTwenty) {
+                            percentprogress.append(" §e").append(roundToTwoDecimalPlaces((double)percentElapsed/20*100)).append("%");
+                        } else {
+                            percentprogress.append(" §e").append(roundToTwoDecimalPlaces(percentageFirst)).append("%");
+                        }
+                        player.sendTitle("§e§l" + leaderMode.getFirst(), percentprogress.toString(), 0, 60, 40);
+                    }
+                } else {
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(plugin, 0L, 3L);
         for(Player player : getPlayers()) {
-            player.sendTitle("§e§l" + leaderMode.getFirst(), "", 0, 60, 40);
             messagePlayer(player, " §f-  §e§lᴠᴏᴛɪɴɢ ʀᴇsᴜʟᴛs  §f-");
             int placement = 0;
             for (String key : leaderMode) {
                 placement++;
-                float percentage = ((float) leaderModeVotes.get(placement - 1) /totalvotes)*100;
+                double percentage = roundToTwoDecimalPlaces(((double) leaderModeVotes.get(placement - 1) /totalvotes)*100);
                 messagePlayer(player, placement + ". " + key + ": §e§l" + leaderModeVotes.get(placement-1) + " spaces §e§o(" + percentage + "%)");
             }
             messagePlayer(player, "§f--------------------");
 
         }
+    }
+
+    double roundToTwoDecimalPlaces(double number) {
+        double factor = Math.pow(10, 1);
+        return Math.round(number * factor) / factor;
     }
 
     public void startVoting(){
