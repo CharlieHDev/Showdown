@@ -23,6 +23,7 @@ public class PlayerDeath implements Listener {
     public void onPlayerDeath(PlayerDeathEvent e) {
         Player player = e.getEntity();
         Player killer = e.getEntity().getKiller();
+
         if(killer != null) {
             List<String> deathMessages = DeathMessagesConfig.get().getStringList("kills");
             Random rand = new Random();

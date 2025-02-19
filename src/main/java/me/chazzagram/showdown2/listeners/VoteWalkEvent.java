@@ -22,11 +22,16 @@ public class VoteWalkEvent implements Listener {
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         if(event.getTo() != null) {
-            for(Material concrete : getConcreteColours()) {
-                if (event.getTo().getBlock().getRelative(BlockFace.DOWN).getType().equals(concrete)) {
-                    String colour = concrete.toString().toUpperCase().replace("CONCRETE", "WOOL");
-                    Material wool = Material.getMaterial(colour);
-                    plugin.playerVote.put(event.getPlayer(), wool);
+            if(plugin.currentMode.equals("Voting")) {
+                for (Material concrete : getConcreteColours()) {
+                    if (event.getTo().getBlock().getRelative(BlockFace.DOWN).getType().equals(concrete)) {
+                        String colour = concrete.toString().toUpperCase().replace("CONCRETE", "WOOL");
+                        Material wool = Material.getMaterial(colour);
+                        if (!wool.equals(plugin.playerVote.get(event.getPlayer()))) {
+                            event.getPlayer().sendTitle(plugin.woolLogos.get(wool), "", 0, 20, 10);
+                        }
+                        plugin.playerVote.put(event.getPlayer(), wool);
+                    }
                 }
             }
             if(plugin.votingEnabled) {

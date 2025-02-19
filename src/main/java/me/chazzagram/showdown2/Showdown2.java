@@ -1,12 +1,9 @@
 package me.chazzagram.showdown2;
 
-import com.sun.tools.javac.Main;
 import me.chazzagram.showdown2.commands.MainCommand;
 import me.chazzagram.showdown2.expansions.SpigotExpansion;
 import me.chazzagram.showdown2.files.*;
 import me.chazzagram.showdown2.listeners.*;
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -19,7 +16,6 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.scoreboard.Team;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -63,6 +59,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<String, Integer> colourDashCheckpoints = new HashMap<>();
 
+    public ArrayList<String> deadPlayers = new ArrayList<>();
+
+    public ArrayList<String> deadTeams = new ArrayList<>();
+
+    public HashMap<String, String> lastHitPlayer = new HashMap<>();
+
     public HashMap<String, Integer> modeCompletions = new HashMap<>();
 
     public HashMap<String, Integer> modeTeamPoints = new HashMap<>();
@@ -75,6 +77,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<String, Color> teamColors = new HashMap<>();
 
+    public HashMap<String, Integer> gubGameKills = new HashMap<>();
+
+    public HashMap<Material, String> woolLogos = new HashMap<>();
+
+    public HashMap<String, ChatColor> modeColors = new HashMap<>();
 
     @Override
     public void onEnable() {
@@ -93,7 +100,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         teamColors.put("TestTeam7", Color.FUCHSIA);
         teamColors.put("TestTeam8", Color.WHITE);
 
-        woolModes.put(Material.WHITE_WOOL, "Race");
+        woolModes.put(Material.WHITE_WOOL, "Survival Games");
         woolModes.put(Material.PURPLE_WOOL, "Gub Game");
         woolModes.put(Material.LIME_WOOL, "Slime Golf");
         woolModes.put(Material.ORANGE_WOOL, "Zoomo Go!");
@@ -109,7 +116,24 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         woolColors.put(Material.LIGHT_BLUE_WOOL, Color.AQUA);
         woolColors.put(Material.YELLOW_WOOL, Color.YELLOW);
 
+        modeColors.put("Survival Games", ChatColor.WHITE);
+        modeColors.put("Gub Game", ChatColor.LIGHT_PURPLE);
+        modeColors.put("Slime Golf", ChatColor.GREEN);
+        modeColors.put("Zoomo Go!", ChatColor.GOLD);
+        modeColors.put("Bridge Builders", ChatColor.RED);
+        modeColors.put("Colour Dash", ChatColor.AQUA);
+        modeColors.put("Craftalot", ChatColor.YELLOW);
+
+        woolLogos.put(Material.WHITE_WOOL, "\uD83E\uDD6C");
+        woolLogos.put(Material.PURPLE_WOOL, "\uD83E\uDED0");
+        woolLogos.put(Material.LIME_WOOL, "\uE172");
+        woolLogos.put(Material.ORANGE_WOOL, "\uD83E\uDD55");
+        woolLogos.put(Material.RED_WOOL, "\uD83C\uDF45");
+        woolLogos.put(Material.LIGHT_BLUE_WOOL, "\uD83E\uDD68");
+        woolLogos.put(Material.YELLOW_WOOL, "\ue238");
+
         getServer().getPluginManager().registerEvents(new PlayerDeath(this), this);
+        getServer().getPluginManager().registerEvents(new LastHitEvent(this), this);
         getServer().getPluginManager().registerEvents(new VoteWalkEvent(this), this);
         getServer().getPluginManager().registerEvents(new CraftalotEvent(this), this);
         getServer().getPluginManager().registerEvents(new ColourDashEvent(this), this);
@@ -305,18 +329,23 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             int timeLeft = seconds;
             @Override
             public void run() {
-                if(!pausedTimers.contains(name)) {
-                    runningTimers.get(name).setValue(timeLeft);
-                    timeLeft--;
-                    if (timeLeft == 0) {
-                        messageConsole("Timer finished.");
-                        gameEnd();
-                        runningTimers.remove(name);
-                        cancel();
-                    } else {
+                if(runningTimers.containsKey(name)) {
+                    if (!pausedTimers.contains(name)) {
+                        runningTimers.get(name).setValue(timeLeft);
+                        timeLeft--;
+                        if (timeLeft == 0) {
+                            messageConsole("Timer finished.");
+                            gameEnd();
+                            runningTimers.remove(name);
+                            cancel();
+                        } else {
 
-                        messageConsole(timeLeft + " seconds left..");
+                            messageConsole(timeLeft + " seconds left..");
+                        }
                     }
+                } else {
+                    messageConsole("Timer removed by external factor.");
+                    cancel();
                 }
             }
 
@@ -394,30 +423,35 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
 //    Teleport all players
     public void teleportPlayers(Location location, int countdown){
-        BukkitTask task = new BukkitRunnable() {
-            int timeLeft = countdown+1;
-            @Override
-            public void run() {
-                if(!pausedTimers.contains("teleporttimer")) {
-                    timeLeft--;
-                    runningTimers.get("teleporttimer").setValue(timeLeft);
-                    if (timeLeft == 0) {
-                        for (Player player : getPlayers()) {
-                            player.teleport(location);
-                        }
-                        runningTimers.remove("teleporttimer");
-                        cancel();
-                    } else {
-                        for (Player player : getPlayers()) {
-                            player.sendTitle("", "§6Teleporting in §c" + timeLeft + "...", 0, 20, 20);
+        if(location != null) {
+            BukkitTask task = new BukkitRunnable() {
+                int timeLeft = countdown + 1;
+
+                @Override
+                public void run() {
+                    if (!pausedTimers.contains("teleporttimer")) {
+                        timeLeft--;
+                        runningTimers.get("teleporttimer").setValue(timeLeft);
+                        if (timeLeft == 0) {
+                            for (Player player : getPlayers()) {
+                                player.teleport(location);
+                            }
+                            runningTimers.remove("teleporttimer");
+                            cancel();
+                        } else {
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("", "§6Teleporting in §c" + timeLeft + "...", 0, 20, 20);
+                            }
                         }
                     }
                 }
-            }
 
-        }.runTaskTimer(this, 0L, 20L);
+            }.runTaskTimer(this, 0L, 20L);
 
-        runningTimers.put("teleporttimer", new AbstractMap.SimpleEntry<>(task, 6));
+            runningTimers.put("teleporttimer", new AbstractMap.SimpleEntry<>(task, 6));
+        } else {
+            messageConsole("ERROR: Location not found.");
+        }
     }
 
 //    Teleport all players (teleports all players to their team teleports)
@@ -500,6 +534,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         case 60:
                             teamTeleport("slimegolf", 5);
                             resetModePoints();
+                            resetSlimeCompletions();
                             break;
                         case 55:
                             currentMode = "Slime Golf";
@@ -552,6 +587,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§a§l▶ GO! ◀", "", 0, 40, 0);
                             }
+                            startTimer(90, "slimegolftimer");
                             startStopwatch(90, "slimegolf");
                             runningTimers.remove("slimegolfstart");
                             cancel();
@@ -832,6 +868,187 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }
     }
 
+
+    public void startZoomoGo(){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 61;
+            @Override
+            public void run() {
+                if(!pausedTimers.contains("zoomogostart")) {
+                    timeLeft--;
+                    runningTimers.get("zoomogostart").setValue(timeLeft);
+                    switch (timeLeft) {
+                        case 60:
+                            for(Player p : getPlayers()){
+                                lastHitPlayer.put(p.getName(), "");
+                            }
+                            teamTeleport("zoomogo", 5);
+                            resetZoomoGo();
+                            resetModePoints();
+                            break;
+                        case 55:
+                            currentMode = "Zoomo Go";
+                            for (Player player : getPlayers()) {
+                                PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
+                                player.addPotionEffect(PotionEffect);
+                                player.setGameMode(GameMode.ADVENTURE);
+                            }
+                            break;
+
+                        case 50:
+                            for (Player player : getPlayers()) {
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§e§l?§8] §eWelcome to §a§lZoomo Go§e! Keep moving fast and stay on the platforms! This game takes sumo to the next level with disappearing platforms and fast-movement gameplay! Watch out for §cRed Platforms§e.
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 30:
+                            for (Player player : getPlayers()) {
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§e§l?§8] §eThere is no finish line, simply stay alive and knock other players off the platforms with your §aKnockback Stick§e! §bDouble jump §eis your ally, double-tap space bar and you will be sent flying in the direction you are facing!
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 10:
+                            ItemStack knockbackStick = new ItemStack(Material.STICK);
+                            knockbackStick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 3);
+                            for (Player player : getPlayers()) {
+                                player.getInventory().addItem(knockbackStick);
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§c§l!§8] §7Game Starting in §c§l10 seconds...
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 5, 4, 3, 2, 1:
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
+                            }
+                            break;
+                        case 0:
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("§a§l▶ ZOOMO GO! ◀", "", 0, 40, 0);
+                            }
+                            startTimer(90, "zoomogo");
+                            runningTimers.remove("zoomogostart");
+                            cancel();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("zoomogostart", new AbstractMap.SimpleEntry<>(task, 61));
+    }
+
+
+    public void resetZoomoGo(){
+        deadPlayers.clear();
+        deadTeams.clear();
+    }
+
+
+
+    public void startGubGame(){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 61;
+            @Override
+            public void run() {
+                if(!pausedTimers.contains("gubgamestart")) {
+                    timeLeft--;
+                    runningTimers.get("gubgamestart").setValue(timeLeft);
+                    switch (timeLeft) {
+                        case 60:
+                            for(Player p : getPlayers()){
+                                lastHitPlayer.put(p.getName(), "");
+                            }
+                            teamTeleport("gubgame", 5);
+                            resetGubGame();
+                            resetModePoints();
+                            break;
+                        case 55:
+                            currentMode = "Zoomo Go";
+                            for (Player player : getPlayers()) {
+                                PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
+                                player.addPotionEffect(PotionEffect);
+                                player.setGameMode(GameMode.ADVENTURE);
+                            }
+                            break;
+
+                        case 50:
+                            for (Player player : getPlayers()) {
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§e§l?§8] §eWelcome to §d§lGub Game§e! In this game it's all about kills, every player for themselves. Get 15 kills as quickly as possible before the time runs out.
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 30:
+                            for (Player player : getPlayers()) {
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§e§l?§8] §eEach player starts out with highly powered weapons, but with each kill, you are given harder weapons to get kills with! Until you are left with your bare fists...
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 10:
+                            ItemStack knockbackStick = new ItemStack(Material.STICK);
+                            knockbackStick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 3);
+                            for (Player player : getPlayers()) {
+                                player.getInventory().addItem(knockbackStick);
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§c§l!§8] §7Game Starting in §c§l10 seconds...
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 5, 4, 3, 2, 1:
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
+                            }
+                            break;
+                        case 0:
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("§a§l▶ GUB! ◀", "", 0, 40, 0);
+                            }
+                            startTimer(90, "gubgame");
+                            runningTimers.remove("gubgamestart");
+                            cancel();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("gubgamestart", new AbstractMap.SimpleEntry<>(task, 61));
+    }
+
+    public void resetGubGame() {
+        gubGameKills.clear();
+    }
+
+
+
     public LinkedHashMap<String, Integer> sortByValue() {
 
         HashMap<String, Integer> teamPoints = new HashMap<>();
@@ -898,10 +1115,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public void countVotes(){
         modeVotes.clear();
         int totalvotes = 0;
-        for(int i = 356; i <= 360; i++){
-            for(int j = -400; j <= -396; j++){
+        for(int i = 109; i <= 139; i++){
+            for(int j = -381; j <= -351; j++){
                 totalvotes++;
-                Material block = Bukkit.getServer().getWorld("world").getBlockAt(j, 62, i).getType();
+                Material block = Bukkit.getServer().getWorld("world").getBlockAt(j, 122, i).getType();
                 if(woolModes.containsKey(block)) {
                     if (modeVotes.containsKey(woolModes.get(block))) {
                         modeVotes.put(woolModes.get(block), modeVotes.get(woolModes.get(block)) + 1);
@@ -915,6 +1132,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         List<Integer> leaderModeVotes = new ArrayList<>(sortMap(modeVotes).values());
         int totalOutOfTwenty = round((double) leaderModeVotes.getFirst() /totalvotes*20);
         float percentageFirst = ((float) leaderModeVotes.getFirst() /totalvotes)*100;
+        currentMode = leaderMode.getFirst();
         BukkitTask task = new BukkitRunnable() {
             int percentElapsed = 0;
             @Override
@@ -944,7 +1162,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             for (String key : leaderMode) {
                 placement++;
                 double percentage = roundToTwoDecimalPlaces(((double) leaderModeVotes.get(placement - 1) /totalvotes)*100);
-                messagePlayer(player, placement + ". " + key + ": §e§l" + leaderModeVotes.get(placement-1) + " spaces §e§o(" + percentage + "%)");
+                messagePlayer(player, placement + ". " + plugin.modeColors.get(key) + key + "§7: §e§l" + leaderModeVotes.get(placement-1) + " spaces §e§o(" + percentage + "%)");
             }
             messagePlayer(player, "§f--------------------");
 
@@ -966,6 +1184,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     runningTimers.get("voting").setValue(timeLeft);
                     switch (timeLeft) {
                         case 90:
+                            currentMode = "Voting";
                             for (int i = 356; i <= 360; i++) {
                                 for (int j = -400; j <= -396; j++) {
                                     Bukkit.getServer().getWorld("world").getBlockAt(j, 62, i).setType(Material.BLACK_WOOL);
@@ -1076,6 +1295,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
                         case 0:
                             runningTimers.remove("backtolobby");
+                            currentMode = "Lobby";
                             cancel();
                             break;
                         default:
@@ -1137,6 +1357,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){
             modeCompletions.put(team, 0);
         }
+    }
+
+    public void resetSlimeCompletions(){
+        slimeFinishers.clear();
     }
 
     public ItemStack[] craftalotKit(){
@@ -1201,6 +1425,18 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 0L, 20L);
 
         runningTimers.put("readytimer", new AbstractMap.SimpleEntry<>(task, 31));
+    }
+
+    public String formatDeathMessage(String player){
+        Random r = new Random();
+        List<String> messages = DeathMessagesConfig.get().getStringList("zoomodeaths");
+        return String.format(messages.get(r.nextInt(messages.size())), getPlayerDisplayName(player));
+    }
+
+    public String formatKillMessage(String killer, String victim){
+        Random r = new Random();
+        List<String> messages = DeathMessagesConfig.get().getStringList("kills");
+        return String.format(messages.get(r.nextInt(messages.size())), getPlayerDisplayName(victim), getPlayerDisplayName(killer));
     }
 
     public void resetReady(){

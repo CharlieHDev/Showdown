@@ -194,6 +194,66 @@ public class MainCommand implements CommandExecutor {
                         }
                     }
                     break;
+                case "zoomodeath":
+                    if(!plugin.deadPlayers.contains(args[1])){
+                        plugin.deadPlayers.add(args[1]);
+                        Player p = Bukkit.getServer().getPlayer(args[1]);
+                        plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| You died.");
+                        p.setGameMode(GameMode.SPECTATOR);
+
+                        if(plugin.lastHitPlayer.containsKey(args[1])){
+                            if(!plugin.lastHitPlayer.get(args[1]).isEmpty()){
+                                plugin.earnPoints(plugin.lastHitPlayer.get(args[1]), 20, true);
+                            }
+                        }
+
+                        for(Player player : plugin.getPlayers()){
+                            if(!plugin.deadPlayers.contains(player.getName())){
+                                if(plugin.lastHitPlayer.containsKey(args[1])){
+                                    if(!plugin.lastHitPlayer.get(args[1]).isEmpty()){
+                                        plugin.messagePlayer(player, "§e\uD83D\uDCB05 §7| " + plugin.formatKillMessage(p.getName(), plugin.lastHitPlayer.get(args[1])));
+                                    } else {
+                                        plugin.messagePlayer(player, "§e\uD83D\uDCB05 §7| " + plugin.formatDeathMessage(p.getName()));
+                                    }
+                                }
+                                plugin.earnPoints(player.getName(), 5, true);
+                            } else {
+                                if(plugin.lastHitPlayer.containsKey(args[1])){
+                                    if(!plugin.lastHitPlayer.get(args[1]).isEmpty()){
+                                        plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(p.getName(), plugin.lastHitPlayer.get(args[1])));
+                                    } else {
+                                        plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatDeathMessage(p.getName()));
+                                    }
+                                }
+                            }
+                        }
+
+                        boolean teamDead = true;
+                        for(String player : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players")){
+                            if (!plugin.deadPlayers.contains(player)) {
+                                teamDead = false;
+                                break;
+                            }
+                        }
+                        if(teamDead){
+                            for(Player player2 : Bukkit.getServer().getOnlinePlayers()){
+                                plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + " §chave been eliminated.\n§f");
+                                plugin.deadTeams.add(PlayerConfig.get().getString("players." + args[1]) + ".team");
+                            }
+                        }
+
+                        List<String> teamList = new ArrayList<>(List.of());
+                        for(Player player : plugin.getPlayers()){
+                            if(!teamList.contains(PlayerConfig.get().getString("players." + player.getName() + ".team"))){
+                               teamList.add(PlayerConfig.get().getString("players." + player.getName() + ".team"));
+                            }
+                        }
+                        if(plugin.deadTeams.size() == teamList.size()-1){
+                            plugin.deadTeams.clear();
+                            plugin.runningTimers.remove("zoomogo");
+                            plugin.gameEnd();
+                        }
+                    }
                 default:
                     break;
             }
@@ -204,6 +264,32 @@ public class MainCommand implements CommandExecutor {
 
         } else {
             switch (args[0].toLowerCase()) {
+                case "help":
+                    p.sendMessage("""
+                            §6All Showdown Commands:§f
+                            /mcevent createteam <teamname>
+                            /mcevent delteam <teamname>
+                            /mcevent jointeam <teamname> <player>
+                            /mcevent leaveteam <player>
+                            /mcevent starttimer <seconds> <timer>
+                            /mcevent startstopwatch <seconds> <stopwatch>
+                            /mcevent stoptimer <timer>
+                            /mcevent test
+                            /mcevent settp <players/spectators/teamname> <location-name>
+                            /mcevent deltp <players/spectators/teamname> <location-name>
+                            /mcevent tpp <location-name>
+                            /mcevent tpt <location-name>
+                            /mcevent slimefinishers
+                            /mcevent startslimegolf
+                            /mcevent startcolourdash
+                            /mcevent startbridgebuilders
+                            /mcevent startcraftalot
+                            /mcevent countvotes
+                            /mcevent readycheck
+                            /mcevent pause
+                            /mcevent unpause
+                            """);
+                    break;
                 case "createteam":
                     if(args.length > 1) {
                         if (TeamsConfig.get().getConfigurationSection("teams") == null) {
@@ -445,6 +531,9 @@ public class MainCommand implements CommandExecutor {
                     break;
                 case "startcraftalot":
                     plugin.startCraftalot();
+                    break;
+                case "startzoomogo":
+                    plugin.startZoomoGo();
                     break;
                 case "countvotes":
                     plugin.startVoting();
