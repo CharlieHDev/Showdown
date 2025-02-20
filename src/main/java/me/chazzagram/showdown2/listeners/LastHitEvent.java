@@ -1,6 +1,8 @@
 package me.chazzagram.showdown2.listeners;
 
 import me.chazzagram.showdown2.Showdown2;
+import me.chazzagram.showdown2.files.PlayerConfig;
+import me.chazzagram.showdown2.files.TeamsConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -42,31 +44,18 @@ public class LastHitEvent implements Listener {
                     e.setCancelled(true);
                     victim.setGameMode(GameMode.SPECTATOR);
                     plugin.gubGameKills.put(killer.getName(), plugin.gubGameKills.get(killer.getName()) + 1);
+                    plugin.earnPoints(killer.getName(), 40-plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName())), true);
+                    plugin.gubKitKills.put(plugin.gubGameKills.get(killer.getName()), plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName()))+1);
 
                     if (plugin.gubGameKills.get(killer.getName()).equals(15)) {
                         killer.setGameMode(GameMode.SPECTATOR);
                     } else {
+                        killer.sendTitle("", "§e\uD83D\uDCB0" + (40-plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName()))) + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
                         killer.getInventory().clear();
                         plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| NEXT KIT! (§e§l" + plugin.gubGameKills.get(killer.getName()) + "/15§7)");
                         for (ItemStack item : getGubKits().get(plugin.gubGameKills.get(killer.getName()))) {
                             killer.getInventory().addItem(item);
                         }
-                    }
-                    switch(plugin.deadPlayers.size()){
-                        case 8:
-                            Bukkit.getWorld("world").getWorldBorder().setSize(100, 60);
-                            break;
-                        case 16:
-                            Bukkit.getWorld("world").getWorldBorder().setSize(80, 60);
-                            break;
-                        case 24:
-                            Bukkit.getWorld("world").getWorldBorder().setSize(60, 60);
-                            break;
-                        case 32:
-                            Bukkit.getWorld("world").getWorldBorder().setSize(40, 60);
-                            break;
-                        default:
-                            break;
                     }
                 }
             }
@@ -76,11 +65,59 @@ public class LastHitEvent implements Listener {
 
                 if (victim.getHealth() - e.getFinalDamage() <= 0) {
                     for (Player p : plugin.getPlayers()) {
-                        plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
+                        if(!p.getGameMode().equals(GameMode.SPECTATOR)) {
+                            plugin.messagePlayer(p, "§e\uD83D\uDCB05 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
+                            plugin.earnPoints(p.getName(), 5, true);
+                        } else {
+                            plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
+                        }
                     }
                     plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died to " + plugin.getPlayerDisplayName(killer.getName()));
+                    victim.sendTitle("§c§lYOU DIED.", "", 0, 40, 10);
                     e.setCancelled(true);
                     victim.setGameMode(GameMode.SPECTATOR);
+                    plugin.earnPoints(killer.getName(), 30, true);
+                    killer.sendTitle("", "§e\uD83D\uDCB030" + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
+                    boolean teamDead = true;
+                    for(String player : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + victim.getName() + ".team") + ".players")){
+                        if (!plugin.deadPlayers.contains(player)) {
+                            teamDead = false;
+                            break;
+                        }
+                    }
+                    if(teamDead){
+                        for(Player player2 : Bukkit.getServer().getOnlinePlayers()){
+                            plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + victim.getName() + ".team")) + " §chave been eliminated.\n§f");
+                        }
+                    }
+                    switch(plugin.deadPlayers.size()){
+                        case 8:
+                            Bukkit.getWorld("world").getWorldBorder().setSize(100, 60);
+                            for(Player p : plugin.getPlayers()){
+                                p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                            }
+                            break;
+                        case 16:
+                            Bukkit.getWorld("world").getWorldBorder().setSize(80, 60);
+                            for(Player p : plugin.getPlayers()){
+                                p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                            }
+                            break;
+                        case 24:
+                            Bukkit.getWorld("world").getWorldBorder().setSize(60, 60);
+                            for(Player p : plugin.getPlayers()){
+                                p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                            }
+                            break;
+                        case 32:
+                            Bukkit.getWorld("world").getWorldBorder().setSize(40, 60);
+                            for(Player p : plugin.getPlayers()){
+                                p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                            }
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
         }

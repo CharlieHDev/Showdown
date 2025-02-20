@@ -83,6 +83,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<String, ChatColor> modeColors = new HashMap<>();
 
+    public HashMap<Integer, Integer> gubKitKills = new HashMap<>();
+
     @Override
     public void onEnable() {
         // Plugin startup logic
@@ -1028,7 +1030,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§a§l▶ GUB! ◀", "", 0, 40, 0);
                             }
-                            startTimer(90, "gubgame");
+                            startTimer(120, "gubgame");
                             runningTimers.remove("gubgamestart");
                             cancel();
                             break;
@@ -1045,6 +1047,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void resetGubGame() {
         gubGameKills.clear();
+        gubKitKills.clear();
+        for(Player p : getPlayers()) {
+            gubGameKills.put(p.getName(), 0);
+        }
+        for(int i = 1; i <= 15; i++){
+            gubKitKills.put(i, 0);
+        }
     }
 
     public void startSurvivalGames(){

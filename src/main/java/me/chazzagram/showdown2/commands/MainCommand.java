@@ -535,6 +535,9 @@ public class MainCommand implements CommandExecutor {
                 case "startzoomogo":
                     plugin.startZoomoGo();
                     break;
+                case "startgubgame":
+                    plugin.startGubGame();
+                    break;
                 case "startsurvivalgames":
                     plugin.startSurvivalGames();
                     break;
