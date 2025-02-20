@@ -11,6 +11,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -30,6 +31,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     private double multiplier = 1.0;
 
     public boolean votingEnabled = false;
+
+    public boolean pvpEnabled = false;
 
     public String currentMode = "Lobby";
 
@@ -134,7 +137,6 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         woolLogos.put(Material.LIGHT_BLUE_WOOL, "\uD83E\uDD68");
         woolLogos.put(Material.YELLOW_WOOL, "\ue238");
 
-        getServer().getPluginManager().registerEvents(new PlayerDeath(this), this);
         getServer().getPluginManager().registerEvents(new LastHitEvent(this), this);
         getServer().getPluginManager().registerEvents(new VoteWalkEvent(this), this);
         getServer().getPluginManager().registerEvents(new CraftalotEvent(this), this);
@@ -219,6 +221,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent e) {
+        e.getPlayer().sendTitle("§7§oLoading...", "", 0, 10, 0);
         boolean playerFound = false;
         Player p = e.getPlayer();
         for(String player : PlayerConfig.get().getConfigurationSection("players").getKeys(false)){
@@ -668,6 +671,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 0:
+                            pvpEnabled = true;
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§a§l▶ DASH! ◀", "", 0, 40, 0);
                             }
@@ -936,6 +940,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 0:
+                            pvpEnabled = true;
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§a§l▶ ZOOMO GO! ◀", "", 0, 40, 0);
                             }
@@ -980,7 +985,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             resetModePoints();
                             break;
                         case 55:
-                            currentMode = "Zoomo Go";
+                            currentMode = "Gub Game";
                             for (Player player : getPlayers()) {
                                 PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
                                 player.addPotionEffect(PotionEffect);
@@ -1009,10 +1014,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 10:
-                            ItemStack knockbackStick = new ItemStack(Material.STICK);
-                            knockbackStick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 3);
+                            ItemStack firstKit = new ItemStack(Material.NETHERITE_SWORD);
+                            ItemMeta meta = firstKit.getItemMeta();
+                            meta.setUnbreakable(true);
+                            firstKit.setItemMeta(meta);
                             for (Player player : getPlayers()) {
-                                player.getInventory().addItem(knockbackStick);
+                                player.getInventory().addItem(firstKit);
                                 messagePlayer(player, """
                                         §8
                                         §8
@@ -1027,6 +1034,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 0:
+                            pvpEnabled = true;
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§a§l▶ GUB! ◀", "", 0, 40, 0);
                             }
@@ -1120,6 +1128,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 0:
+                            startGracePeriod();
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§a§l▶ LOOT! ◀", "", 0, 40, 0);
                             }
@@ -1135,7 +1144,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 0L, 20L);
 
         runningTimers.put("survivalgamesstart", new AbstractMap.SimpleEntry<>(task, 61));
+    }
 
+    public void startGracePeriod() {
         BukkitTask task2 = new BukkitRunnable() {
             int timeLeft = 21;
             @Override
@@ -1158,6 +1169,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             §f
                             """);
                             }
+                            pvpEnabled = true;
                             runningTimers.remove("graceperiod");
                             cancel();
                             break;
@@ -1315,9 +1327,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 90:
                             currentMode = "Voting";
-                            for (int i = 356; i <= 360; i++) {
-                                for (int j = -400; j <= -396; j++) {
-                                    Bukkit.getServer().getWorld("world").getBlockAt(j, 62, i).setType(Material.BLACK_WOOL);
+                            for(int i = 109; i <= 139; i++){
+                                for(int j = -381; j <= -351; j++){
+                                    Bukkit.getServer().getWorld("world").getBlockAt(j, 122, i).setType(Material.BLACK_WOOL);
                                 }
                             }
                             for (Player player : getPlayers()) {
@@ -1393,9 +1405,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     runningTimers.get("backtolobby").setValue(timeLeft);
                     switch (timeLeft) {
                         case 60:
+                            pvpEnabled = false;
                             for (Player player : getPlayers()) {
                                 Bukkit.getWorld("world").getWorldBorder().setCenter(0, 0);
                                 Bukkit.getWorld("world").getWorldBorder().setSize(25000);
+                                player.getInventory().clear();
                                 player.sendTitle("§c§lGAME OVER!", "", 0, 60, 40);
                             }
                             break;
@@ -1405,6 +1419,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             } else {
                                 getPlayerModePoints();
                             }
+                            currentMode = "Lobby";
                             break;
                         case 45:
                             getTeamModePoints();

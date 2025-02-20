@@ -211,7 +211,7 @@ public class MainCommand implements CommandExecutor {
                             if(!plugin.deadPlayers.contains(player.getName())){
                                 if(plugin.lastHitPlayer.containsKey(args[1])){
                                     if(!plugin.lastHitPlayer.get(args[1]).isEmpty()){
-                                        plugin.messagePlayer(player, "§e\uD83D\uDCB05 §7| " + plugin.formatKillMessage(p.getName(), plugin.lastHitPlayer.get(args[1])));
+                                        plugin.messagePlayer(player, "§e\uD83D\uDCB05 §7| " + plugin.formatKillMessage(plugin.lastHitPlayer.get(args[1]), p.getName()));
                                     } else {
                                         plugin.messagePlayer(player, "§e\uD83D\uDCB05 §7| " + plugin.formatDeathMessage(p.getName()));
                                     }
@@ -220,7 +220,7 @@ public class MainCommand implements CommandExecutor {
                             } else {
                                 if(plugin.lastHitPlayer.containsKey(args[1])){
                                     if(!plugin.lastHitPlayer.get(args[1]).isEmpty()){
-                                        plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(p.getName(), plugin.lastHitPlayer.get(args[1])));
+                                        plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(plugin.lastHitPlayer.get(args[1]), p.getName()));
                                     } else {
                                         plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatDeathMessage(p.getName()));
                                     }
@@ -238,14 +238,14 @@ public class MainCommand implements CommandExecutor {
                         if(teamDead){
                             for(Player player2 : Bukkit.getServer().getOnlinePlayers()){
                                 plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + " §chave been eliminated.\n§f");
-                                plugin.deadTeams.add(PlayerConfig.get().getString("players." + args[1]) + ".team");
                             }
+                            plugin.deadTeams.add(PlayerConfig.get().getString("players." + args[1]) + ".team");
                         }
 
                         List<String> teamList = new ArrayList<>(List.of());
                         for(Player player : plugin.getPlayers()){
                             if(!teamList.contains(PlayerConfig.get().getString("players." + player.getName() + ".team"))){
-                               teamList.add(PlayerConfig.get().getString("players." + player.getName() + ".team"));
+                                teamList.add(PlayerConfig.get().getString("players." + player.getName() + ".team"));
                             }
                         }
                         if(plugin.deadTeams.size() == teamList.size()-1){
