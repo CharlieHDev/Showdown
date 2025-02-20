@@ -1,6 +1,7 @@
 package me.chazzagram.showdown2.listeners;
 
 import me.chazzagram.showdown2.Showdown2;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -25,17 +26,13 @@ public class LastHitEvent implements Listener {
     @EventHandler
     public void onPlayerHit(EntityDamageByEntityEvent e) {
         if(plugin.currentMode.equals("Zoomo Go")) {
-            if (e.getDamager() instanceof Player && e.getEntity() instanceof Player) {
-                Player killer = (Player) e.getDamager();
-                Player victim = (Player) e.getEntity();
+            if (e.getDamager() instanceof Player killer && e.getEntity() instanceof Player victim) {
 
                 plugin.lastHitPlayer.put(killer.getName(), victim.getName());
             }
         }
         if (plugin.currentMode.equals("Gub Game")) {
-            if (e.getDamager() instanceof Player && e.getEntity() instanceof Player) {
-                Player killer = (Player) e.getDamager();
-                Player victim = (Player) e.getEntity();
+            if (e.getDamager() instanceof Player killer && e.getEntity() instanceof Player victim) {
 
                 if (victim.getHealth() - e.getFinalDamage() <= 0) {
                     for(Player p : plugin.getPlayers()){
@@ -55,6 +52,35 @@ public class LastHitEvent implements Listener {
                             killer.getInventory().addItem(item);
                         }
                     }
+                    switch(plugin.deadPlayers.size()){
+                        case 8:
+                            Bukkit.getWorld("world").getWorldBorder().setSize(100, 60);
+                            break;
+                        case 16:
+                            Bukkit.getWorld("world").getWorldBorder().setSize(80, 60);
+                            break;
+                        case 24:
+                            Bukkit.getWorld("world").getWorldBorder().setSize(60, 60);
+                            break;
+                        case 32:
+                            Bukkit.getWorld("world").getWorldBorder().setSize(40, 60);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+        if(plugin.currentMode.equals("Survival Games")){
+            if (e.getDamager() instanceof Player killer && e.getEntity() instanceof Player victim) {
+
+                if (victim.getHealth() - e.getFinalDamage() <= 0) {
+                    for (Player p : plugin.getPlayers()) {
+                        plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
+                    }
+                    plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died to " + plugin.getPlayerDisplayName(killer.getName()));
+                    e.setCancelled(true);
+                    victim.setGameMode(GameMode.SPECTATOR);
                 }
             }
         }

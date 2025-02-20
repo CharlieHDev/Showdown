@@ -1047,6 +1047,128 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         gubGameKills.clear();
     }
 
+    public void startSurvivalGames(){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 61;
+            @Override
+            public void run() {
+                if(!pausedTimers.contains("survivalgamesstart")) {
+                    timeLeft--;
+                    runningTimers.get("survivalgamesstart").setValue(timeLeft);
+                    switch (timeLeft) {
+                        case 60:
+                            for(Player p : getPlayers()){
+                                lastHitPlayer.put(p.getName(), "");
+                            }
+                            teamTeleport("survivalgames", 5);
+                            resetSurvivalGames();
+                            resetModePoints();
+                            break;
+                        case 55:
+                            currentMode = "Survival Games";
+                            for (Player player : getPlayers()) {
+                                PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
+                                player.addPotionEffect(PotionEffect);
+                                player.setGameMode(GameMode.ADVENTURE);
+                            }
+                            Bukkit.getWorld("world").getWorldBorder().setCenter(0, 0);
+                            Bukkit.getWorld("world").getWorldBorder().setSize(120);
+                            break;
+
+                        case 50:
+                            for (Player player : getPlayers()) {
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§e§l?§8] §eWelcome to §a§lSurvival Games§e! Good old original game of last team standing. Stay alive, stay aware, stay together. Survive until the very end with your PVP skills.
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 30:
+                            for (Player player : getPlayers()) {
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§e§l?§8] §eDid you know the border shrinks? That's right! It shrinks, and shrinks, until the very last battle has been won. Chests refill around the map every 4 minutes so keep looting!
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 10:
+                            for (Player player : getPlayers()) {
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§c§l!§8] §7Game Starting in §c§l10 seconds...
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 5, 4, 3, 2, 1:
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
+                            }
+                            break;
+                        case 0:
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("§a§l▶ LOOT! ◀", "", 0, 40, 0);
+                            }
+                            runningTimers.remove("survivalgamesstart");
+                            cancel();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("survivalgamesstart", new AbstractMap.SimpleEntry<>(task, 61));
+
+        BukkitTask task2 = new BukkitRunnable() {
+            int timeLeft = 21;
+            @Override
+            public void run() {
+                if(!pausedTimers.contains("graceperiod")) {
+                    timeLeft--;
+                    runningTimers.get("graceperiod").setValue(timeLeft);
+                    switch (timeLeft) {
+                        case 5, 4, 3, 2, 1:
+                            for (Player player : getPlayers()) {
+                                messagePlayer(player, "§c§l⏱ §8| §c§lGrace period ends in: " + timeLeft);
+                            }
+                            break;
+                        case 0:
+                            for (Player player : getPlayers()) {
+                                messagePlayer(player, """
+                            §f
+                            §f
+                            §c§lGRACE PERIOD IS OVER!");
+                            §f
+                            """);
+                            }
+                            runningTimers.remove("graceperiod");
+                            cancel();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("graceperiod", new AbstractMap.SimpleEntry<>(task2, 21));
+    }
+
+
+    public void resetSurvivalGames(){
+        deadPlayers.clear();
+        deadTeams.clear();
+    }
+
 
 
     public LinkedHashMap<String, Integer> sortByValue() {
@@ -1165,7 +1287,6 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                 messagePlayer(player, placement + ". " + plugin.modeColors.get(key) + key + "§7: §e§l" + leaderModeVotes.get(placement-1) + " spaces §e§o(" + percentage + "%)");
             }
             messagePlayer(player, "§f--------------------");
-
         }
     }
 
@@ -1264,6 +1385,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 60:
                             for (Player player : getPlayers()) {
+                                Bukkit.getWorld("world").getWorldBorder().setCenter(0, 0);
+                                Bukkit.getWorld("world").getWorldBorder().setSize(25000);
                                 player.sendTitle("§c§lGAME OVER!", "", 0, 60, 40);
                             }
                             break;
