@@ -35,99 +35,104 @@ public class MainCommand implements CommandExecutor {
             switch (args[0].toLowerCase()) {
                 case "cdcp":
                     if (args.length > 2) {
-                        if (!plugin.colourDashCheckpoints.containsKey(args[2])) {
-                            plugin.colourDashCheckpoints.put(args[2], 0);
-                        }
-                        if (plugin.colourDashCheckpoints.get(args[2]) < Integer.parseInt(args[1])) {
-                            int placement = 1;
-                            for (Integer checkpoint : plugin.colourDashCheckpoints.values()) {
-                                if (checkpoint == Integer.parseInt(args[1])) {
-                                    placement++;
+                        if(plugin.runningTimers.containsKey("colourdash")) {
+                            if (!plugin.colourDashCheckpoints.containsKey(args[2])) {
+                                plugin.colourDashCheckpoints.put(args[2], 0);
+                            }
+                            if (plugin.colourDashCheckpoints.get(args[2]) < Integer.parseInt(args[1])) {
+                                int placement = 1;
+                                for (Integer checkpoint : plugin.colourDashCheckpoints.values()) {
+                                    if (checkpoint == Integer.parseInt(args[1])) {
+                                        placement++;
+                                    }
                                 }
-                            }
-                            int pointsEarned = 41 - placement;
-                            plugin.earnPoints(args[2], pointsEarned, true);
-                            Player p = Bukkit.getServer().getPlayer(args[2]);
-                            p.sendTitle("§a[✔] \uD83C\uDFC3-" + args[1], "§8[§f§l⏱§8] §e§o" + plugin.getTimer("colourdashwatch"), 0, 100, 5);
-                            plugin.messagePlayer(p, "§a[\uD83C\uDFC3-" + args[1] + "] Dashpoint reached!");
-                            plugin.colourDashCheckpoints.put(args[2], Integer.parseInt(args[1]));
-                            for (Player player : plugin.getPlayers()) {
-                                plugin.messagePlayer(player, "§a§l⏱ §8| " + plugin.getPlayerDisplayName(p.getName()) + "§7 has reached §a\uD83C\uDFC3-" + args[1] + "§7!");
-                            }
+                                int pointsEarned = 41 - placement;
+                                plugin.earnPoints(args[2], pointsEarned, true);
+                                Player p = Bukkit.getServer().getPlayer(args[2]);
+                                p.sendTitle("§a[✔] \uD83C\uDFC3-" + args[1], "§8[§f§l⏱§8] §e§o" + plugin.getTimer("colourdashwatch"), 0, 100, 5);
+                                plugin.messagePlayer(p, "§a[\uD83C\uDFC3-" + args[1] + "] Dashpoint reached!");
+                                plugin.colourDashCheckpoints.put(args[2], Integer.parseInt(args[1]));
+                                for (Player player : plugin.getPlayers()) {
+                                    plugin.messagePlayer(player, "§a§l⏱ §8| " + plugin.getPlayerDisplayName(p.getName()) + "§7 has reached §a\uD83C\uDFC3-" + args[1] + "§7!");
+                                }
 
+                            }
                         }
                     }
 
                     break;
                 case "cdfinish":
                     if (args.length > 1) {
-                        if (plugin.colourDashCheckpoints.get(args[1]) < 10) {
-                            int placement = 1;
-                            for (Integer checkpoint : plugin.colourDashCheckpoints.values()) {
-                                if (checkpoint == 10) {
-                                    placement++;
+                        if(plugin.runningTimers.containsKey("colourdash")) {
+                            if (plugin.colourDashCheckpoints.get(args[1]) < 10) {
+                                int placement = 1;
+                                for (Integer checkpoint : plugin.colourDashCheckpoints.values()) {
+                                    if (checkpoint == 10) {
+                                        placement++;
+                                    }
                                 }
-                            }
-                            int pointsEarned = 102 - (2 * placement);
-                            plugin.earnPoints(args[1], pointsEarned, true);
+                                int pointsEarned = 102 - (2 * placement);
+                                plugin.earnPoints(args[1], pointsEarned, true);
 
-                            Player p = Bukkit.getServer().getPlayer(args[1]);
-                            String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
-                            plugin.modeCompletions.put(team, (plugin.modeCompletions.get(team) + 1));
-                            p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("colourdashwatch"), 0, 100, 5);
-                            plugin.messagePlayer(p, "\n§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lCourse Completed!");
-                            plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("colourdashwatch") + "\n");
-                            plugin.colourDashCheckpoints.put(args[1], 10);
-                            p.setGameMode(GameMode.SPECTATOR);
-                            for (Player player : plugin.getPlayers()) {
-                                plugin.messagePlayer(player, "§f\uD83D\uDC51 §8| " + plugin.getPlayerDisplayName(p.getName()) + "§e was §f§l#" + placement + " §eto finish!");
+                                Player p = Bukkit.getServer().getPlayer(args[1]);
+                                String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
+                                plugin.modeCompletions.put(team, (plugin.modeCompletions.get(team) + 1));
+                                p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("colourdashwatch"), 0, 100, 5);
+                                plugin.messagePlayer(p, "\n§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lCourse Completed!");
+                                plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("colourdashwatch") + "\n");
+                                plugin.colourDashCheckpoints.put(args[1], 10);
+                                p.setGameMode(GameMode.SPECTATOR);
+                                for (Player player : plugin.getPlayers()) {
+                                    plugin.messagePlayer(player, "§f\uD83D\uDC51 §8| " + plugin.getPlayerDisplayName(p.getName()) + "§e was §f§l#" + placement + " §eto finish!");
+                                }
                             }
                         }
                     }
                     break;
                 case "bbjcp":
                     if (args.length > 2) {
+                        if(plugin.runningTimers.containsKey("bridgebuilders")) {
+                            if (!plugin.bridgeJumpRegister.get(Integer.parseInt(args[1])).contains(args[2])) {
+                                plugin.bridgeJumpRegister.get(Integer.parseInt(args[1])).add(args[2]);
+                                int register = 0;
+                                for (String player : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")) {
+                                    if (plugin.bridgeJumpRegister.get(Integer.parseInt(args[1])).contains(player)) {
+                                        register++;
+                                        if (register == TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players").size()) {
+                                            Integer placement = plugin.bridgeJumpCheckpoints.get(Integer.parseInt(args[1]));
+                                            if (placement == 1) {
+                                                for (Player p : plugin.getPlayers()) {
+                                                    plugin.messagePlayer(p, "§e§l⏱ §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[2] + ".team")) + "§7 crossed §a\uD83C\uDF09-" + args[1] + "§7!");
+                                                }
+                                            } else {
+                                                for (Player p : plugin.getPlayers()) {
+                                                    plugin.messagePlayer(p, "§f§l⏱ §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[2] + ".team")) + "§7 crossed §a\uD83C\uDF09-" + args[1] + "§7!");
+                                                }
+                                            }
 
-                        if(!plugin.bridgeJumpRegister.get(Integer.parseInt(args[1])).contains(args[2])){
-                            plugin.bridgeJumpRegister.get(Integer.parseInt(args[1])).add(args[2]);
-                            int register = 0;
-                            for(String player : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")) {
-                                if(plugin.bridgeJumpRegister.get(Integer.parseInt(args[1])).contains(player)){
-                                    register++;
-                                    if(register == TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players").size()){
-                                        Integer placement = plugin.bridgeJumpCheckpoints.get(Integer.parseInt(args[1]));
-                                        if (placement == 1) {
-                                            for (Player p : plugin.getPlayers()) {
-                                                plugin.messagePlayer(p, "§e§l⏱ §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[2] + ".team")) + "§7 crossed §a\uD83C\uDF09-" + args[1] + "§7!");
+                                            int pointsEarned = 51 - placement;
+                                            plugin.earnTeamPoints(PlayerConfig.get().getString("players." + args[2] + ".team"), pointsEarned);
+
+                                            for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")) {
+                                                if (Bukkit.getServer().getPlayer(player2) != null) {
+                                                    Player p = Bukkit.getServer().getPlayer(player2);
+                                                    p.sendTitle("§a[✔] \uD83C\uDF09-" + args[1], "§7Now build!", 0, 40, 0);
+                                                    plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Jump Complete!");
+                                                    plugin.messagePlayer(p, "§cCreative attained, get building!");
+                                                    p.setGameMode(GameMode.CREATIVE);
+                                                }
                                             }
-                                        } else {
-                                            for (Player p : plugin.getPlayers()) {
-                                                plugin.messagePlayer(p, "§f§l⏱ §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[2] + ".team")) + "§7 crossed §a\uD83C\uDF09-" + args[1] + "§7!");
-                                            }
+                                            plugin.bridgeJumpCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);
                                         }
-
-                                        int pointsEarned = 51 - placement;
-                                        plugin.earnTeamPoints(PlayerConfig.get().getString("players." + args[2] + ".team"), pointsEarned);
-
-                                        for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")) {
-                                            if (Bukkit.getServer().getPlayer(player2) != null) {
-                                                Player p = Bukkit.getServer().getPlayer(player2);
-                                                p.sendTitle("§a[✔] \uD83C\uDF09-" + args[1], "§7Now build!", 0, 40, 0);
-                                                plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Jump Complete!");
-                                                plugin.messagePlayer(p, "§cCreative attained, get building!");
-                                                p.setGameMode(GameMode.CREATIVE);
-                                            }
-                                        }
-                                        plugin.bridgeJumpCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);
                                     }
                                 }
-                            }
-                            StringBuilder playerCompletions = new StringBuilder();
-                            playerCompletions.append("§a✔ ".repeat(register));
-                            for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")) {
-                                if (Bukkit.getServer().getPlayer(player2) != null) {
-                                    Player p = Bukkit.getServer().getPlayer(player2);
-                                    p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§eCompletions§f: " + playerCompletions));
+                                StringBuilder playerCompletions = new StringBuilder();
+                                playerCompletions.append("§a✔ ".repeat(register));
+                                for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")) {
+                                    if (Bukkit.getServer().getPlayer(player2) != null) {
+                                        Player p = Bukkit.getServer().getPlayer(player2);
+                                        p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§eCompletions§f: " + playerCompletions));
+                                    }
                                 }
                             }
                         }
@@ -135,123 +140,127 @@ public class MainCommand implements CommandExecutor {
                     break;
                 case "bbfinish":
                     if (args.length > 1) {
-                        if(!plugin.bridgeJumpRegister.get(plugin.bridgeJumpRegister.size()).contains(args[1])){
-                            plugin.bridgeJumpRegister.get(plugin.bridgeJumpRegister.size()).add(args[1]);
-                            int register = 0;
-                            for(String player : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players")) {
-                                if (plugin.bridgeJumpRegister.get(plugin.bridgeJumpRegister.size()).contains(player)) {
-                                    register++;
-                                    if (register == TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players").size()) {
+                        if(plugin.runningTimers.containsKey("bridgebuilders")) {
+                            if (!plugin.bridgeJumpRegister.get(plugin.bridgeJumpRegister.size()).contains(args[1])) {
+                                plugin.bridgeJumpRegister.get(plugin.bridgeJumpRegister.size()).add(args[1]);
+                                int register = 0;
+                                for (String player : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players")) {
+                                    if (plugin.bridgeJumpRegister.get(plugin.bridgeJumpRegister.size()).contains(player)) {
+                                        register++;
+                                        if (register == TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players").size()) {
 
-                                        Integer placement = plugin.bridgeCheckpoints.get(plugin.bridgeCheckpoints.size());
-                                        switch (placement) {
-                                            case 1:
-                                                for (Player p : plugin.getPlayers()) {
-                                                    plugin.messagePlayer(p, "§8| §e\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + "§e was §e§l1st §eto finish!");
-                                                }
-                                                break;
-                                            case 2:
-                                                for (Player p : plugin.getPlayers()) {
-                                                    plugin.messagePlayer(p, "§8| §7\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + "§e was §7§l2nd §eto finish!");
-                                                }
-                                                break;
-                                            case 3:
-                                                for (Player p : plugin.getPlayers()) {
-                                                    plugin.messagePlayer(p, "§8| §6\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + "§e was §6§l3rd §eto finish!");
-                                                }
-                                                break;
-                                            default:
-                                                for (Player p : plugin.getPlayers()) {
-                                                    plugin.messagePlayer(p, "§8| §f\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + "§e was §f§l" + placement + "th §eto finish!");
-                                                }
-                                                break;
-                                        }
-
-                                        int pointsEarned = 155 - (5 * placement);
-                                        plugin.earnTeamPoints(PlayerConfig.get().getString("players." + args[1] + ".team"), pointsEarned);
-
-                                        for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players")) {
-                                            if (Bukkit.getServer().getPlayer(player2) != null) {
-                                                Player p = Bukkit.getServer().getPlayer(player2);
-                                                p.sendTitle("§aFINISH", "", 0, 100, 5);
-                                                plugin.messagePlayer(p, "§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lCourse Completed!");
-                                                p.setGameMode(GameMode.SPECTATOR);
+                                            Integer placement = plugin.bridgeCheckpoints.get(plugin.bridgeCheckpoints.size());
+                                            switch (placement) {
+                                                case 1:
+                                                    for (Player p : plugin.getPlayers()) {
+                                                        plugin.messagePlayer(p, "§8| §e\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + "§e was §e§l1st §eto finish!");
+                                                    }
+                                                    break;
+                                                case 2:
+                                                    for (Player p : plugin.getPlayers()) {
+                                                        plugin.messagePlayer(p, "§8| §7\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + "§e was §7§l2nd §eto finish!");
+                                                    }
+                                                    break;
+                                                case 3:
+                                                    for (Player p : plugin.getPlayers()) {
+                                                        plugin.messagePlayer(p, "§8| §6\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + "§e was §6§l3rd §eto finish!");
+                                                    }
+                                                    break;
+                                                default:
+                                                    for (Player p : plugin.getPlayers()) {
+                                                        plugin.messagePlayer(p, "§8| §f\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + "§e was §f§l" + placement + "th §eto finish!");
+                                                    }
+                                                    break;
                                             }
-                                        }
-                                        plugin.bridgeCheckpoints.replace(plugin.bridgeCheckpoints.size(), placement + 1);
 
+                                            int pointsEarned = 155 - (5 * placement);
+                                            plugin.earnTeamPoints(PlayerConfig.get().getString("players." + args[1] + ".team"), pointsEarned);
+
+                                            for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players")) {
+                                                if (Bukkit.getServer().getPlayer(player2) != null) {
+                                                    Player p = Bukkit.getServer().getPlayer(player2);
+                                                    p.sendTitle("§aFINISH", "", 0, 100, 5);
+                                                    plugin.messagePlayer(p, "§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lCourse Completed!");
+                                                    p.setGameMode(GameMode.SPECTATOR);
+                                                }
+                                            }
+                                            plugin.bridgeCheckpoints.replace(plugin.bridgeCheckpoints.size(), placement + 1);
+
+                                        }
                                     }
                                 }
-                            }
-                            StringBuilder playerCompletions = new StringBuilder();
-                            playerCompletions.append("§a✔ ".repeat(register));
-                            for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players")) {
-                                if (Bukkit.getServer().getPlayer(player2) != null) {
-                                    Player p = Bukkit.getServer().getPlayer(player2);
-                                    p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§eCompletions§f: " + playerCompletions));
+                                StringBuilder playerCompletions = new StringBuilder();
+                                playerCompletions.append("§a✔ ".repeat(register));
+                                for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players")) {
+                                    if (Bukkit.getServer().getPlayer(player2) != null) {
+                                        Player p = Bukkit.getServer().getPlayer(player2);
+                                        p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§eCompletions§f: " + playerCompletions));
+                                    }
                                 }
                             }
                         }
                     }
                     break;
                 case "zoomodeath":
-                    if(!plugin.deadPlayers.contains(args[1])){
-                        plugin.deadPlayers.add(args[1]);
-                        Player p = Bukkit.getServer().getPlayer(args[1]);
-                        plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| You died.");
-                        p.setGameMode(GameMode.SPECTATOR);
+                    if(plugin.runningTimers.containsKey("zoomogo")) {
+                        if (!plugin.deadPlayers.contains(args[1])) {
+                            plugin.deadPlayers.add(args[1]);
+                            Player p = Bukkit.getServer().getPlayer(args[1]);
+                            plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| You died.");
+                            p.setGameMode(GameMode.SPECTATOR);
 
-                        if(plugin.lastHitPlayer.containsKey(args[1])){
-                            if(!plugin.lastHitPlayer.get(args[1]).isEmpty()){
-                                plugin.earnPoints(plugin.lastHitPlayer.get(args[1]), 20, true);
-                            }
-                        }
-
-                        for(Player player : plugin.getPlayers()){
-                            if(!plugin.deadPlayers.contains(player.getName())){
-                                if(plugin.lastHitPlayer.containsKey(args[1])){
-                                    if(!plugin.lastHitPlayer.get(args[1]).isEmpty()){
-                                        plugin.messagePlayer(player, "§e\uD83D\uDCB05 §7| " + plugin.formatKillMessage(plugin.lastHitPlayer.get(args[1]), p.getName()));
-                                    } else {
-                                        plugin.messagePlayer(player, "§e\uD83D\uDCB05 §7| " + plugin.formatDeathMessage(p.getName()));
-                                    }
-                                }
-                                plugin.earnPoints(player.getName(), 5, true);
-                            } else {
-                                if(plugin.lastHitPlayer.containsKey(args[1])){
-                                    if(!plugin.lastHitPlayer.get(args[1]).isEmpty()){
-                                        plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(plugin.lastHitPlayer.get(args[1]), p.getName()));
-                                    } else {
-                                        plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatDeathMessage(p.getName()));
-                                    }
+                            if (plugin.lastHitPlayer.containsKey(args[1])) {
+                                if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
+                                    plugin.earnPoints(plugin.lastHitPlayer.get(args[1]), 20, true);
                                 }
                             }
-                        }
 
-                        boolean teamDead = true;
-                        for(String player : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players")){
-                            if (!plugin.deadPlayers.contains(player)) {
-                                teamDead = false;
-                                break;
+                            for (Player player : plugin.getPlayers()) {
+                                if (!plugin.deadPlayers.contains(player.getName())) {
+                                    if (plugin.lastHitPlayer.containsKey(args[1])) {
+                                        if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
+                                            plugin.messagePlayer(player, "§e\uD83D\uDCB05 §7| " + plugin.formatKillMessage(plugin.lastHitPlayer.get(args[1]), p.getName()));
+                                        } else {
+                                            plugin.messagePlayer(player, "§e\uD83D\uDCB05 §7| " + plugin.formatDeathMessage(p.getName()));
+                                        }
+                                    }
+                                    plugin.earnPoints(player.getName(), 5, true);
+                                } else {
+                                    if (plugin.lastHitPlayer.containsKey(args[1])) {
+                                        if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
+                                            plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(plugin.lastHitPlayer.get(args[1]), p.getName()));
+                                        } else {
+                                            plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatDeathMessage(p.getName()));
+                                        }
+                                    }
+                                }
                             }
-                        }
-                        if(teamDead){
-                            for(Player player2 : Bukkit.getServer().getOnlinePlayers()){
-                                plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + " §chave been eliminated.\n§f");
-                            }
-                            plugin.deadTeams.add(PlayerConfig.get().getString("players." + args[1]) + ".team");
-                        }
 
-                        List<String> teamList = new ArrayList<>(List.of());
-                        for(Player player : plugin.getPlayers()){
-                            if(!teamList.contains(PlayerConfig.get().getString("players." + player.getName() + ".team"))){
-                                teamList.add(PlayerConfig.get().getString("players." + player.getName() + ".team"));
+                            boolean teamDead = true;
+                            for (String player : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players")) {
+                                if (!plugin.deadPlayers.contains(player)) {
+                                    teamDead = false;
+                                    break;
+                                }
                             }
-                        }
-                        if(plugin.deadTeams.size() == teamList.size()-1){
-                            plugin.deadTeams.clear();
-                            plugin.runningTimers.remove("zoomogo");
-                            plugin.gameEnd();
+                            if (teamDead) {
+                                for (Player player2 : Bukkit.getServer().getOnlinePlayers()) {
+                                    plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + " §chave been eliminated.\n§f");
+                                }
+                                plugin.deadTeams.add(PlayerConfig.get().getString("players." + args[1]) + ".team");
+                            }
+
+                            List<String> teamList = new ArrayList<>(List.of());
+                            for (Player player : plugin.getPlayers()) {
+                                if (!teamList.contains(PlayerConfig.get().getString("players." + player.getName() + ".team"))) {
+                                    teamList.add(PlayerConfig.get().getString("players." + player.getName() + ".team"));
+                                }
+                            }
+                            if (plugin.deadTeams.size() == teamList.size() - 1) {
+                                plugin.deadTeams.clear();
+                                plugin.runningTimers.remove("zoomogo");
+                                plugin.gameEnd();
+                            }
                         }
                     }
                 default:
@@ -553,6 +562,16 @@ public class MainCommand implements CommandExecutor {
                 case "unpause":
                     plugin.resumeEvent();
                     break;
+                case "resetpoints":
+                    for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)) {
+                        TeamsConfig.get().set("teams." + team + ".points", 0);
+                    }
+                    for(String player : PlayerConfig.get().getConfigurationSection("players").getKeys(false)) {
+                        PlayerConfig.get().set("players." + player + ".points", 0);
+                    }
+                    PlayerConfig.save();
+                    TeamsConfig.save();
+                    break;
                 default:
                     plugin.messagePlayer(p, "Missing Args.");
                     break;
@@ -565,101 +584,107 @@ public class MainCommand implements CommandExecutor {
             switch (args[0].toLowerCase()) {
                 case "slimecp":
                     if (args.length > 2) {
-                        Integer placement = plugin.slimeCheckpoints.get(Integer.parseInt(args[1]));
-                        if (placement == 1) {
-                            for (Player p : plugin.getPlayers()) {
-                                plugin.messagePlayer(p, "§8| §b★ §8| " + plugin.getTeamDisplayName(args[2]) + "§e was 1st to reach §a\uD83D\uDDFB-" + args[1] + "§7!");
+                        if(plugin.runningTimers.containsKey("slimegolf")) {
+                            Integer placement = plugin.slimeCheckpoints.get(Integer.parseInt(args[1]));
+                            if (placement == 1) {
+                                for (Player p : plugin.getPlayers()) {
+                                    plugin.messagePlayer(p, "§8| §b★ §8| " + plugin.getTeamDisplayName(args[2]) + "§e was 1st to reach §a\uD83D\uDDFB-" + args[1] + "§7!");
+                                }
+                            } else {
+                                for (Player p : plugin.getPlayers()) {
+                                    plugin.messagePlayer(p, "§8| §a§l⏱ §8| " + plugin.getTeamDisplayName(args[2]) + "§7 has reached §a\uD83D\uDDFB-" + args[1] + "§7!");
+                                }
                             }
-                        } else {
-                            for (Player p : plugin.getPlayers()) {
-                                plugin.messagePlayer(p, "§8| §a§l⏱ §8| " + plugin.getTeamDisplayName(args[2]) + "§7 has reached §a\uD83D\uDDFB-" + args[1] + "§7!");
-                            }
-                        }
 
-                        int pointsEarned = 21 - placement;
-                        plugin.earnTeamPoints(args[2], pointsEarned);
-                        plugin.teamCheckpoints.put(args[2], Integer.parseInt(args[1]));
+                            int pointsEarned = 21 - placement;
+                            plugin.earnTeamPoints(args[2], pointsEarned);
+                            plugin.teamCheckpoints.put(args[2], Integer.parseInt(args[1]));
 
-                        for (String player : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
-                            if (Bukkit.getServer().getPlayer(player) != null) {
-                                Player p = Bukkit.getServer().getPlayer(player);
-                                p.sendTitle("§a[✔] \uD83D\uDDFB-" + args[1], "§8[§f§l⏱§8] §e§o" + plugin.getTimer("slimegolf"), 0, 100, 5);
-                                plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Checkpoint reached!");
+                            for (String player : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
+                                if (Bukkit.getServer().getPlayer(player) != null) {
+                                    Player p = Bukkit.getServer().getPlayer(player);
+                                    p.sendTitle("§a[✔] \uD83D\uDDFB-" + args[1], "§8[§f§l⏱§8] §e§o" + plugin.getTimer("slimegolf"), 0, 100, 5);
+                                    plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Checkpoint reached!");
+                                }
                             }
+                            plugin.slimeCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);
                         }
-                        plugin.slimeCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);
                     }
                     break;
                 case "slimefinish":
                     if (args.length > 1) {
-                        Integer placement = plugin.slimeCheckpoints.get(plugin.slimeCheckpoints.size());
-                        switch (placement) {
-                            case 1:
-                                for (Player p : plugin.getPlayers()) {
-                                    plugin.messagePlayer(p, "§8| §e\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(args[1]) + "§e was §e§l1st §eto finish!");
-                                }
-                                break;
-                            case 2:
-                                for (Player p : plugin.getPlayers()) {
-                                    plugin.messagePlayer(p, "§8| §7\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(args[1]) + "§e was §7§l2nd §eto finish!");
-                                }
-                                break;
-                            case 3:
-                                for (Player p : plugin.getPlayers()) {
-                                    plugin.messagePlayer(p, "§8| §6\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(args[1]) + "§e was §6§l3rd §eto finish!");
-                                }
-                                break;
-                            default:
-                                for (Player p : plugin.getPlayers()) {
-                                    plugin.messagePlayer(p, "§8| §f\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(args[1]) + "§e was §f§l" + placement + "th §eto finish!");
-                                }
-                                break;
-                        }
-
-                        int pointsEarned = 155 - (5 * placement);
-                        plugin.earnTeamPoints(args[1], pointsEarned);
-                        plugin.teamCheckpoints.put(args[1], 6);
-                        plugin.slimeFinishers.put(args[1], plugin.getTimer("slimegolf"));
-
-                        for (String player : TeamsConfig.get().getStringList("teams." + args[1] + ".players")) {
-                            if (Bukkit.getServer().getPlayer(player) != null) {
-                                Player p = Bukkit.getServer().getPlayer(player);
-                                p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("slimegolf"), 0, 100, 5);
-                                plugin.messagePlayer(p, "§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lHole Completed!");
-                                plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("slimegolf"));
-                                p.setGameMode(GameMode.SPECTATOR);
+                        if(plugin.runningTimers.containsKey("slimegolf")) {
+                            Integer placement = plugin.slimeCheckpoints.get(plugin.slimeCheckpoints.size());
+                            switch (placement) {
+                                case 1:
+                                    for (Player p : plugin.getPlayers()) {
+                                        plugin.messagePlayer(p, "§8| §e\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(args[1]) + "§e was §e§l1st §eto finish!");
+                                    }
+                                    break;
+                                case 2:
+                                    for (Player p : plugin.getPlayers()) {
+                                        plugin.messagePlayer(p, "§8| §7\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(args[1]) + "§e was §7§l2nd §eto finish!");
+                                    }
+                                    break;
+                                case 3:
+                                    for (Player p : plugin.getPlayers()) {
+                                        plugin.messagePlayer(p, "§8| §6\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(args[1]) + "§e was §6§l3rd §eto finish!");
+                                    }
+                                    break;
+                                default:
+                                    for (Player p : plugin.getPlayers()) {
+                                        plugin.messagePlayer(p, "§8| §f\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(args[1]) + "§e was §f§l" + placement + "th §eto finish!");
+                                    }
+                                    break;
                             }
+
+                            int pointsEarned = 155 - (5 * placement);
+                            plugin.earnTeamPoints(args[1], pointsEarned);
+                            plugin.teamCheckpoints.put(args[1], 6);
+                            plugin.slimeFinishers.put(args[1], plugin.getTimer("slimegolf"));
+
+                            for (String player : TeamsConfig.get().getStringList("teams." + args[1] + ".players")) {
+                                if (Bukkit.getServer().getPlayer(player) != null) {
+                                    Player p = Bukkit.getServer().getPlayer(player);
+                                    p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("slimegolf"), 0, 100, 5);
+                                    plugin.messagePlayer(p, "§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lHole Completed!");
+                                    plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("slimegolf"));
+                                    p.setGameMode(GameMode.SPECTATOR);
+                                }
+                            }
+                            plugin.slimeCheckpoints.replace(plugin.slimeCheckpoints.size(), placement + 1);
                         }
-                        plugin.slimeCheckpoints.replace(plugin.slimeCheckpoints.size(), placement + 1);
                     }
                     break;
                 case "bbcp":
                     if (args.length > 2) {
-                        Integer placement = plugin.bridgeCheckpoints.get(Integer.parseInt(args[1]));
-                        if (placement == 1) {
-                            for (Player p : plugin.getPlayers()) {
-                                plugin.messagePlayer(p, "§e§l⏱ §8| " + plugin.getTeamDisplayName(args[2]) + "§7 built §a\uD83C\uDF09-" + args[1] + "§7!");
+                        if(plugin.runningTimers.containsKey("bridgebuilders")) {
+                            Integer placement = plugin.bridgeCheckpoints.get(Integer.parseInt(args[1]));
+                            if (placement == 1) {
+                                for (Player p : plugin.getPlayers()) {
+                                    plugin.messagePlayer(p, "§e§l⏱ §8| " + plugin.getTeamDisplayName(args[2]) + "§7 built §a\uD83C\uDF09-" + args[1] + "§7!");
+                                }
+                            } else {
+                                for (Player p : plugin.getPlayers()) {
+                                    plugin.messagePlayer(p, "§f§l⏱ §8| " + plugin.getTeamDisplayName(args[2]) + "§7 built §a\uD83C\uDF09-" + args[1] + "§7!");
+                                }
                             }
-                        } else {
-                            for (Player p : plugin.getPlayers()) {
-                                plugin.messagePlayer(p, "§f§l⏱ §8| " + plugin.getTeamDisplayName(args[2]) + "§7 built §a\uD83C\uDF09-" + args[1] + "§7!");
-                            }
-                        }
 
-                        int pointsEarned = 51 - placement;
-                        plugin.earnTeamPoints(args[2], pointsEarned);
-                        plugin.teamCheckpoints.put(args[2], Integer.parseInt(args[1]));
+                            int pointsEarned = 51 - placement;
+                            plugin.earnTeamPoints(args[2], pointsEarned);
+                            plugin.teamCheckpoints.put(args[2], Integer.parseInt(args[1]));
 
-                        for (String player : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
-                            if (Bukkit.getServer().getPlayer(player) != null) {
-                                Player p = Bukkit.getServer().getPlayer(player);
-                                p.sendTitle("§a[✔] \uD83C\uDF09-" + args[1], "§7Now get running!", 0, 40, 0);
-                                plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Build Complete!");
-                                plugin.messagePlayer(p, "§cCreative removed, move onto the next build.");
-                                p.setGameMode(GameMode.ADVENTURE);
+                            for (String player : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
+                                if (Bukkit.getServer().getPlayer(player) != null) {
+                                    Player p = Bukkit.getServer().getPlayer(player);
+                                    p.sendTitle("§a[✔] \uD83C\uDF09-" + args[1], "§7Now get running!", 0, 40, 0);
+                                    plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Build Complete!");
+                                    plugin.messagePlayer(p, "§cCreative removed, move onto the next build.");
+                                    p.setGameMode(GameMode.ADVENTURE);
+                                }
                             }
+                            plugin.bridgeCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);
                         }
-                        plugin.bridgeCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);
                     }
                     break;
                 default:

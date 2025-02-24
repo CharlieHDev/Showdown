@@ -1,6 +1,7 @@
 package me.chazzagram.showdown2.listeners;
 
 import me.chazzagram.showdown2.Showdown2;
+import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -48,23 +49,16 @@ public class VoteWalkEvent implements Listener {
 
     private Material[] getWoolColors() {
         return new Material[]{
-                Material.WHITE_WOOL, Material.ORANGE_WOOL, Material.MAGENTA_WOOL,
-                Material.LIGHT_BLUE_WOOL, Material.YELLOW_WOOL, Material.LIME_WOOL,
-                Material.PINK_WOOL, Material.GRAY_WOOL, Material.LIGHT_GRAY_WOOL,
-                Material.CYAN_WOOL, Material.PURPLE_WOOL, Material.BLUE_WOOL,
-                Material.BROWN_WOOL, Material.GREEN_WOOL, Material.RED_WOOL,
-                Material.BLACK_WOOL
+                Material.RED_WOOL, Material.WHITE_WOOL, Material.ORANGE_WOOL, Material.LIGHT_BLUE_WOOL, Material.LIME_WOOL,
+                Material.YELLOW_WOOL, Material.PURPLE_WOOL, Material.BLACK_WOOL
         };
     }
 
     private Material[] getConcreteColours() {
         return new Material[]{
-                Material.WHITE_CONCRETE, Material.ORANGE_CONCRETE, Material.MAGENTA_CONCRETE,
-                Material.LIGHT_BLUE_CONCRETE, Material.YELLOW_CONCRETE, Material.LIME_CONCRETE,
-                Material.PINK_CONCRETE, Material.GRAY_CONCRETE, Material.LIGHT_GRAY_CONCRETE,
-                Material.CYAN_CONCRETE, Material.PURPLE_CONCRETE, Material.BLUE_CONCRETE,
-                Material.BROWN_CONCRETE, Material.GREEN_CONCRETE, Material.RED_CONCRETE,
-                Material.BLACK_CONCRETE
+                Material.RED_CONCRETE, Material.WHITE_CONCRETE, Material.ORANGE_CONCRETE, Material.LIGHT_BLUE_CONCRETE, Material.LIME_CONCRETE,
+                Material.YELLOW_CONCRETE, Material.PURPLE_CONCRETE
+
         };
     }
 }

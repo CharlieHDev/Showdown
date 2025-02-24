@@ -13,6 +13,7 @@ me\chazzagram\showdown2\listeners\ColourDashEvent.class
 me\chazzagram\showdown2\commands\MainCommand.class
 me\chazzagram\showdown2\listeners\CraftalotEvent.class
 me\chazzagram\showdown2\Showdown2$11.class
+me\chazzagram\showdown2\listeners\DropItemEvent.class
 me\chazzagram\showdown2\listeners\LastHitEvent$1.class
 me\chazzagram\showdown2\Showdown2$16.class
 me\chazzagram\showdown2\Showdown2$2.class

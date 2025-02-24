@@ -137,6 +137,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         woolLogos.put(Material.LIGHT_BLUE_WOOL, "\uD83E\uDD68");
         woolLogos.put(Material.YELLOW_WOOL, "\ue238");
 
+        getServer().getPluginManager().registerEvents(new DropItemEvent(this), this);
         getServer().getPluginManager().registerEvents(new LastHitEvent(this), this);
         getServer().getPluginManager().registerEvents(new VoteWalkEvent(this), this);
         getServer().getPluginManager().registerEvents(new CraftalotEvent(this), this);
@@ -594,6 +595,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             startTimer(90, "slimegolftimer");
                             startStopwatch(90, "slimegolf");
+                            pvpEnabled = true;
                             runningTimers.remove("slimegolfstart");
                             cancel();
                             break;
@@ -654,9 +656,6 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         case 10:
 
                             for (Player player : getPlayers()) {
-                                ItemStack infiniteBlocks = new ItemStack(Material.getMaterial(TeamsConfig.get().getString("teams." + PlayerConfig.get().getString("players." + player.getName() + ".team") + ".colourname") + "_CONCRETE"));
-                                infiniteBlocks.setAmount(64);
-                                player.getInventory().addItem(infiniteBlocks);
                                 messagePlayer(player, """
                                         §8
                                         §8
@@ -673,6 +672,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         case 0:
                             pvpEnabled = true;
                             for (Player player : getPlayers()) {
+                                ItemStack infiniteBlocks = new ItemStack(Material.getMaterial(TeamsConfig.get().getString("teams." + PlayerConfig.get().getString("players." + player.getName() + ".team") + ".colourname") + "_CONCRETE"));
+                                infiniteBlocks.setAmount(64);
+                                player.getInventory().addItem(infiniteBlocks);
                                 player.sendTitle("§a§l▶ DASH! ◀", "", 0, 40, 0);
                             }
                             startTimer(90, "colourdash");
@@ -703,6 +705,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 60:
                             teleportPlayers(TeleportConfig.get().getLocation("players.craftalot"), 5);
+                            resetCraftalot();
                             resetModePoints();
                             break;
                         case 55:
@@ -774,6 +777,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         runningTimers.put("craftalotstart", new AbstractMap.SimpleEntry<>(task, 61));
     }
 
+    public void resetCraftalot(){
+        itemToCraft.clear();
+        for(Player player : getPlayers()) {
+            itemToCraft.put(player.getName(), "");
+        }
+    }
+
     public void startBridgeBuilders(){
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 61;
@@ -838,6 +848,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
                         case 0:
                             for (Player player : getPlayers()) {
+                                player.setGameMode(GameMode.CREATIVE);
                                 player.sendTitle("§a§l▶ BUILD! ◀", "", 0, 40, 0);
                             }
                             startTimer(90, "bridgebuilders");
@@ -1337,7 +1348,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 75:
-                            teleportPlayers(TeleportConfig.get().getLocation("players.votearena"), 0);
+                            teamTeleport("votearena", 0);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -1407,6 +1418,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         case 60:
                             pvpEnabled = false;
                             for (Player player : getPlayers()) {
+                                player.setGameMode(GameMode.SPECTATOR);
+                                healFeedPlayer(player);
                                 Bukkit.getWorld("world").getWorldBorder().setCenter(0, 0);
                                 Bukkit.getWorld("world").getWorldBorder().setSize(25000);
                                 player.getInventory().clear();
@@ -1442,7 +1455,6 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
                         case 0:
                             runningTimers.remove("backtolobby");
-                            currentMode = "Lobby";
                             cancel();
                             break;
                         default:
@@ -1517,8 +1529,16 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         ItemStack axe = new ItemStack(Material.IRON_AXE);
         ItemStack shovel = new ItemStack(Material.IRON_SHOVEL);
         ItemStack trident = new ItemStack(Material.TRIDENT);
+        ItemMeta tridentMeta = trident.getItemMeta();
+        tridentMeta.addEnchant(Enchantment.RIPTIDE, 3, true);
+        trident.setItemMeta(tridentMeta);
 
         return new ItemStack[]{sword, pickaxe, axe, shovel, trident};
+    }
+
+    public void healFeedPlayer(Player p) {
+        p.setHealth(20);
+        p.setFoodLevel(20);
     }
 
     public void getReadyPlayers(){

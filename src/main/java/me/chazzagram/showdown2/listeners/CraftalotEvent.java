@@ -35,7 +35,7 @@ public class CraftalotEvent implements Listener {
         Inventory inventory = p.getInventory();
         if(plugin.currentMode.equals("Craftalot")){
             if(entity.equals(EntityType.VILLAGER)){
-                if(plugin.itemToCraft.containsKey(p.getName())){
+                if(!plugin.itemToCraft.get(p.getName()).isEmpty()){
                     List<String> items = new ArrayList<>();
                     for(ItemStack item : inventory){
                         if(item != null && item.getItemMeta() != null) {

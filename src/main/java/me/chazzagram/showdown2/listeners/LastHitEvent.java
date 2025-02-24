@@ -7,6 +7,7 @@ import me.chazzagram.showdown2.files.TeleportConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
@@ -50,134 +51,139 @@ public class LastHitEvent implements Listener {
     }
 
     public void handlePlayerDamage(Player killer, Player victim, EntityDamageByEntityEvent e) {
-        if(plugin.currentMode.equals("Gub Game")) {
-            if (victim.getHealth() - e.getFinalDamage() <= 0) {
-                for (Player p : plugin.getPlayers()) {
-                    plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
-                }
-                plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died to " + plugin.getPlayerDisplayName(killer.getName()));
-                e.setCancelled(true);
-                victim.setGameMode(GameMode.SPECTATOR);
-                plugin.gubGameKills.put(killer.getName(), plugin.gubGameKills.get(killer.getName()) + 1);
-                plugin.earnPoints(killer.getName(), 40 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName())), true);
-                plugin.gubKitKills.put(plugin.gubGameKills.get(killer.getName()), plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName())) + 1);
-                victim.setHealth(20);
-                if (plugin.gubGameKills.get(killer.getName()).equals(15)) {
-                    killer.setGameMode(GameMode.SPECTATOR);
-                    killer.sendTitle("§eFINISH", "§e\uD83D\uDCB0" + (41 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName()))) + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
-                } else {
-                    killer.sendTitle("", "§e\uD83D\uDCB0" + (41 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName()))) + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
-                    killer.getInventory().clear();
-                    plugin.messagePlayer(killer, "§c\uD83D\uDC80 §7| NEXT KIT! (§e§l" + plugin.gubGameKills.get(killer.getName()) + "/15§7)");
-                    for (ItemStack item : getGubKits().get(plugin.gubGameKills.get(killer.getName()))) {
-                        killer.getInventory().addItem(item);
-                    }
-                }
-                BukkitTask task = new BukkitRunnable() {
-                    int timeLeft = 6;
-                    @Override
-                    public void run() {
-                        if(plugin.runningTimers.containsKey(victim.getName()+"respawn")) {
-                            if (!plugin.pausedTimers.contains(victim.getName()+"respawn")) {
-                                plugin.runningTimers.get(victim.getName()+"respawn").setValue(timeLeft);
-                                timeLeft--;
-                                if (timeLeft == 0) {
-                                    plugin.messageConsole("Timer finished.");
-                                    victim.setGameMode(GameMode.ADVENTURE);
-                                    victim.teleport(TeleportConfig.get().getLocation("teams." + PlayerConfig.get().getString("players." + victim.getName() + ".team") + ".gubgame"));
-                                    plugin.runningTimers.remove(victim.getName()+"respawn");
-                                    cancel();
-                                } else {
-
-                                    plugin.messageConsole(timeLeft + " seconds left..");
-                                }
-                            }
-                        } else {
-                            plugin.messageConsole("Timer removed by external factor.");
-                            cancel();
-                        }
-                    }
-
-                }.runTaskTimer(plugin, 0L, 20L);
-
-                plugin.runningTimers.put(victim.getName()+"respawn", new AbstractMap.SimpleEntry<>(task, 6));
-            }
-        }
-        if(plugin.currentMode.equals("Survival Games")){
-            if (victim.getHealth() - e.getFinalDamage() <= 0) {
-                plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died to " + plugin.getPlayerDisplayName(killer.getName()));
-                victim.sendTitle("§c§lYOU DIED.", "", 0, 40, 10);
-                e.setCancelled(true);
-                victim.setGameMode(GameMode.SPECTATOR);
-                plugin.deadPlayers.add(victim.getName());
-                plugin.earnPoints(killer.getName(), 30, true);
-                killer.sendTitle("", "§e\uD83D\uDCB030" + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
-                for (Player p : plugin.getPlayers()) {
-                    if(!p.getGameMode().equals(GameMode.SPECTATOR) && p.getName().equals(killer.getName())) {
-                        plugin.messagePlayer(p, "§e\uD83D\uDCB05 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
-                        plugin.earnPoints(p.getName(), 5, true);
-                    } else {
+        if (PlayerConfig.get().getString("players." + killer.getName() + ".team").equals(PlayerConfig.get().getString("players." + victim.getName() + ".team"))) {
+            e.setCancelled(true);
+        } else {
+            if (plugin.currentMode.equals("Gub Game")) {
+                if (victim.getHealth() - e.getFinalDamage() <= 0) {
+                    for (Player p : plugin.getPlayers()) {
                         plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
                     }
-                }
-                switch(plugin.deadPlayers.size()){
-                    case 8:
-                        Bukkit.getWorld("world").getWorldBorder().setSize(100, 60);
-                        for(Player p : plugin.getPlayers()){
-                            p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                    plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died to " + plugin.getPlayerDisplayName(killer.getName()));
+                    e.setCancelled(true);
+                    victim.setGameMode(GameMode.SPECTATOR);
+                    plugin.gubGameKills.put(killer.getName(), plugin.gubGameKills.get(killer.getName()) + 1);
+                    plugin.earnPoints(killer.getName(), 40 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName())), true);
+                    plugin.gubKitKills.put(plugin.gubGameKills.get(killer.getName()), plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName())) + 1);
+                    victim.setHealth(20);
+                    if (plugin.gubGameKills.get(killer.getName()).equals(15)) {
+                        killer.setGameMode(GameMode.SPECTATOR);
+                        killer.sendTitle("§eFINISH", "§e\uD83D\uDCB0" + (41 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName()))) + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
+                    } else {
+                        killer.sendTitle("", "§e\uD83D\uDCB0" + (41 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName()))) + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
+                        killer.getInventory().clear();
+                        plugin.messagePlayer(killer, "§c\uD83D\uDC80 §7| NEXT KIT! (§e§l" + plugin.gubGameKills.get(killer.getName()) + "/15§7)");
+                        for (ItemStack item : getGubKits().get(plugin.gubGameKills.get(killer.getName()))) {
+                            killer.getInventory().addItem(item);
                         }
-                        break;
-                    case 16:
-                        Bukkit.getWorld("world").getWorldBorder().setSize(80, 60);
-                        for(Player p : plugin.getPlayers()){
-                            p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
-                        }
-                        break;
-                    case 24:
-                        Bukkit.getWorld("world").getWorldBorder().setSize(60, 60);
-                        for(Player p : plugin.getPlayers()){
-                            p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
-                        }
-                        break;
-                    case 32:
-                        Bukkit.getWorld("world").getWorldBorder().setSize(40, 60);
-                        for(Player p : plugin.getPlayers()){
-                            p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
-                        }
-                        break;
-                    default:
-                        break;
-                }
-                boolean teamDead = true;
-                for (String player : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + victim.getName() + ".team") + ".players")) {
-                    if (!plugin.deadPlayers.contains(player)) {
-                        teamDead = false;
-                        break;
                     }
-                }
+                    BukkitTask task = new BukkitRunnable() {
+                        int timeLeft = 6;
 
-                if (teamDead) {
-                    for (Player player2 : Bukkit.getServer().getOnlinePlayers()) {
-                        plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + victim.getName() + ".team")) + " §chave been eliminated.\n§f");
+                        @Override
+                        public void run() {
+                            if (plugin.runningTimers.containsKey(victim.getName() + "respawn")) {
+                                if (!plugin.pausedTimers.contains(victim.getName() + "respawn")) {
+                                    plugin.runningTimers.get(victim.getName() + "respawn").setValue(timeLeft);
+                                    timeLeft--;
+                                    if (timeLeft == 0) {
+                                        plugin.messageConsole("Timer finished.");
+                                        victim.setGameMode(GameMode.ADVENTURE);
+                                        victim.teleport(TeleportConfig.get().getLocation("teams." + PlayerConfig.get().getString("players." + victim.getName() + ".team") + ".gubgame"));
+                                        plugin.runningTimers.remove(victim.getName() + "respawn");
+                                        cancel();
+                                    } else {
+
+                                        plugin.messageConsole(timeLeft + " seconds left..");
+                                    }
+                                }
+                            } else {
+                                plugin.messageConsole("Timer removed by external factor.");
+                                cancel();
+                            }
+                        }
+
+                    }.runTaskTimer(plugin, 0L, 20L);
+
+                    plugin.runningTimers.put(victim.getName() + "respawn", new AbstractMap.SimpleEntry<>(task, 6));
+                }
+            }
+            if (plugin.currentMode.equals("Survival Games")) {
+                if (victim.getHealth() - e.getFinalDamage() <= 0) {
+                    plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died to " + plugin.getPlayerDisplayName(killer.getName()));
+                    victim.sendTitle("§c§lYOU DIED.", "", 0, 40, 10);
+                    e.setCancelled(true);
+                    victim.setGameMode(GameMode.SPECTATOR);
+                    plugin.deadPlayers.add(victim.getName());
+                    plugin.earnPoints(killer.getName(), 30, true);
+                    killer.sendTitle("", "§e\uD83D\uDCB030" + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
+                    for (Player p : plugin.getPlayers()) {
+                        if (!p.getGameMode().equals(GameMode.SPECTATOR) && p.getName().equals(killer.getName())) {
+                            plugin.messagePlayer(p, "§e\uD83D\uDCB05 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
+                            plugin.earnPoints(p.getName(), 5, true);
+                        } else {
+                            plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
+                        }
                     }
-                    plugin.deadTeams.add(PlayerConfig.get().getString("players." + victim.getName() + ".team"));
-                }
-
-                Set<String> teamList = new HashSet<>();
-
-                for (Player player : plugin.getPlayers()) {
-                    String team = PlayerConfig.get().getString("players." + player.getName() + ".team");
-                    if (team != null && !team.isEmpty()) {
-                        teamList.add(team);
+                    switch (plugin.deadPlayers.size()) {
+                        case 8:
+                            Bukkit.getWorld("world").getWorldBorder().setSize(100, 60);
+                            for (Player p : plugin.getPlayers()) {
+                                p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                            }
+                            break;
+                        case 16:
+                            Bukkit.getWorld("world").getWorldBorder().setSize(80, 60);
+                            for (Player p : plugin.getPlayers()) {
+                                p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                            }
+                            break;
+                        case 24:
+                            Bukkit.getWorld("world").getWorldBorder().setSize(60, 60);
+                            for (Player p : plugin.getPlayers()) {
+                                p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                            }
+                            break;
+                        case 32:
+                            Bukkit.getWorld("world").getWorldBorder().setSize(40, 60);
+                            for (Player p : plugin.getPlayers()) {
+                                p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                            }
+                            break;
+                        default:
+                            break;
                     }
-                }
+                    boolean teamDead = true;
+                    for (String player : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + victim.getName() + ".team") + ".players")) {
+                        if (!plugin.deadPlayers.contains(player)) {
+                            teamDead = false;
+                            break;
+                        }
+                    }
 
-                if (plugin.deadTeams.size() == teamList.size() - 1) {
-                    plugin.deadTeams.clear();
-                    plugin.runningTimers.remove("survivalgames");
-                    plugin.gameEnd();
-                }
+                    if (teamDead) {
+                        for (Player player2 : Bukkit.getServer().getOnlinePlayers()) {
+                            plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + victim.getName() + ".team")) + " §chave been eliminated.\n§f");
+                        }
+                        plugin.deadTeams.add(PlayerConfig.get().getString("players." + victim.getName() + ".team"));
+                    }
 
+                    Set<String> teamList = new HashSet<>();
+
+                    for (Player player : plugin.getPlayers()) {
+                        String team = PlayerConfig.get().getString("players." + player.getName() + ".team");
+                        if (team != null && !team.isEmpty()) {
+                            teamList.add(team);
+                        }
+                    }
+
+                    if (plugin.deadTeams.size() == teamList.size() - 1) {
+                        plugin.deadTeams.clear();
+                        plugin.runningTimers.remove("survivalgames");
+                        plugin.gameEnd();
+                    }
+
+                }
             }
         }
     }
@@ -251,6 +257,12 @@ public class LastHitEvent implements Listener {
             for(ItemStack item : kit){
                 if(item.getType() != Material.AIR) {
                     ItemMeta meta = item.getItemMeta();
+                    if(item.getType() == Material.TRIDENT){
+                        meta.addEnchant(Enchantment.LOYALTY, 3, true);
+                    }
+                    if(item.getType() == Material.CROSSBOW || item.getType() == Material.BOW){
+                        meta.addEnchant(Enchantment.INFINITY, 1, true);
+                    }
                     meta.setUnbreakable(true);
                     item.setItemMeta(meta);
                 }
