@@ -3,6 +3,7 @@ package me.chazzagram.showdown2.listeners;
 import me.chazzagram.showdown2.Showdown2;
 import org.bukkit.Color;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -34,14 +35,19 @@ public class VoteWalkEvent implements Listener {
                         plugin.playerVote.put(event.getPlayer(), wool);
                     }
                 }
-            }
-            if(plugin.votingEnabled) {
-                for (Material wool : getWoolColors()) {
-                    if (event.getTo().getBlock().getRelative(BlockFace.DOWN).getType().equals(wool)) {
-                        if (plugin.playerVote.containsKey(event.getPlayer())) {
-                            event.getTo().getBlock().getRelative(BlockFace.DOWN).setType(plugin.playerVote.get(event.getPlayer()));
+                if (plugin.votingEnabled) {
+                    for (Material wool : getWoolColors()) {
+                        if (event.getTo().getBlock().getRelative(BlockFace.DOWN).getType().equals(wool)) {
+                            if (plugin.playerVote.containsKey(event.getPlayer())) {
+                                event.getTo().getBlock().getRelative(BlockFace.DOWN).setType(plugin.playerVote.get(event.getPlayer()));
+                            }
                         }
                     }
+                }
+            } else if (plugin.currentMode.equals("Zoomo Go") && plugin.doubleJumpEnabled) {
+                Block block = event.getPlayer().getLocation().subtract(0, 1, 0).getBlock();
+                if (block.getType() != Material.AIR) {
+                    event.getPlayer().setAllowFlight(true);
                 }
             }
         }

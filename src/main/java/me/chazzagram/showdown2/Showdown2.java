@@ -36,6 +36,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public String currentMode = "Lobby";
 
+    public boolean doubleJumpEnabled = false;
+
     public HashMap<String, Map.Entry<BukkitTask, Integer>> runningTimers = new HashMap<>();
 
     public ArrayList<String> pausedTimers = new ArrayList<>();
@@ -137,6 +139,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         woolLogos.put(Material.LIGHT_BLUE_WOOL, "\uD83E\uDD68");
         woolLogos.put(Material.YELLOW_WOOL, "\ue238");
 
+        getServer().getPluginManager().registerEvents(new DoubleJumpEvent(this), this);
         getServer().getPluginManager().registerEvents(new DropItemEvent(this), this);
         getServer().getPluginManager().registerEvents(new LastHitEvent(this), this);
         getServer().getPluginManager().registerEvents(new VoteWalkEvent(this), this);
@@ -955,6 +958,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§a§l▶ ZOOMO GO! ◀", "", 0, 40, 0);
                             }
+                            doubleJumpEnabled = true;
                             startTimer(90, "zoomogo");
                             runningTimers.remove("zoomogostart");
                             cancel();
@@ -1417,7 +1421,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 60:
                             pvpEnabled = false;
+                            doubleJumpEnabled = false;
                             for (Player player : getPlayers()) {
+                                if(currentMode.equals("Zoomo Go")){
+                                    player.setAllowFlight(false);
+                                    player.setFlying(false);
+                                }
                                 player.setGameMode(GameMode.SPECTATOR);
                                 healFeedPlayer(player);
                                 Bukkit.getWorld("world").getWorldBorder().setCenter(0, 0);

@@ -9,6 +9,7 @@ me\chazzagram\showdown2\listeners\VoteSneakBombEvent.class
 me\chazzagram\showdown2\Showdown2$10.class
 me\chazzagram\showdown2\Showdown2$8.class
 me\chazzagram\showdown2\Showdown2$7.class
+me\chazzagram\showdown2\listeners\DoubleJumpEvent.class
 me\chazzagram\showdown2\listeners\ColourDashEvent.class
 me\chazzagram\showdown2\commands\MainCommand.class
 me\chazzagram\showdown2\listeners\CraftalotEvent.class
