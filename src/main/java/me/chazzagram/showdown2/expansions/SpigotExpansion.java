@@ -52,6 +52,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
     public String onPlaceholderRequest(Player p, String params) {
         List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
         List<Integer> leaderteampoints = new ArrayList<>(plugin.sortByValue().values());
+        List<String> modeteams = new ArrayList<>(plugin.sortMap(plugin.modeTeamPoints).keySet());
+        List<Integer> modeteampoints = new ArrayList<>(plugin.sortMap(plugin.modeTeamPoints).values());
         if(p == null){
             return "";
         }
@@ -61,22 +63,27 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "playerdisplay":
                 return plugin.getPlayerDisplayName(p.getName());
             case "team":
-                if (SpectatorConfig.get().getStringList("spectators").contains(p.getName())) {
+                if (SpectatorConfig.get().getConfigurationSection("spectators").getKeys(false).contains(p.getName())) {
                     return "Spectator";
                 } else {
                     String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
                     return Objects.requireNonNullElse(team, "No Team.");
                 }
             case "displayteam":
-                if (SpectatorConfig.get().getStringList("spectators").contains(p.getName())) {
+                if (SpectatorConfig.get().getConfigurationSection("spectators").getKeys(false).contains(p.getName())) {
                     return "Spectator";
                 } else {
                     String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
                     return Objects.requireNonNullElse(plugin.getTeamDisplayName(team), "No Team.");
                 }
             case "points":
-                String points = PlayerConfig.get().getString("players." + p.getName() + ".points");
-                return Objects.requireNonNullElse(points, "N/A");
+                if (SpectatorConfig.get().getStringList("spectators").contains(p.getName())) {
+                    String points = SpectatorConfig.get().getString("spectators." + p.getName() + ".points");
+                    return Objects.requireNonNullElse(points, "N/A");
+                } else {
+                    String points = PlayerConfig.get().getString("players." + p.getName() + ".points");
+                    return Objects.requireNonNullElse(points, "N/A");
+                }
             case "teampoints":
                 String selectTeam = PlayerConfig.get().getString("players." + p.getName() + ".team");
                 String teampoints = String.valueOf(TeamsConfig.get().getInt("teams." + selectTeam + ".points"));
@@ -97,27 +104,65 @@ public class SpigotExpansion extends PlaceholderExpansion {
                         return teamicon;
                     }
                 }
-            case "timer_sumo":
-                if (plugin.runningTimers.containsKey("sumo")) {
-                    return plugin.getTimer("sumo");
+            case "timer_bridgebuilders":
+                if (plugin.runningTimers.containsKey("bridgebuildersstart")) {
+                    return plugin.getTimer("bridgebuildersstart");
+                } else if (plugin.runningTimers.containsKey("bridgebuilders")){
+                    return plugin.getTimer("bridgebuilders");
+                } else {
+                    return "Waiting..";
+                }
+            case "timer_colourdash":
+                if (plugin.runningTimers.containsKey("colourdashstart")) {
+                    return plugin.getTimer("colourdashstart");
+                } else if (plugin.runningTimers.containsKey("colourdash")){
+                    return plugin.getTimer("colourdash");
                 } else {
                     return "Waiting..";
                 }
             case "timer_craftalot":
-                if (plugin.runningTimers.containsKey("craftalot")) {
+                if (plugin.runningTimers.containsKey("craftalotstart")) {
+                    return plugin.getTimer("craftalotstart");
+                } else if (plugin.runningTimers.containsKey("craftalot")){
                     return plugin.getTimer("craftalot");
                 } else {
                     return "Waiting..";
                 }
-            case "timer_slimegolfstart":
+            case "timer_gubgame":
+                if (plugin.runningTimers.containsKey("gubgamestart")) {
+                    return plugin.getTimer("gubgamestart");
+                } else if (plugin.runningTimers.containsKey("gubgame")){
+                    return plugin.getTimer("gubgame");
+                } else {
+                    return "Waiting..";
+                }
+            case "timer_slimegolf":
                 if (plugin.runningTimers.containsKey("slimegolfstart")) {
                     return plugin.getTimer("slimegolfstart");
+                } else if (plugin.runningTimers.containsKey("slimegolf")){
+                    return plugin.getTimer("slimegolf");
+                } else {
+                    return "Waiting..";
+                }
+            case "timer_survivalgames":
+                if (plugin.runningTimers.containsKey("survivalgamesstart")) {
+                    return plugin.getTimer("survivalgamesstart");
+                } else if (plugin.runningTimers.containsKey("survivalgames")){
+                    return plugin.getTimer("survivalgames");
                 } else {
                     return "Waiting..";
                 }
             case "timer_voting":
                 if (plugin.runningTimers.containsKey("voting")) {
                     return plugin.getTimer("voting");
+                } else {
+                    return "Waiting..";
+                }
+            case "timer_zoomogo":
+                if (plugin.runningTimers.containsKey("zoomogostart")) {
+                    return plugin.getTimer("zoomogostart");
+                } else if (plugin.runningTimers.containsKey("zoomogo")){
+                    return plugin.getTimer("zoomogo");
                 } else {
                     return "Waiting..";
                 }
@@ -287,6 +332,92 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "§8N/A";
                 }
+            case "modepoints_1":
+                if(modeteampoints.size() > 1) {
+                    if(modeteampoints.get(1) != null) {
+                        return "§e§l\uD83D\uDCB0" + modeteampoints.get(1);
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "modetop_1":
+                if(modeteams.size() > 1) {
+                    if(modeteams.get(1) != null) {
+                        return plugin.getTeamDisplayName(modeteams.get(1));
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "modepoints_2":
+                if(modeteampoints.size() > 2) {
+                    if(modeteampoints.get(2) != null) {
+                        return "§e§l\uD83D\uDCB0" + modeteampoints.get(2);
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "modetop_2":
+                if(modeteams.size() > 2) {
+                    if(modeteams.get(2) != null) {
+                        return plugin.getTeamDisplayName(modeteams.get(2));
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "modepoints_3":
+                if(modeteampoints.size() > 3) {
+                    if(modeteampoints.get(3) != null) {
+                        return "§e§l\uD83D\uDCB0" + modeteampoints.get(3);
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "modetop_3":
+                if(modeteams.size() > 3) {
+                    if(modeteams.get(3) != null) {
+                        return plugin.getTeamDisplayName(modeteams.get(3));
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "modepoints_4":
+                if(modeteampoints.size() > 4) {
+                    if(modeteampoints.get(4) != null) {
+                        return "§e§l\uD83D\uDCB0" + modeteampoints.get(4);
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "modetop_4":
+                if(modeteams.size() > 4) {
+                    if(modeteams.get(4) != null) {
+                        return plugin.getTeamDisplayName(modeteams.get(4));
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "playersalive":
+                if(plugin.currentMode.equals("Zoomo Go")){
+                    return String.valueOf(PlayerConfig.get().getConfigurationSection("players").getKeys(false).size() - plugin.deadPlayers.size());
+                } else {
+                    return "§8N/A";
+                }
             case "checkpoints_Team1":
                 return plugin.getTeamProgress("TestTeam1").toString();
             case "votedmode":
@@ -299,6 +430,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "§8Waiting..";
                 }
+            case "currentmode":
+                return plugin.currentMode;
             default:
                 return null;
         }

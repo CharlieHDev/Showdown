@@ -3,6 +3,7 @@ package me.chazzagram.showdown2.listeners;
 import me.chazzagram.showdown2.Showdown2;
 import org.bukkit.Color;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -31,6 +32,7 @@ public class VoteWalkEvent implements Listener {
                         Material wool = Material.getMaterial(colour);
                         if (!wool.equals(plugin.playerVote.get(event.getPlayer()))) {
                             event.getPlayer().sendTitle(plugin.woolLogos.get(wool), "", 0, 20, 10);
+                            event.getPlayer().playSound(event.getPlayer().getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 10, 1.0F);
                         }
                         plugin.playerVote.put(event.getPlayer(), wool);
                     }

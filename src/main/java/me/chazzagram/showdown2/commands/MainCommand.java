@@ -13,6 +13,9 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -208,7 +211,8 @@ public class MainCommand implements CommandExecutor {
                             Player p = Bukkit.getServer().getPlayer(args[1]);
                             plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| You died.");
                             p.setGameMode(GameMode.SPECTATOR);
-
+                            p.setAllowFlight(true);
+                            p.setFlying(true);
                             if (plugin.lastHitPlayer.containsKey(args[1])) {
                                 if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
                                     plugin.earnPoints(plugin.lastHitPlayer.get(args[1]), 20, true);
@@ -299,6 +303,23 @@ public class MainCommand implements CommandExecutor {
                             /mcevent unpause
                             """);
                     break;
+
+                case "teams":
+                    plugin.updateTeamGUI();
+                    ((Player) commandSender).openInventory(plugin.gui);
+                    break;
+
+//                    for(Player player : plugin.getPlayers()) {
+//                        ItemStack playerHead = new ItemStack(Material.PLAYER_HEAD, 1);
+//                        SkullMeta meta = (SkullMeta) playerHead.getItemMeta();
+//
+//                        meta.setOwningPlayer(player);
+//
+//                        meta.setDisplayName(player.getDisplayName());
+//                        playerHead.setItemMeta(meta);
+//
+//                        gui.addItem(playerHead);
+//                    }
                 case "createteam":
                     if(args.length > 1) {
                         if (TeamsConfig.get().getConfigurationSection("teams") == null) {

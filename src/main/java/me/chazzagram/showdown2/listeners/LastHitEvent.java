@@ -10,6 +10,7 @@ import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.entity.Slime;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -34,6 +35,10 @@ public class LastHitEvent implements Listener {
         if (plugin.currentMode.equals("Zoomo Go")) {
             if (e.getDamager() instanceof Player killer && e.getEntity() instanceof Player victim) {
                 plugin.lastHitPlayer.put(victim.getName(), killer.getName());
+            }
+        } else if (plugin.currentMode.equals("Slime Golf")) {
+            if (e.getDamager() instanceof Slime slime && e.getEntity() instanceof Player victim) {
+                e.setCancelled(true);
             }
         } else {
             if(plugin.pvpEnabled) {
@@ -62,6 +67,10 @@ public class LastHitEvent implements Listener {
                     plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died to " + plugin.getPlayerDisplayName(killer.getName()));
                     e.setCancelled(true);
                     victim.setGameMode(GameMode.SPECTATOR);
+                    victim.getInventory().clear();
+                    for (ItemStack item : getGubKits().get(plugin.gubGameKills.get(victim.getName()))) {
+                        victim.getInventory().addItem(item);
+                    }
                     plugin.gubGameKills.put(killer.getName(), plugin.gubGameKills.get(killer.getName()) + 1);
                     plugin.earnPoints(killer.getName(), 40 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName())), true);
                     plugin.gubKitKills.put(plugin.gubGameKills.get(killer.getName()), plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName())) + 1);
@@ -89,11 +98,12 @@ public class LastHitEvent implements Listener {
                                     if (timeLeft == 0) {
                                         plugin.messageConsole("Timer finished.");
                                         victim.setGameMode(GameMode.ADVENTURE);
+                                        victim.sendTitle("", "", 0, 30, 0);
                                         victim.teleport(TeleportConfig.get().getLocation("teams." + PlayerConfig.get().getString("players." + victim.getName() + ".team") + ".gubgame"));
                                         plugin.runningTimers.remove(victim.getName() + "respawn");
                                         cancel();
                                     } else {
-
+                                        victim.sendTitle("§c§lYou Died.", "§6Respawning in §c" + timeLeft + "..", 0, 30, 0);
                                         plugin.messageConsole(timeLeft + " seconds left..");
                                     }
                                 }

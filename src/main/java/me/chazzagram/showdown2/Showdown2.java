@@ -10,8 +10,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -90,6 +92,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<Integer, Integer> gubKitKills = new HashMap<>();
 
+    public Inventory gui = Bukkit.createInventory(null, 36, "§eTeams");
+
     @Override
     public void onEnable() {
         // Plugin startup logic
@@ -139,6 +143,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         woolLogos.put(Material.LIGHT_BLUE_WOOL, "\uD83E\uDD68");
         woolLogos.put(Material.YELLOW_WOOL, "\ue238");
 
+        getServer().getPluginManager().registerEvents(new InventoryEvent(this), this);
         getServer().getPluginManager().registerEvents(new DoubleJumpEvent(this), this);
         getServer().getPluginManager().registerEvents(new DropItemEvent(this), this);
         getServer().getPluginManager().registerEvents(new LastHitEvent(this), this);
@@ -236,7 +241,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }
         if(!playerFound){
             if(!SpectatorConfig.get().getStringList("spectators").isEmpty()) {
-                for (String player : SpectatorConfig.get().getStringList("spectators")) {
+                for (String player : SpectatorConfig.get().getConfigurationSection("spectators").getKeys(false)) {
                     if (p.getName().equals(player)) {
                         playerFound = true;
                         break;
@@ -244,9 +249,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                 }
             }
             if(!playerFound){
-                List<String> spectators = SpectatorConfig.get().getStringList("spectators");
-                spectators.add(p.getName());
-                SpectatorConfig.get().set("spectators", spectators);
+                SpectatorConfig.get().set("spectators." + p.getName() + ".points", 0);
                 SpectatorConfig.save();
             }
         }
@@ -324,7 +327,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 //    Get all spectators
     public List<Player> getSpectators(){
         List<Player> spectators = new ArrayList<>();
-        for(String spectator : SpectatorConfig.get().getStringList("spectators")){
+        for(String spectator : SpectatorConfig.get().getConfigurationSection("spectators").getKeys(false)){
             if(Bukkit.getServer().getPlayer(spectator) != null) {
                 spectators.add(Bukkit.getPlayer(spectator));
             }
@@ -508,7 +511,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         runningTimers.remove("teleporttimerspec");
                         cancel();
                     } else {
-                        for (Player player : getPlayers()) {
+                        for (Player player : getSpectators()) {
                             player.sendTitle("", "§7§oTeleporting in " + timeLeft + "...", 0, 20, 20);
                         }
                     }
@@ -542,6 +545,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 60:
                             teamTeleport("slimegolf", 5);
+                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.slimegolf"));
                             resetModePoints();
                             resetSlimeCompletions();
                             break;
@@ -555,6 +559,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
 
                         case 50:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -565,6 +570,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 30:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -575,6 +581,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 10:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             ItemStack knockbackStick = new ItemStack(Material.STICK);
                             knockbackStick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 3);
                             for (Player player : getPlayers()) {
@@ -588,11 +595,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 5, 4, 3, 2, 1:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*timeLeft);
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
                             break;
                         case 0:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 2);
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§a§l▶ GO! ◀", "", 0, 40, 0);
                             }
@@ -624,6 +633,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 60:
                             teamTeleport("colourdash", 5);
+                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.colourdash"));
                             resetTeamCompletions();
                             resetModePoints();
                             break;
@@ -637,6 +647,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
 
                         case 50:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -647,6 +658,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 30:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -657,7 +669,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 10:
-
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -668,11 +680,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 5, 4, 3, 2, 1:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*timeLeft);
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
                             break;
                         case 0:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 2);
                             pvpEnabled = true;
                             for (Player player : getPlayers()) {
                                 ItemStack infiniteBlocks = new ItemStack(Material.getMaterial(TeamsConfig.get().getString("teams." + PlayerConfig.get().getString("players." + player.getName() + ".team") + ".colourname") + "_CONCRETE"));
@@ -708,6 +722,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 60:
                             teleportPlayers(TeleportConfig.get().getLocation("players.craftalot"), 5);
+                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.craftalot"));
                             resetCraftalot();
                             resetModePoints();
                             break;
@@ -721,6 +736,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
 
                         case 50:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -731,6 +747,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 30:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -741,7 +758,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 10:
-
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -752,11 +769,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 5, 4, 3, 2, 1:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*timeLeft);
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
                             break;
                         case 0:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 2);
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§a§l▶ CRAFT! ◀", "§7Speak to Edguard.", 0, 40, 0);
                                 player.getInventory().clear();
@@ -798,6 +817,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 60:
                             teamTeleport("bridgebuilders", 5);
+                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.bridgebuilders"));
                             resetBridgeBuilders();
                             resetModePoints();
                             break;
@@ -811,6 +831,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
 
                         case 50:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -821,6 +842,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 30:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -831,7 +853,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 10:
-
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 ItemStack infiniteBlocks = new ItemStack(Material.getMaterial(TeamsConfig.get().getString("teams." + PlayerConfig.get().getString("players." + player.getName() + ".team") + ".colourname") + "_CONCRETE"));
                                 infiniteBlocks.setAmount(64);
@@ -845,11 +867,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 5, 4, 3, 2, 1:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*timeLeft);
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
                             break;
                         case 0:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 2);
                             for (Player player : getPlayers()) {
                                 player.setGameMode(GameMode.CREATIVE);
                                 player.sendTitle("§a§l▶ BUILD! ◀", "", 0, 40, 0);
@@ -899,10 +923,18 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     runningTimers.get("zoomogostart").setValue(timeLeft);
                     switch (timeLeft) {
                         case 60:
+                            for(int[] box : getZoomoSpawnBox()){
+                                for(int i = box[0]; i <= box[0]+2; i++){
+                                    for(int j = box[2]; j <= box[2]+2; j++){
+                                        Bukkit.getServer().getWorld("world").getBlockAt(i, box[1], j).setType(Material.BARRIER);
+                                    }
+                                }
+                            }
                             for(Player p : getPlayers()){
                                 lastHitPlayer.put(p.getName(), "");
                             }
                             teamTeleport("zoomogo", 5);
+                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.zoomogo"));
                             resetZoomoGo();
                             resetModePoints();
                             break;
@@ -916,6 +948,14 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
 
                         case 50:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
+                            for (int i = 1; i <= 26; i++){
+                                summonIsland(zoomoIslands(i));
+                                if(i > 5){
+                                    destroyIsland(zoomoIslands(i));
+                                }
+                                summonIsland(zoomoIslands(27));
+                            }
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -926,6 +966,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 30:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -936,6 +977,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 10:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             ItemStack knockbackStick = new ItemStack(Material.STICK);
                             knockbackStick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 3);
                             for (Player player : getPlayers()) {
@@ -949,19 +991,28 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 5, 4, 3, 2, 1:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*timeLeft);
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
                             break;
                         case 0:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 2);
                             pvpEnabled = true;
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§a§l▶ ZOOMO GO! ◀", "", 0, 40, 0);
                             }
+                            for(int[] box : getZoomoSpawnBox()){
+                                for(int i = box[0]; i <= box[0]+2; i++){
+                                    for(int j = box[2]; j <= box[2]+2; j++){
+                                        Bukkit.getServer().getWorld("world").getBlockAt(i, box[1], j).setType(Material.AIR);
+                                    }
+                                }
+                            }
                             doubleJumpEnabled = true;
-                            startTimer(90, "zoomogo");
                             runningTimers.remove("zoomogostart");
                             cancel();
+                            initiateZoomoIslands();
                             break;
                         default:
                             break;
@@ -974,6 +1025,256 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         runningTimers.put("zoomogostart", new AbstractMap.SimpleEntry<>(task, 61));
     }
 
+    public void initiateZoomoIslands(){
+        BukkitTask task = new BukkitRunnable() {
+            int y = 72;
+            int timeLeft = 261;
+            @Override
+            public void run() {
+                if(!pausedTimers.contains("zoomogo")) {
+                    timeLeft--;
+                    runningTimers.get("zoomogo").setValue(timeLeft);
+                    switch (timeLeft) {
+                        case 250:
+                            destroyIsland(zoomoIslands(27));
+                        case 230:
+                            summonIsland(zoomoIslands(6));
+                            break;
+                        case 239:
+                            summonIsland(zoomoIslands(10));
+                            break;
+                        case 238:
+                            summonIsland(zoomoIslands(7));
+                            break;
+                        case 235:
+                            destroyIsland(zoomoIslands(1));
+                            break;
+                        case 234:
+                            destroyIsland(zoomoIslands(2));
+                            break;
+                        case 233:
+                            destroyIsland(zoomoIslands(3));
+                            break;
+                        case 232:
+                            destroyIsland(zoomoIslands(4));
+                            break;
+                        case 215:
+                            summonIsland(zoomoIslands(8));
+                            break;
+                        case 214:
+                            summonIsland(zoomoIslands(9));
+                            break;
+                        case 213:
+                            summonIsland(zoomoIslands(12));
+                            break;
+                        case 212:
+                            summonIsland(zoomoIslands(11));
+                            break;
+                        case 210:
+                            destroyIsland(zoomoIslands(5));
+                            break;
+                        case 209:
+                            destroyIsland(zoomoIslands(6));
+                            break;
+                        case 208:
+                            destroyIsland(zoomoIslands(10));
+                            break;
+                        case 207:
+                            destroyIsland(zoomoIslands(7));
+                            break;
+                        case 190:
+                            summonIsland(zoomoIslands(13));
+                            break;
+                        case 189:
+                            summonIsland(zoomoIslands(14));
+                            break;
+                        case 188:
+                            summonIsland(zoomoIslands(15));
+                            break;
+                        case 185:
+                            destroyIsland(zoomoIslands(8));
+                            break;
+                        case 184:
+                            destroyIsland(zoomoIslands(9));
+                            break;
+                        case 183:
+                            destroyIsland(zoomoIslands(12));
+                            break;
+                        case 182:
+                            destroyIsland(zoomoIslands(11));
+                            break;
+                        case 165:
+                            summonIsland(zoomoIslands(16));
+                            break;
+                        case 164:
+                            summonIsland(zoomoIslands(17));
+                            break;
+                        case 163:
+                            summonIsland(zoomoIslands(18));
+                            break;
+                        case 160:
+                            destroyIsland(zoomoIslands(13));
+                            break;
+                        case 149:
+                            destroyIsland(zoomoIslands(14));
+                            break;
+                        case 158:
+                            destroyIsland(zoomoIslands(15));
+                            break;
+                        case 140:
+                            summonIsland(zoomoIslands(19));
+                            break;
+                        case 139:
+                            summonIsland(zoomoIslands(20));
+                            break;
+                        case 138:
+                            summonIsland(zoomoIslands(22));
+                            break;
+                        case 135:
+                            destroyIsland(zoomoIslands(16));
+                            break;
+                        case 134:
+                            destroyIsland(zoomoIslands(17));
+                            break;
+                        case 133:
+                            destroyIsland(zoomoIslands(18));
+                            break;
+                        case 115:
+                            summonIsland(zoomoIslands(21));
+                            break;
+                        case 114:
+                            summonIsland(zoomoIslands(23));
+                            break;
+                        case 110:
+                            destroyIsland(zoomoIslands(19));
+                            break;
+                        case 109:
+                            destroyIsland(zoomoIslands(20));
+                            break;
+                        case 108:
+                            destroyIsland(zoomoIslands(22));
+                            break;
+                        case 90:
+                            summonIsland(zoomoIslands(24));
+                            break;
+                        case 89:
+                            summonIsland(zoomoIslands(25));
+                            break;
+                        case 85:
+                            destroyIsland(zoomoIslands(21));
+                            break;
+                        case 84:
+                            destroyIsland(zoomoIslands(23));
+                            break;
+                        case 65:
+                            summonIsland(zoomoIslands(26));
+                            break;
+                        case 60:
+                            destroyIsland(zoomoIslands(24));
+                            break;
+                        case 50:
+                            destroyIsland(zoomoIslands(25));
+                            break;
+                        case 20:
+                            destroyIsland(zoomoIslands(26));
+                            break;
+                        case 0:
+                            runningTimers.remove("zoomogo");
+                            cancel();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("zoomogo", new AbstractMap.SimpleEntry<>(task, 241));
+    }
+
+    public int[] zoomoIslands(int index){
+
+        int[][] coords = {
+                {-584, 330},
+                {-612, 321},
+                {-612, 339},
+                {-582, 351},
+                {-610, 362},
+                {-596, 380},
+                {-569, 394},
+                {-594, 413},
+                {-572, 426},
+                {-614, 394},
+                {-590, 440},
+                {-548, 409},
+                {-533, 431},
+                {-519, 464},
+                {-555, 457},
+                {-543, 485},
+                {-573, 479},
+                {-599, 492},
+                {-586, 514},
+                {-612, 516},
+                {-599, 554},
+                {-569, 532},
+                {-574, 559},
+                {-598, 578},
+                {-566, 585},
+                {-575, 615},
+                {-597, 340}
+        };
+
+        return coords[index-1];
+    }
+
+    public int[][] getZoomoSpawnBox(){
+        return new int[][]{
+            {-600, 124, 364},
+            {-605, 124, 350},
+            {-600, 124, 336},
+            {-586, 124, 331},
+            {-572, 124, 336},
+            {-567, 124, 350},
+            {-572, 124, 364},
+            {-586, 124, 369}
+        };
+    }
+
+    public void summonIsland(int[] islandCoords){
+        Bukkit.getWorld("world").getBlockAt(islandCoords[0], 74, islandCoords[1]).setType(Material.REDSTONE_BLOCK);
+        Bukkit.getWorld("world").getBlockAt(islandCoords[0], 74, islandCoords[1]).setType(Material.STONE);
+    }
+
+    public void destroyIsland(int[] islandCoords){
+        final String name = ("islandtimer" + runningTimers.size()+1);
+        Bukkit.getWorld("world").getBlockAt(islandCoords[0], 73, islandCoords[1]).setType(Material.REDSTONE_BLOCK);
+        Bukkit.getWorld("world").getBlockAt(islandCoords[0], 73, islandCoords[1]).setType(Material.STONE);
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 6;
+            @Override
+            public void run() {
+                if(runningTimers.containsKey(name)) {
+                    if (!pausedTimers.contains(name)) {
+                        runningTimers.get(name).setValue(timeLeft);
+                        timeLeft--;
+                        if (timeLeft == 0) {
+                            Bukkit.getWorld("world").getBlockAt(islandCoords[0], 72, islandCoords[1]).setType(Material.REDSTONE_BLOCK);
+                            Bukkit.getWorld("world").getBlockAt(islandCoords[0], 72, islandCoords[1]).setType(Material.STONE);
+                            runningTimers.remove(name);
+                            cancel();
+                        }
+                    }
+                } else {
+                    messageConsole("Timer removed by external factor.");
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, 6));
+    }
 
     public void resetZoomoGo(){
         deadPlayers.clear();
@@ -996,6 +1297,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 lastHitPlayer.put(p.getName(), "");
                             }
                             teamTeleport("gubgame", 5);
+                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.gubgame"));
                             resetGubGame();
                             resetModePoints();
                             break;
@@ -1009,6 +1311,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
 
                         case 50:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -1019,6 +1322,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 30:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -1029,6 +1333,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 10:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             ItemStack firstKit = new ItemStack(Material.NETHERITE_SWORD);
                             ItemMeta meta = firstKit.getItemMeta();
                             meta.setUnbreakable(true);
@@ -1044,11 +1349,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 5, 4, 3, 2, 1:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*timeLeft);
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
                             break;
                         case 0:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 2);
                             pvpEnabled = true;
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§a§l▶ GUB! ◀", "", 0, 40, 0);
@@ -1093,6 +1400,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 lastHitPlayer.put(p.getName(), "");
                             }
                             teamTeleport("survivalgames", 5);
+                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.survivalgames"));
                             resetSurvivalGames();
                             resetModePoints();
                             break;
@@ -1108,6 +1416,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
 
                         case 50:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -1118,6 +1427,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 30:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -1128,6 +1438,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 10:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -1138,11 +1449,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 5, 4, 3, 2, 1:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*timeLeft);
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
                             break;
                         case 0:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 2);
                             startGracePeriod();
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§a§l▶ LOOT! ◀", "", 0, 40, 0);
@@ -1291,6 +1604,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         int totalOutOfTwenty = round((double) leaderModeVotes.getFirst() /totalvotes*20);
         float percentageFirst = ((float) leaderModeVotes.getFirst() /totalvotes)*100;
         currentMode = leaderMode.getFirst();
+        playSoundAll(Sound.ENTITY_GENERIC_EXPLODE, 1.5F);
         BukkitTask task = new BukkitRunnable() {
             int percentElapsed = 0;
             @Override
@@ -1342,6 +1656,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 90:
                             currentMode = "Voting";
+                            playSoundAll(Sound.ITEM_GOAT_HORN_SOUND_0, 1);
                             for(int i = 109; i <= 139; i++){
                                 for(int j = -381; j <= -351; j++){
                                     Bukkit.getServer().getWorld("world").getBlockAt(j, 122, i).setType(Material.BLACK_WOOL);
@@ -1353,6 +1668,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
                         case 75:
                             teamTeleport("votearena", 0);
+                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.votearena"));
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
@@ -1363,7 +1679,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                         """);
                             }
                             break;
+                        case 74:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
+                            break;
                         case 60:
+                            playSoundAll(Sound.ITEM_GOAT_HORN_SOUND_1, 1);
                             votingEnabled = true;
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
@@ -1376,6 +1696,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 30:
+                            playSoundAll(Sound.BLOCK_FIRE_EXTINGUISH, 1);
                             votingEnabled = false;
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
@@ -1388,6 +1709,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 25:
+                            playSoundAll(Sound.ENTITY_CREEPER_PRIMED, 1);
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§7§k000000000", "", 0, 100, 40);
                             }
@@ -1456,6 +1778,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                         """);
                             }
                             teleportPlayers(TeleportConfig.get().getLocation("players.lobby"), 5);
+                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.lobby"));
                             break;
                         case 35:
                             for (Player player : getPlayers()) {
@@ -1550,6 +1873,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         p.setFoodLevel(20);
     }
 
+    public void playSoundAll(Sound sound, float pitch) {
+        for(Player player : Bukkit.getOnlinePlayers()){
+            player.playSound(player.getLocation(), sound, 10, pitch);
+        }
+    }
+
     public void getReadyPlayers(){
         resetReady();
         BukkitTask task = new BukkitRunnable() {
@@ -1622,6 +1951,87 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }
     }
 
+    public void startEvent(){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 91;
+            @Override
+            public void run() {
+                if(!pausedTimers.contains("startevent")) {
+                    timeLeft--;
+                    runningTimers.get("startevent").setValue(timeLeft);
+                    switch (timeLeft) {
+                        case 90:
+                            currentMode = "Start";
+//                            Play music
+                            PotionEffect PotionEffect = new PotionEffect(PotionEffectType.LEVITATION, 5, 1, false, false);
+                            for(Player player : getPlayers()) {
+                                player.addPotionEffect(PotionEffect);
+                            }
+                            teleportPlayers(TeleportConfig.get().getLocation("players.stage"), 5);
+                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.stage"));
+                            break;
+                        case 85:
+                            PotionEffect PotionEffect2 = new PotionEffect(PotionEffectType.SLOW_FALLING, 5, 1, false, false);
+                            for(Player player : getPlayers()) {
+                                player.addPotionEffect(PotionEffect2);
+                            }
+                            break;
+                        case 0:
+                            runningTimers.remove("voting");
+                            cancel();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("startevent", new AbstractMap.SimpleEntry<>(task, 91));
+    }
+
+
+    public void updateTeamGUI() {
+        ItemStack divider1 = new ItemStack(Material.RED_CANDLE, 1);
+        ItemStack divider2 = new ItemStack(Material.YELLOW_CANDLE, 1);
+        ItemStack divider3 = new ItemStack(Material.LIGHT_BLUE_CANDLE, 1);
+        ItemStack divider4 = new ItemStack(Material.PINK_CANDLE, 1);
+        ItemStack air = new ItemStack(Material.AIR, 1);
+        int index = 0;
+        int playerindex;
+        plugin.gui.clear();
+        plugin.gui.setItem(4, divider1);
+        plugin.gui.setItem(13, divider2);
+        plugin.gui.setItem(22, divider3);
+        plugin.gui.setItem(31, divider4);
+        for(String teamname : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)) {
+            playerindex = 0;
+            for (String playername : TeamsConfig.get().getStringList("teams." + teamname + ".players")) {
+                playerindex++;
+                ItemStack playerHead = new ItemStack(Material.PLAYER_HEAD, 1);
+                SkullMeta meta = (SkullMeta) playerHead.getItemMeta();
+                meta.setDisplayName(playername);
+                if (Bukkit.getPlayer(playername) != null) {
+                    Player player = Bukkit.getPlayer(playername);
+
+                    meta.setOwningPlayer(player);
+                }
+                playerHead.setItemMeta(meta);
+                plugin.gui.setItem(index, playerHead);
+                index++;
+            }
+            if(playerindex < 4){
+                for(int i = 0; i < 4-playerindex; i++){
+                    plugin.gui.setItem(index, air);
+                    index++;
+                }
+            }
+            if(index == 4 || index == 13 || index == 22 || index == 31){
+                index++;
+            }
+        }
+    }
 //    public void playerMedal(Player p) {
 //        ItemStack[] currentInv = p.getInventory().getContents();
 //        p.getInventory().setItemInOffHand();
