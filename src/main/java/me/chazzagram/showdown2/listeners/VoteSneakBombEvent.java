@@ -27,7 +27,7 @@ public class VoteSneakBombEvent implements Listener {
     @EventHandler
     public void voteSneakBombEvent(PlayerToggleSneakEvent e) {
 
-        if(plugin.votingEnabled){
+        if(plugin.votingEnabled && plugin.powerUpHolders.contains(e.getPlayer().getName())){
             if(!e.getPlayer().isSneaking()){
                 BukkitTask task = new BukkitRunnable() {
                     int timeLeft = 0;
@@ -63,7 +63,7 @@ public class VoteSneakBombEvent implements Listener {
                                     Particle.DustOptions dustOptions = new Particle.DustOptions(plugin.woolColors.get(plugin.playerVote.get(e.getPlayer())), 4);
 
                                     e.getPlayer().getWorld().spawnParticle(Particle.DUST, e.getPlayer().getLocation(), 300, 1.5, 0.0, 1.5, 1, dustOptions, false);
-
+                                    plugin.powerUpHolders.remove(e.getPlayer().getName());
                                     cancel();
                                 } else {
                                     StringBuilder progressfail = new StringBuilder();

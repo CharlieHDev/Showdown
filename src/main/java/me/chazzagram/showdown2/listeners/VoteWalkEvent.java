@@ -2,6 +2,7 @@ package me.chazzagram.showdown2.listeners;
 
 import me.chazzagram.showdown2.Showdown2;
 import org.bukkit.Color;
+import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
@@ -46,7 +47,7 @@ public class VoteWalkEvent implements Listener {
                         }
                     }
                 }
-            } else if (plugin.currentMode.equals("Zoomo Go") && plugin.doubleJumpEnabled) {
+            } else if (plugin.currentMode.equals("Zoomo Go") && plugin.doubleJumpEnabled && event.getPlayer().getGameMode().equals(GameMode.ADVENTURE)) {
                 Block block = event.getPlayer().getLocation().subtract(0, 1, 0).getBlock();
                 if (block.getType() != Material.AIR) {
                     event.getPlayer().setAllowFlight(true);

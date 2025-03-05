@@ -6,6 +6,8 @@ import me.chazzagram.showdown2.files.*;
 import me.chazzagram.showdown2.listeners.*;
 import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -92,6 +94,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<Integer, Integer> gubKitKills = new HashMap<>();
 
+    public List<String> powerUpHolders = new ArrayList<>();
+
     public Inventory gui = Bukkit.createInventory(null, 36, "§eTeams");
 
     @Override
@@ -144,6 +148,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         woolLogos.put(Material.YELLOW_WOOL, "\ue238");
 
         getServer().getPluginManager().registerEvents(new InventoryEvent(this), this);
+        getServer().getPluginManager().registerEvents(new PickupItemEvent(this), this);
         getServer().getPluginManager().registerEvents(new DoubleJumpEvent(this), this);
         getServer().getPluginManager().registerEvents(new DropItemEvent(this), this);
         getServer().getPluginManager().registerEvents(new LastHitEvent(this), this);
@@ -595,7 +600,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 5, 4, 3, 2, 1:
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*timeLeft);
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*(6-timeLeft));
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
@@ -680,7 +685,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 5, 4, 3, 2, 1:
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*timeLeft);
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*(6-timeLeft));
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
@@ -769,7 +774,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 5, 4, 3, 2, 1:
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*timeLeft);
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*(6-timeLeft));
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
@@ -867,7 +872,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 5, 4, 3, 2, 1:
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*timeLeft);
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*(6-timeLeft));
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
@@ -991,7 +996,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 5, 4, 3, 2, 1:
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*timeLeft);
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*(6-timeLeft));
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
@@ -1349,7 +1354,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 5, 4, 3, 2, 1:
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*timeLeft);
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*(6-timeLeft));
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
@@ -1449,7 +1454,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 5, 4, 3, 2, 1:
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*timeLeft);
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*(6-timeLeft));
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
@@ -1695,6 +1700,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                         """);
                             }
                             break;
+                        case 50:
+                            summonPowerUp(20);
+                            break;
                         case 30:
                             playSoundAll(Sound.BLOCK_FIRE_EXTINGUISH, 1);
                             votingEnabled = false;
@@ -1718,6 +1726,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             countVotes();
                             break;
                         case 0:
+                            powerUpHolders.clear();
+                            for (Entity entity : Bukkit.getWorld("world").getEntities()) {
+                                if (entity instanceof Item) {
+                                    entity.remove();
+                                }
+                            }
                             runningTimers.remove("voting");
                             cancel();
                             break;
@@ -1730,6 +1744,57 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 0L, 20L);
 
         runningTimers.put("voting", new AbstractMap.SimpleEntry<>(task, 91));
+    }
+
+    public void summonPowerUp(int time){
+        Random random = new Random();
+        int x = -351-random.nextInt(31);
+        int z = 109+random.nextInt(31);
+        ItemStack tntItemStack = new ItemStack(Material.TNT);
+        Location coords = new Location(Bukkit.getWorld("world"), x,123,z);
+        Item powerUp = Bukkit.getWorld("world").dropItemNaturally(coords, tntItemStack);
+        powerUp.setGlowing(true);
+        coords.setY(126);
+        playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
+        for(Player player : getPlayers()) {
+            player.sendMessage("""
+                    §a
+                    §a
+                    §a§lA POWER UP HAS SPAWNED!
+                    §a
+                    """);
+        }
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = time+1;
+            @Override
+            public void run() {
+                if(runningTimers.containsKey("powerup")) {
+                    if (!pausedTimers.contains("powerup")) {
+                        timeLeft--;
+                        runningTimers.get("powerup").setValue(timeLeft);
+                        if (timeLeft == 0) {
+                            runningTimers.remove("powerup");
+                            cancel();
+                        } else {
+                            Particle.DustOptions dustOptions = new Particle.DustOptions(Color.WHITE, 4);
+
+                            coords.setX(powerUp.getLocation().getX());
+                            coords.setZ(powerUp.getLocation().getZ());
+
+                            Bukkit.getWorld("world").spawnParticle(Particle.DUST, coords, 40, 0.0, 1, 0.0, 1, dustOptions, false);
+                        }
+                    }
+                    if (!runningTimers.containsKey("powerup")) {
+                        cancel();
+                    }
+                } else {
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("powerup", new AbstractMap.SimpleEntry<>(task, time+1));
     }
 
     public void gameEnd(){

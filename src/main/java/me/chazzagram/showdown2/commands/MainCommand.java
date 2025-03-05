@@ -211,8 +211,10 @@ public class MainCommand implements CommandExecutor {
                             Player p = Bukkit.getServer().getPlayer(args[1]);
                             plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| You died.");
                             p.setGameMode(GameMode.SPECTATOR);
-                            p.setAllowFlight(true);
-                            p.setFlying(true);
+                            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                                p.setAllowFlight(true);
+                                p.setFlying(true);
+                            }, 1L);
                             if (plugin.lastHitPlayer.containsKey(args[1])) {
                                 if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
                                     plugin.earnPoints(plugin.lastHitPlayer.get(args[1]), 20, true);
