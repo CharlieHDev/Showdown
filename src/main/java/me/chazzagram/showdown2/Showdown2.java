@@ -106,14 +106,14 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
         this.getCommand("mcevent").setExecutor(new MainCommand(this));
 
-        teamColors.put("TestTeam1", Color.RED);
-        teamColors.put("TestTeam2", Color.ORANGE);
-        teamColors.put("TestTeam3", Color.YELLOW);
-        teamColors.put("TestTeam4", Color.LIME);
-        teamColors.put("TestTeam5", Color.AQUA);
-        teamColors.put("TestTeam6", Color.NAVY);
-        teamColors.put("TestTeam7", Color.FUCHSIA);
-        teamColors.put("TestTeam8", Color.WHITE);
+        teamColors.put("RubyRaiders", Color.RED);
+        teamColors.put("AmberAmbushers", Color.ORANGE);
+        teamColors.put("TopazTroopers", Color.YELLOW);
+        teamColors.put("KyaniteKillers", Color.LIME);
+        teamColors.put("DiamondDestroyers", Color.AQUA);
+        teamColors.put("SapphireSoldiers", Color.NAVY);
+        teamColors.put("SmithsoniteSlayers", Color.FUCHSIA);
+        teamColors.put("CrystalCrashers", Color.WHITE);
 
         woolModes.put(Material.WHITE_WOOL, "Survival Games");
         woolModes.put(Material.PURPLE_WOOL, "Gub Game");
@@ -501,9 +501,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     }
 
 //    Teleports all spectators
-    public void teleportSpectators(Location location){
+    public void teleportSpectators(Location location, int countdown){
         BukkitTask task = new BukkitRunnable() {
-            int timeLeft = 6;
+            int timeLeft = countdown+1;
             @Override
             public void run() {
                 if(!pausedTimers.contains("teleporttimerspec")) {
@@ -525,7 +525,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
         }.runTaskTimer(this, 0L, 20L);
 
-        runningTimers.put("teleporttimerspec", new AbstractMap.SimpleEntry<>(task, 6));
+        runningTimers.put("teleporttimerspec", new AbstractMap.SimpleEntry<>(task, countdown+1));
     }
 
     public String getTeamDisplayName(String team){
@@ -550,7 +550,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 60:
                             teamTeleport("slimegolf", 5);
-                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.slimegolf"));
+                            teleportSpectators(TeleportConfig.get().getLocation("spectators.slimegolf"), 5);
                             resetModePoints();
                             resetSlimeCompletions();
                             break;
@@ -638,7 +638,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 60:
                             teamTeleport("colourdash", 5);
-                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.colourdash"));
+                            teleportSpectators(TeleportConfig.get().getLocation("spectators.colourdash"), 5);
                             resetTeamCompletions();
                             resetModePoints();
                             break;
@@ -727,7 +727,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 60:
                             teleportPlayers(TeleportConfig.get().getLocation("players.craftalot"), 5);
-                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.craftalot"));
+                            teleportSpectators(TeleportConfig.get().getLocation("spectators.craftalot"), 5);
                             resetCraftalot();
                             resetModePoints();
                             break;
@@ -822,7 +822,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 60:
                             teamTeleport("bridgebuilders", 5);
-                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.bridgebuilders"));
+                            teleportSpectators(TeleportConfig.get().getLocation("spectators.bridgebuilders"), 5);
                             resetBridgeBuilders();
                             resetModePoints();
                             break;
@@ -939,7 +939,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 lastHitPlayer.put(p.getName(), "");
                             }
                             teamTeleport("zoomogo", 5);
-                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.zoomogo"));
+                            teleportSpectators(TeleportConfig.get().getLocation("spectators.zoomogo"), 5);
                             resetZoomoGo();
                             resetModePoints();
                             break;
@@ -1033,7 +1033,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public void initiateZoomoIslands(){
         BukkitTask task = new BukkitRunnable() {
             int y = 72;
-            int timeLeft = 261;
+            int timeLeft = 256;
             @Override
             public void run() {
                 if(!pausedTimers.contains("zoomogo")) {
@@ -1195,7 +1195,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
         }.runTaskTimer(this, 0L, 20L);
 
-        runningTimers.put("zoomogo", new AbstractMap.SimpleEntry<>(task, 241));
+        runningTimers.put("zoomogo", new AbstractMap.SimpleEntry<>(task, 256));
     }
 
     public int[] zoomoIslands(int index){
@@ -1302,7 +1302,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 lastHitPlayer.put(p.getName(), "");
                             }
                             teamTeleport("gubgame", 5);
-                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.gubgame"));
+                            teleportSpectators(TeleportConfig.get().getLocation("spectators.gubgame"), 5);
                             resetGubGame();
                             resetModePoints();
                             break;
@@ -1405,7 +1405,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 lastHitPlayer.put(p.getName(), "");
                             }
                             teamTeleport("survivalgames", 5);
-                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.survivalgames"));
+                            teleportSpectators(TeleportConfig.get().getLocation("spectators.survivalgames"), 5);
                             resetSurvivalGames();
                             resetModePoints();
                             break;
@@ -1616,7 +1616,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             public void run() {
                 percentElapsed++;
                 if(percentElapsed <= totalOutOfTwenty) {
-                    for(Player player : getPlayers()) {
+                    for(Player player : Bukkit.getOnlinePlayers()) {
                         StringBuilder percentprogress = new StringBuilder();
                         percentprogress.append("§e|".repeat(percentElapsed));
                         percentprogress.append("§8|".repeat(20 - percentElapsed));
@@ -1633,7 +1633,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             }
 
         }.runTaskTimer(plugin, 0L, 3L);
-        for(Player player : getPlayers()) {
+        for(Player player : Bukkit.getOnlinePlayers()) {
             messagePlayer(player, " §f-  §e§lᴠᴏᴛɪɴɢ ʀᴇsᴜʟᴛs  §f-");
             int placement = 0;
             for (String key : leaderMode) {
@@ -1667,14 +1667,14 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                     Bukkit.getServer().getWorld("world").getBlockAt(j, 122, i).setType(Material.BLACK_WOOL);
                                 }
                             }
-                            for (Player player : getPlayers()) {
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 player.sendTitle("§e§lVoting Time!", "", 0, 60, 40);
                             }
                             break;
                         case 75:
                             teamTeleport("votearena", 0);
-                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.votearena"));
-                            for (Player player : getPlayers()) {
+                            teleportSpectators(TeleportConfig.get().getLocation("spectators.votearena"), 0);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 messagePlayer(player, """
                                         §8
                                         §8
@@ -1690,7 +1690,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         case 60:
                             playSoundAll(Sound.ITEM_GOAT_HORN_SOUND_1, 1);
                             votingEnabled = true;
-                            for (Player player : getPlayers()) {
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 messagePlayer(player, """
                                         §8
                                         §8
@@ -1700,13 +1700,19 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                         """);
                             }
                             break;
+                        case 55:
+                            summonPowerUp(25);
+                            break;
                         case 50:
                             summonPowerUp(20);
+                            break;
+                        case 40:
+                            summonPowerUp(10);
                             break;
                         case 30:
                             playSoundAll(Sound.BLOCK_FIRE_EXTINGUISH, 1);
                             votingEnabled = false;
-                            for (Player player : getPlayers()) {
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 messagePlayer(player, """
                                         §8
                                         §8
@@ -1718,7 +1724,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
                         case 25:
                             playSoundAll(Sound.ENTITY_CREEPER_PRIMED, 1);
-                            for (Player player : getPlayers()) {
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 player.sendTitle("§7§k000000000", "", 0, 100, 40);
                             }
                             break;
@@ -1774,6 +1780,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         runningTimers.get("powerup").setValue(timeLeft);
                         if (timeLeft == 0) {
                             runningTimers.remove("powerup");
+                            powerUp.remove();
                             cancel();
                         } else {
                             Particle.DustOptions dustOptions = new Particle.DustOptions(Color.WHITE, 4);
@@ -1785,6 +1792,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         }
                     }
                     if (!runningTimers.containsKey("powerup")) {
+                        powerUp.remove();
                         cancel();
                     }
                 } else {
@@ -1812,7 +1820,6 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             for (Player player : getPlayers()) {
                                 if(currentMode.equals("Zoomo Go")){
                                     player.setAllowFlight(false);
-                                    player.setFlying(false);
                                 }
                                 player.setGameMode(GameMode.SPECTATOR);
                                 healFeedPlayer(player);
@@ -1843,7 +1850,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                         """);
                             }
                             teleportPlayers(TeleportConfig.get().getLocation("players.lobby"), 5);
-                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.lobby"));
+                            teleportSpectators(TeleportConfig.get().getLocation("spectators.lobby"), 5);
                             break;
                         case 35:
                             for (Player player : getPlayers()) {
@@ -1968,17 +1975,18 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                     } else {
                                         notReady.append("§f, ").append(getPlayerDisplayName(player));
                                     }
-                                    Player p = Bukkit.getPlayer(player);
-                                    p.sendTitle("§c§lNot Ready.", "We'll try again soon.", 0, 60, 40);
 
                                 }
                             }
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle("§c§lNot Ready.", "We'll try again soon.", 0, 60, 40);
+                            }
                             if(!notReady.isEmpty()) {
-                                for (Player player : getPlayers()) {
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     messagePlayer(player, notReady.toString());
                                 }
                             } else {
-                                for (Player player : getPlayers()) {
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     messagePlayer(player, "Everyone is ready!");
                                 }
                             }
@@ -2033,7 +2041,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 player.addPotionEffect(PotionEffect);
                             }
                             teleportPlayers(TeleportConfig.get().getLocation("players.stage"), 5);
-                            teleportSpectators(SpectatorConfig.get().getLocation("spectators.stage"));
+                            teleportSpectators(TeleportConfig.get().getLocation("spectators.stage") , 5);
                             break;
                         case 85:
                             PotionEffect PotionEffect2 = new PotionEffect(PotionEffectType.SLOW_FALLING, 5, 1, false, false);

@@ -78,6 +78,9 @@ public class LastHitEvent implements Listener {
                     if (plugin.gubGameKills.get(killer.getName()).equals(15)) {
                         killer.setGameMode(GameMode.SPECTATOR);
                         killer.sendTitle("§eFINISH", "§e\uD83D\uDCB0" + (41 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName()))) + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
+                        for(Player p : Bukkit.getOnlinePlayers()){
+                            plugin.messagePlayer(p, "§e♛ §7| " + plugin.getPlayerDisplayName(killer.getName()) + " §fhas finished the final kit!");
+                        }
                     } else {
                         killer.sendTitle("", "§e\uD83D\uDCB0" + (41 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName()))) + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
                         killer.getInventory().clear();

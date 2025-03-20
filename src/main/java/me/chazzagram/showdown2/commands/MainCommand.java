@@ -303,9 +303,22 @@ public class MainCommand implements CommandExecutor {
                             /mcevent readycheck
                             /mcevent pause
                             /mcevent unpause
+                            /mcevent whitelist
+                            /mcevent unwhitelist
                             """);
                     break;
-
+                case "whitelist":
+                    for(String key : PlayerConfig.get().getConfigurationSection("players").getKeys(false)){
+                        Bukkit.getOfflinePlayer(key).setWhitelisted(true);
+                    }
+                    plugin.messagePlayer(p, "§ePlayers in player config have been whitelisted.");
+                    break;
+                case "unwhitelist":
+                    for(String key : PlayerConfig.get().getConfigurationSection("players").getKeys(false)){
+                        Bukkit.getOfflinePlayer(key).setWhitelisted(false);
+                    }
+                    plugin.messagePlayer(p, "§ePlayers in player config have been unwhitelisted.");
+                    break;
                 case "teams":
                     plugin.updateTeamGUI();
                     ((Player) commandSender).openInventory(plugin.gui);
