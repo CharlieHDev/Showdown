@@ -56,16 +56,39 @@ public class SpigotExpansion extends PlaceholderExpansion {
         List<String> modeteams = new ArrayList<>(plugin.sortMap(plugin.modeTeamPoints).keySet());
         List<Integer> modeteampoints = new ArrayList<>(plugin.sortMap(plugin.modeTeamPoints).values());
         StringBuilder teamplayers = new StringBuilder();
+        StringBuilder teamsplayersalive = new StringBuilder();
+        int count = 0;
         teamplayers.setLength(0);
         int index = 0;
         if(p == null){
             return "";
+        }
+        if (params.startsWith("killrecord_")) {
+            try {
+                int killindex = Integer.parseInt(params.split("_")[1]);
+
+                if (killindex >= 0 && killindex < plugin.killRecord.toArray().length) {
+                    return plugin.killRecord.get((plugin.killRecord.toArray().length-killindex)-1);
+                } else {
+                    return "§7------------";
+                }
+            } catch (NumberFormatException e) {
+                return "Invalid number format!";
+            }
         }
         switch (params) {
             case "player":
                 return p.getName();
             case "playerdisplay":
                 return plugin.getPlayerDisplayName(p.getName());
+            case "playerprefix":
+                if(PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
+                    return TeamsConfig.get().get("teams." + PlayerConfig.get().getString("players." + p.getName() + ".team") + ".colour") + TeamsConfig.get().getString("teams." + PlayerConfig.get().get("players." + p.getName() + ".team") + ".icon");
+                } else if (SpectatorConfig.get().getConfigurationSection("spectators").getKeys(false).contains(p.getName())) {
+                    return "§7";
+                } else {
+                    return "§f";
+                }
             case "team":
                 if (SpectatorConfig.get().getConfigurationSection("spectators").getKeys(false).contains(p.getName())) {
                     return "Spectator";

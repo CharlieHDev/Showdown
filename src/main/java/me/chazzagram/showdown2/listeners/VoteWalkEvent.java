@@ -1,10 +1,9 @@
 package me.chazzagram.showdown2.listeners;
 
 import me.chazzagram.showdown2.Showdown2;
-import org.bukkit.Color;
-import org.bukkit.GameMode;
-import org.bukkit.Material;
-import org.bukkit.Sound;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -24,7 +23,7 @@ public class VoteWalkEvent implements Listener {
     }
 
     @EventHandler
-    public void onPlayerMove(PlayerMoveEvent event) {
+    public void onPlayerMove(PlayerMoveEvent event) throws ReflectiveOperationException {
         if(event.getTo() != null) {
             if(plugin.currentMode.equals("Voting")) {
                 for (Material concrete : getConcreteColours()) {
@@ -36,6 +35,11 @@ public class VoteWalkEvent implements Listener {
                             event.getPlayer().playSound(event.getPlayer().getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 10, 1.0F);
                         }
                         plugin.playerVote.put(event.getPlayer(), wool);
+                        if(event.getPlayer().equals(plugin.slimeBallVote)) {
+                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                plugin.glowingEntities.setGlowing(plugin.chickenBall, player, plugin.modeColors.get(plugin.woolModes.get(plugin.playerVote.get(event.getPlayer()))));
+                            }
+                        }
                     }
                 }
                 if (plugin.votingEnabled) {
@@ -51,6 +55,7 @@ public class VoteWalkEvent implements Listener {
                 Block block = event.getPlayer().getLocation().subtract(0, 1, 0).getBlock();
                 if (block.getType() != Material.AIR) {
                     event.getPlayer().setAllowFlight(true);
+                    event.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§eDOUBLE JUMP READY!"));
                 }
             }
         }

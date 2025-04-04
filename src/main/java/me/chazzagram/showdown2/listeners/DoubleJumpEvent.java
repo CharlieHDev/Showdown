@@ -1,6 +1,8 @@
 package me.chazzagram.showdown2.listeners;
 
 import me.chazzagram.showdown2.Showdown2;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -23,6 +25,7 @@ public class DoubleJumpEvent implements Listener {
             p.setFlying(false);
             p.setVelocity(p.getLocation().getDirection().multiply(1.8).setY(1));
             e.setCancelled(true);
+            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(""));
         }
     }
 }

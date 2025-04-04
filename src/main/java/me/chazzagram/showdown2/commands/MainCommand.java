@@ -9,6 +9,7 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.command.*;
@@ -27,6 +28,8 @@ public class MainCommand implements CommandExecutor {
     public MainCommand(Showdown2 plugin) {
         this.plugin = plugin;
     }
+
+    Location safeSpace = new Location(Bukkit.getServer().getWorld("world"), -585, 97, 351);
 
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args) {
@@ -268,6 +271,9 @@ public class MainCommand implements CommandExecutor {
                                 plugin.gameEnd();
                             }
                         }
+                    } else {
+                        Bukkit.getPlayer(args[1]).teleport(safeSpace);
+                        plugin.messagePlayer(Bukkit.getPlayer(args[1]), "§7[§e!§7] §eYou cannot die yet! You've been saved! But grace period will end when the game starts.");
                     }
                 default:
                     break;
@@ -306,6 +312,11 @@ public class MainCommand implements CommandExecutor {
                             /mcevent whitelist
                             /mcevent unwhitelist
                             """);
+                    break;
+                case "offglow":
+                    for(Player player : Bukkit.getServer().getOnlinePlayers()) {
+                        player.setGlowing(false);
+                    }
                     break;
                 case "whitelist":
                     for(String key : PlayerConfig.get().getConfigurationSection("players").getKeys(false)){

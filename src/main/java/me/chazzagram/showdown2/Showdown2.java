@@ -1,14 +1,13 @@
 package me.chazzagram.showdown2;
-
+import fr.skytasul.glowingentities.GlowingEntities;
 import me.chazzagram.showdown2.commands.MainCommand;
 import me.chazzagram.showdown2.expansions.SpigotExpansion;
 import me.chazzagram.showdown2.files.*;
 import me.chazzagram.showdown2.listeners.*;
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Item;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -21,6 +20,9 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.ScoreboardManager;
+import org.bukkit.scoreboard.Team;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -94,15 +96,27 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<Integer, Integer> gubKitKills = new HashMap<>();
 
+    public HashMap<String, ChatColor> teamGlowColors = new HashMap<>();
+
     public List<String> powerUpHolders = new ArrayList<>();
 
+    public GlowingEntities glowingEntities;
+
+    public LivingEntity chickenBall;
+
     public Inventory gui = Bukkit.createInventory(null, 36, "§eTeams");
+
+    public Player slimeBallVote;
+
+    public List<String> killRecord = new ArrayList<>();
 
     @Override
     public void onEnable() {
         // Plugin startup logic
 
         plugin = this;
+
+        glowingEntities = new GlowingEntities(plugin);
 
         this.getCommand("mcevent").setExecutor(new MainCommand(this));
 
@@ -111,9 +125,18 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         teamColors.put("TopazTroopers", Color.YELLOW);
         teamColors.put("KyaniteKillers", Color.LIME);
         teamColors.put("DiamondDestroyers", Color.AQUA);
-        teamColors.put("SapphireSoldiers", Color.NAVY);
+        teamColors.put("SapphireSoldiers", Color.BLUE);
         teamColors.put("SmithsoniteSlayers", Color.FUCHSIA);
         teamColors.put("CrystalCrashers", Color.WHITE);
+
+        teamGlowColors.put("RubyRaiders", ChatColor.RED);
+        teamGlowColors.put("AmberAmbushers", ChatColor.GOLD);
+        teamGlowColors.put("TopazTroopers", ChatColor.YELLOW);
+        teamGlowColors.put("KyaniteKillers", ChatColor.GREEN);
+        teamGlowColors.put("DiamondDestroyers", ChatColor.AQUA);
+        teamGlowColors.put("SapphireSoldiers", ChatColor.BLUE);
+        teamGlowColors.put("SmithsoniteSlayers", ChatColor.LIGHT_PURPLE);
+        teamGlowColors.put("CrystalCrashers", ChatColor.WHITE);
 
         woolModes.put(Material.WHITE_WOOL, "Survival Games");
         woolModes.put(Material.PURPLE_WOOL, "Gub Game");
@@ -187,48 +210,48 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             new SpigotExpansion(this).register();
         }
 
-        for(int i = 1; i <= 5; i++){
+        for (int i = 1; i <= 5; i++) {
             slimeCheckpoints.put(i, 1);
         }
 
-        for(int i = 1; i <= 5; i++){
+        for (int i = 1; i <= 5; i++) {
             bridgeCheckpoints.put(i, 1);
         }
 
-        for(int i = 1; i <= 5; i++){
+        for (int i = 1; i <= 5; i++) {
             bridgeJumpCheckpoints.put(i, 1);
         }
 
-        for(int i = 1; i <= 5; i++){
+        for (int i = 1; i <= 5; i++) {
             List<String> list = new ArrayList<>();
             bridgeJumpRegister.put(i, list);
         }
 
-        for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){
+        for (String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)) {
             teamCheckpoints.put(team, 0);
         }
 
-        for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){
+        for (String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)) {
             modeCompletions.put(team, 0);
         }
 
-        for(Player player : getPlayers()){
+        for (Player player : getPlayers()) {
             modePoints.put(player.getName(), 0);
         }
 
-        for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){
+        for (String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)) {
             modeTeamPoints.put(team, 0);
         }
 
-        for(Player player : getPlayers()){
+        for (Player player : getPlayers()) {
             readyPlayers.put(player.getName(), 0);
         }
 
-        messageConsole("Plugin Loaded.");
     }
 
     @Override
     public void onDisable() {
+        glowingEntities.disable();
         // Plugin shutdown logic
         messageConsole("Plugin Unloaded.");
     }
@@ -555,6 +578,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             resetSlimeCompletions();
                             break;
                         case 55:
+                            try {
+                                glowTeams();
+                            } catch (ReflectiveOperationException e) {
+                                throw new RuntimeException(e);
+                            }
                             currentMode = "Slime Golf";
                             for (Player player : getPlayers()) {
                                 PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
@@ -643,6 +671,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             resetModePoints();
                             break;
                         case 55:
+                            try {
+                                glowTeams();
+                            } catch (ReflectiveOperationException e) {
+                                throw new RuntimeException(e);
+                            }
                             currentMode = "Colour Dash";
                             for (Player player : getPlayers()) {
                                 PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
@@ -732,6 +765,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             resetModePoints();
                             break;
                         case 55:
+                            try {
+                                glowTeams();
+                            } catch (ReflectiveOperationException e) {
+                                throw new RuntimeException(e);
+                            }
                             currentMode = "Craftalot";
                             for (Player player : getPlayers()) {
                                 PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
@@ -827,6 +865,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             resetModePoints();
                             break;
                         case 55:
+                            try {
+                                glowTeams();
+                            } catch (ReflectiveOperationException e) {
+                                throw new RuntimeException(e);
+                            }
                             currentMode = "Bridge Builders";
                             for (Player player : getPlayers()) {
                                 PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
@@ -928,13 +971,6 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     runningTimers.get("zoomogostart").setValue(timeLeft);
                     switch (timeLeft) {
                         case 60:
-                            for(int[] box : getZoomoSpawnBox()){
-                                for(int i = box[0]; i <= box[0]+2; i++){
-                                    for(int j = box[2]; j <= box[2]+2; j++){
-                                        Bukkit.getServer().getWorld("world").getBlockAt(i, box[1], j).setType(Material.BARRIER);
-                                    }
-                                }
-                            }
                             for(Player p : getPlayers()){
                                 lastHitPlayer.put(p.getName(), "");
                             }
@@ -945,15 +981,16 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
                         case 55:
                             currentMode = "Zoomo Go";
+                            try {
+                                glowTeams();
+                            } catch (ReflectiveOperationException e) {
+                                throw new RuntimeException(e);
+                            }
                             for (Player player : getPlayers()) {
-                                PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
+                                PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 120, 1, false, false);
                                 player.addPotionEffect(PotionEffect);
                                 player.setGameMode(GameMode.ADVENTURE);
                             }
-                            break;
-
-                        case 50:
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (int i = 1; i <= 26; i++){
                                 summonIsland(zoomoIslands(i));
                                 if(i > 5){
@@ -961,11 +998,28 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 }
                                 summonIsland(zoomoIslands(27));
                             }
+                            break;
+
+                        case 50:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
                                         §8
                                         §8
                                         §8[§e§l?§8] §eWelcome to §a§lZoomo Go§e! Keep moving fast and stay on the platforms! This game takes sumo to the next level with disappearing platforms and fast-movement gameplay! Watch out for §cRed Platforms§e.
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 40:
+                            doubleJumpEnabled = true;
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("§c§lDouble Jump", "§7is now enabled.", 0, 20, 20);
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§e§l?§8] §c§lDouble Jump §ehas been §aenabled§e! Give it a go by double-tapping your space bar!
                                         §8
                                         """);
                             }
@@ -1007,14 +1061,6 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§a§l▶ ZOOMO GO! ◀", "", 0, 40, 0);
                             }
-                            for(int[] box : getZoomoSpawnBox()){
-                                for(int i = box[0]; i <= box[0]+2; i++){
-                                    for(int j = box[2]; j <= box[2]+2; j++){
-                                        Bukkit.getServer().getWorld("world").getBlockAt(i, box[1], j).setType(Material.AIR);
-                                    }
-                                }
-                            }
-                            doubleJumpEnabled = true;
                             runningTimers.remove("zoomogostart");
                             cancel();
                             initiateZoomoIslands();
@@ -1033,169 +1079,176 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public void initiateZoomoIslands(){
         BukkitTask task = new BukkitRunnable() {
             int y = 72;
-            int timeLeft = 256;
+            int timeLeft = 141;
             @Override
             public void run() {
-                if(!pausedTimers.contains("zoomogo")) {
-                    timeLeft--;
-                    runningTimers.get("zoomogo").setValue(timeLeft);
-                    switch (timeLeft) {
-                        case 250:
-                            destroyIsland(zoomoIslands(27));
-                        case 230:
-                            summonIsland(zoomoIslands(6));
-                            break;
-                        case 239:
-                            summonIsland(zoomoIslands(10));
-                            break;
-                        case 238:
-                            summonIsland(zoomoIslands(7));
-                            break;
-                        case 235:
-                            destroyIsland(zoomoIslands(1));
-                            break;
-                        case 234:
-                            destroyIsland(zoomoIslands(2));
-                            break;
-                        case 233:
-                            destroyIsland(zoomoIslands(3));
-                            break;
-                        case 232:
-                            destroyIsland(zoomoIslands(4));
-                            break;
-                        case 215:
-                            summonIsland(zoomoIslands(8));
-                            break;
-                        case 214:
-                            summonIsland(zoomoIslands(9));
-                            break;
-                        case 213:
-                            summonIsland(zoomoIslands(12));
-                            break;
-                        case 212:
-                            summonIsland(zoomoIslands(11));
-                            break;
-                        case 210:
-                            destroyIsland(zoomoIslands(5));
-                            break;
-                        case 209:
-                            destroyIsland(zoomoIslands(6));
-                            break;
-                        case 208:
-                            destroyIsland(zoomoIslands(10));
-                            break;
-                        case 207:
-                            destroyIsland(zoomoIslands(7));
-                            break;
-                        case 190:
-                            summonIsland(zoomoIslands(13));
-                            break;
-                        case 189:
-                            summonIsland(zoomoIslands(14));
-                            break;
-                        case 188:
-                            summonIsland(zoomoIslands(15));
-                            break;
-                        case 185:
-                            destroyIsland(zoomoIslands(8));
-                            break;
-                        case 184:
-                            destroyIsland(zoomoIslands(9));
-                            break;
-                        case 183:
-                            destroyIsland(zoomoIslands(12));
-                            break;
-                        case 182:
-                            destroyIsland(zoomoIslands(11));
-                            break;
-                        case 165:
-                            summonIsland(zoomoIslands(16));
-                            break;
-                        case 164:
-                            summonIsland(zoomoIslands(17));
-                            break;
-                        case 163:
-                            summonIsland(zoomoIslands(18));
-                            break;
-                        case 160:
-                            destroyIsland(zoomoIslands(13));
-                            break;
-                        case 149:
-                            destroyIsland(zoomoIslands(14));
-                            break;
-                        case 158:
-                            destroyIsland(zoomoIslands(15));
-                            break;
-                        case 140:
-                            summonIsland(zoomoIslands(19));
-                            break;
-                        case 139:
-                            summonIsland(zoomoIslands(20));
-                            break;
-                        case 138:
-                            summonIsland(zoomoIslands(22));
-                            break;
-                        case 135:
-                            destroyIsland(zoomoIslands(16));
-                            break;
-                        case 134:
-                            destroyIsland(zoomoIslands(17));
-                            break;
-                        case 133:
-                            destroyIsland(zoomoIslands(18));
-                            break;
-                        case 115:
-                            summonIsland(zoomoIslands(21));
-                            break;
-                        case 114:
-                            summonIsland(zoomoIslands(23));
-                            break;
-                        case 110:
-                            destroyIsland(zoomoIslands(19));
-                            break;
-                        case 109:
-                            destroyIsland(zoomoIslands(20));
-                            break;
-                        case 108:
-                            destroyIsland(zoomoIslands(22));
-                            break;
-                        case 90:
-                            summonIsland(zoomoIslands(24));
-                            break;
-                        case 89:
-                            summonIsland(zoomoIslands(25));
-                            break;
-                        case 85:
-                            destroyIsland(zoomoIslands(21));
-                            break;
-                        case 84:
-                            destroyIsland(zoomoIslands(23));
-                            break;
-                        case 65:
-                            summonIsland(zoomoIslands(26));
-                            break;
-                        case 60:
-                            destroyIsland(zoomoIslands(24));
-                            break;
-                        case 50:
-                            destroyIsland(zoomoIslands(25));
-                            break;
-                        case 20:
-                            destroyIsland(zoomoIslands(26));
-                            break;
-                        case 0:
-                            runningTimers.remove("zoomogo");
-                            cancel();
-                            break;
-                        default:
-                            break;
+                if(runningTimers.containsKey("zoomogo")) {
+                    if (!pausedTimers.contains("zoomogo")) {
+                        timeLeft--;
+                        runningTimers.get("zoomogo").setValue(timeLeft);
+                        switch (timeLeft) {
+                            case 140:
+                                destroyIsland(zoomoIslands(27));
+                                break;
+                            case 128:
+                                summonIsland(zoomoIslands(6));
+                                break;
+                            case 134:
+                                summonIsland(zoomoIslands(10));
+                                break;
+                            case 133:
+                                summonIsland(zoomoIslands(7));
+                                break;
+                            case 132:
+                                destroyIsland(zoomoIslands(1));
+                                break;
+                            case 131:
+                                destroyIsland(zoomoIslands(2));
+                                break;
+                            case 130:
+                                destroyIsland(zoomoIslands(3));
+                                break;
+                            case 129:
+                                destroyIsland(zoomoIslands(4));
+                                break;
+                            case 122:
+                                summonIsland(zoomoIslands(8));
+                                break;
+                            case 121:
+                                summonIsland(zoomoIslands(9));
+                                break;
+                            case 120:
+                                summonIsland(zoomoIslands(12));
+                                break;
+                            case 119:
+                                summonIsland(zoomoIslands(11));
+                                break;
+                            case 118:
+                                destroyIsland(zoomoIslands(5));
+                                break;
+                            case 117:
+                                destroyIsland(zoomoIslands(6));
+                                break;
+                            case 116:
+                                destroyIsland(zoomoIslands(10));
+                                break;
+                            case 115:
+                                destroyIsland(zoomoIslands(7));
+                                break;
+                            case 107:
+                                summonIsland(zoomoIslands(13));
+                                break;
+                            case 106:
+                                summonIsland(zoomoIslands(14));
+                                break;
+                            case 105:
+                                summonIsland(zoomoIslands(15));
+                                break;
+                            case 104:
+                                destroyIsland(zoomoIslands(8));
+                                break;
+                            case 103:
+                                destroyIsland(zoomoIslands(11));
+                                break;
+                            case 102:
+                                destroyIsland(zoomoIslands(12));
+                                break;
+                            case 101:
+                                destroyIsland(zoomoIslands(9));
+                                break;
+                            case 93:
+                                summonIsland(zoomoIslands(16));
+                                break;
+                            case 92:
+                                summonIsland(zoomoIslands(17));
+                                break;
+                            case 91:
+                                summonIsland(zoomoIslands(18));
+                                break;
+                            case 90:
+                                destroyIsland(zoomoIslands(13));
+                                break;
+                            case 89:
+                                destroyIsland(zoomoIslands(14));
+                                break;
+                            case 88:
+                                destroyIsland(zoomoIslands(15));
+                                break;
+                            case 79:
+                                summonIsland(zoomoIslands(19));
+                                break;
+                            case 78:
+                                summonIsland(zoomoIslands(20));
+                                break;
+                            case 77:
+                                summonIsland(zoomoIslands(22));
+                                break;
+                            case 76:
+                                destroyIsland(zoomoIslands(16));
+                                break;
+                            case 75:
+                                destroyIsland(zoomoIslands(17));
+                                break;
+                            case 74:
+                                destroyIsland(zoomoIslands(18));
+                                break;
+                            case 65:
+                                summonIsland(zoomoIslands(21));
+                                break;
+                            case 64:
+                                summonIsland(zoomoIslands(23));
+                                break;
+                            case 62:
+                                destroyIsland(zoomoIslands(19));
+                                break;
+                            case 61:
+                                destroyIsland(zoomoIslands(20));
+                                break;
+                            case 60:
+                                destroyIsland(zoomoIslands(22));
+                                break;
+                            case 51:
+                                summonIsland(zoomoIslands(24));
+                                break;
+                            case 50:
+                                summonIsland(zoomoIslands(25));
+                                break;
+                            case 49:
+                                destroyIsland(zoomoIslands(21));
+                                break;
+                            case 48:
+                                destroyIsland(zoomoIslands(23));
+                                break;
+                            case 37:
+                                summonIsland(zoomoIslands(26));
+                                break;
+                            case 34:
+                                destroyIsland(zoomoIslands(24));
+                                break;
+                            case 28:
+                                destroyIsland(zoomoIslands(25));
+                                break;
+                            case 12:
+                                destroyIsland(zoomoIslands(26));
+                                break;
+                            case 0:
+                                runningTimers.remove("zoomogo");
+                                cancel();
+                                break;
+                            default:
+                                break;
+
+                        }
                     }
+                } else {
+                    messageConsole("Timer removed by external factor.");
+                    cancel();
                 }
             }
 
         }.runTaskTimer(this, 0L, 20L);
 
-        runningTimers.put("zoomogo", new AbstractMap.SimpleEntry<>(task, 256));
+        runningTimers.put("zoomogo", new AbstractMap.SimpleEntry<>(task, 141));
     }
 
     public int[] zoomoIslands(int index){
@@ -1307,6 +1360,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             resetModePoints();
                             break;
                         case 55:
+                            try {
+                                glowTeams();
+                            } catch (ReflectiveOperationException e) {
+                                throw new RuntimeException(e);
+                            }
                             currentMode = "Gub Game";
                             for (Player player : getPlayers()) {
                                 PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
@@ -1365,7 +1423,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§a§l▶ GUB! ◀", "", 0, 40, 0);
                             }
-                            startTimer(120, "gubgame");
+                            startTimer(240, "gubgame");
                             runningTimers.remove("gubgamestart");
                             cancel();
                             break;
@@ -1404,20 +1462,23 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             for(Player p : getPlayers()){
                                 lastHitPlayer.put(p.getName(), "");
                             }
-                            teamTeleport("survivalgames", 5);
+                            teamTeleport("sg", 5);
                             teleportSpectators(TeleportConfig.get().getLocation("spectators.survivalgames"), 5);
                             resetSurvivalGames();
                             resetModePoints();
                             break;
                         case 55:
                             currentMode = "Survival Games";
+                            try {
+                                glowTeams();
+                            } catch (ReflectiveOperationException e) {
+                                throw new RuntimeException(e);
+                            }
                             for (Player player : getPlayers()) {
                                 PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
                                 player.addPotionEffect(PotionEffect);
                                 player.setGameMode(GameMode.ADVENTURE);
                             }
-                            Bukkit.getWorld("world").getWorldBorder().setCenter(0, 0);
-                            Bukkit.getWorld("world").getWorldBorder().setSize(120);
                             break;
 
                         case 50:
@@ -1430,6 +1491,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                         §8
                                         """);
                             }
+                            Bukkit.getWorld("build").getWorldBorder().setCenter(-179.5, -708.5);
+                            Bukkit.getWorld("build").getWorldBorder().setSize(469);
                             break;
                         case 30:
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
@@ -1465,6 +1528,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§a§l▶ LOOT! ◀", "", 0, 40, 0);
                             }
+                            startTimer(240, "survivalgames");
                             runningTimers.remove("survivalgamesstart");
                             cancel();
                             break;
@@ -1496,11 +1560,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         case 0:
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
-                            §f
-                            §f
-                            §c§lGRACE PERIOD IS OVER!");
-                            §f
-                            """);
+                                §f
+                                §f
+                                §c§lGRACE PERIOD IS OVER!"
+                                §f
+                                """);
                             }
                             pvpEnabled = true;
                             runningTimers.remove("graceperiod");
@@ -1700,6 +1764,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                         """);
                             }
                             break;
+                        case 57:
+                            messageConsole("case 57 reached.");
+                            try {
+                                summonSlimeBall(27);
+                            } catch (ReflectiveOperationException e) {
+                                throw new RuntimeException(e);
+                            }
                         case 55:
                             summonPowerUp(25);
                             break;
@@ -1721,6 +1792,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                         §8
                                         """);
                             }
+                            powerUpHolders.clear();
+                            for (Entity entity : Bukkit.getWorld("world").getEntities()) {
+                                if (entity instanceof Item) {
+                                    entity.remove();
+                                }
+                            }
                             break;
                         case 25:
                             playSoundAll(Sound.ENTITY_CREEPER_PRIMED, 1);
@@ -1732,12 +1809,6 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             countVotes();
                             break;
                         case 0:
-                            powerUpHolders.clear();
-                            for (Entity entity : Bukkit.getWorld("world").getEntities()) {
-                                if (entity instanceof Item) {
-                                    entity.remove();
-                                }
-                            }
                             runningTimers.remove("voting");
                             cancel();
                             break;
@@ -1805,7 +1876,108 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         runningTimers.put("powerup", new AbstractMap.SimpleEntry<>(task, time+1));
     }
 
+
+    public void summonSlimeBall(int time) throws ReflectiveOperationException {
+        slimeBallVote = null;
+        messageConsole("summonSlimeBall started.");
+        Location coords = new Location(Bukkit.getWorld("world"), -366,131,124);
+        chickenBall = (LivingEntity) Bukkit.getWorld("world").spawnEntity(coords, EntityType.CHICKEN);
+        messageConsole("Chicken spawned hopefully.");
+
+        for(Player player : Bukkit.getOnlinePlayers()){
+            glowingEntities.setGlowing(chickenBall, player, ChatColor.WHITE);
+        }
+
+        for(Player player : getPlayers()) {
+            player.sendMessage("""
+                    §a
+                    §a
+                    §e§lA CHICKEN BALL HAS SPAWNED!
+                    §a
+                    """);
+        }
+
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = time+1;
+            @Override
+            public void run() {
+                if(runningTimers.containsKey("slimeBall")) {
+                    if (!pausedTimers.contains("slimeBall")) {
+                        if(chickenBall.getLocation().clone().subtract(0, 1, 0).getBlock().getType() != Material.AIR) {
+                            messageConsole("Chicken ball touched ground.");
+                            if (slimeBallVote != null) {
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    try {
+                                        glowingEntities.unsetGlowing(chickenBall, player);
+                                    } catch (ReflectiveOperationException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }
+                                Location blockBelow = chickenBall.getLocation().clone().subtract(3, 1, 3);
+                                for (int i = 0; i <= 6; i++) {
+                                    for (int j = 0; j <= 6; j++) {
+                                        Block currentBlock = blockBelow.clone().add(i, 0, j).getBlock();
+                                        for (Material wool : getWoolColors()) {
+                                            if (currentBlock.getType().equals(wool)) {
+                                                currentBlock.setType(plugin.playerVote.get(slimeBallVote));
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                Particle.DustOptions dustOptions = new Particle.DustOptions(plugin.woolColors.get(plugin.playerVote.get(slimeBallVote)), 4);
+
+                                Bukkit.getWorld("world").spawnParticle(Particle.DUST, chickenBall.getLocation(), 300, 1.5, 0.0, 1.5, 1, dustOptions, false);
+                                playSoundAll(Sound.ENTITY_CHICKEN_DEATH, 1);
+                                chickenBall.remove();
+                                cancel();
+                                for (Player player : getPlayers()) {
+                                    player.sendMessage("""
+                                            §a
+                                            §a
+                                            §e§lTHE CHICKEN BALL HAS LANDED!
+                                            §a
+                                            """);
+                                }
+                            }
+                        }
+                        timeLeft--;
+                        runningTimers.get("slimeBall").setValue(timeLeft);
+                        if (timeLeft == 0) {
+                            runningTimers.remove("slimeBall");
+                            cancel();
+                        }
+                    }
+                    if (!runningTimers.containsKey("slimeBall")) {
+                        messageConsole("Not paused, timer non-existent.");
+                        chickenBall.remove();
+                        cancel();
+                    }
+                } else {
+                    messageConsole("Timer does not exist.");
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("slimeBall", new AbstractMap.SimpleEntry<>(task, time+1));
+    }
+
+
+    private Material[] getWoolColors() {
+        return new Material[]{
+                Material.WHITE_WOOL, Material.ORANGE_WOOL, Material.MAGENTA_WOOL,
+                Material.LIGHT_BLUE_WOOL, Material.YELLOW_WOOL, Material.LIME_WOOL,
+                Material.PINK_WOOL, Material.GRAY_WOOL, Material.LIGHT_GRAY_WOOL,
+                Material.CYAN_WOOL, Material.PURPLE_WOOL, Material.BLUE_WOOL,
+                Material.BROWN_WOOL, Material.GREEN_WOOL, Material.RED_WOOL,
+                Material.BLACK_WOOL
+        };
+    }
+
     public void gameEnd(){
+        runningTimers.clear();
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 61;
             @Override
@@ -1817,11 +1989,18 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         case 60:
                             pvpEnabled = false;
                             doubleJumpEnabled = false;
+//                            plugin.killRecord.clear();
+                            try {
+                                unGlowTeams();
+                            } catch (ReflectiveOperationException e) {
+                                throw new RuntimeException(e);
+                            }
                             for (Player player : getPlayers()) {
                                 if(currentMode.equals("Zoomo Go")){
                                     player.setAllowFlight(false);
                                 }
                                 player.setGameMode(GameMode.SPECTATOR);
+                                Bukkit.getScheduler().runTaskLater(plugin, () -> player.setFlying(true), 1L);
                                 healFeedPlayer(player);
                                 Bukkit.getWorld("world").getWorldBorder().setCenter(0, 0);
                                 Bukkit.getWorld("world").getWorldBorder().setSize(25000);
@@ -1968,9 +2147,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
                         case 1:
                             StringBuilder notReady = new StringBuilder();
-                            for (String player : readyPlayers.keySet()){
-                                if(readyPlayers.get(player) < 10) {
-                                    if(notReady.isEmpty()){
+                            for (String player : readyPlayers.keySet()) {
+                                if (readyPlayers.get(player) < 10) {
+                                    if (notReady.isEmpty()) {
                                         notReady.append("§fNot Ready: ").append(getPlayerDisplayName(player));
                                     } else {
                                         notReady.append("§f, ").append(getPlayerDisplayName(player));
@@ -1978,16 +2157,15 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
                                 }
                             }
-                            for(Player p : Bukkit.getOnlinePlayers()){
-                                p.sendTitle("§c§lNot Ready.", "We'll try again soon.", 0, 60, 40);
-                            }
                             if(!notReady.isEmpty()) {
                                 for (Player player : Bukkit.getOnlinePlayers()) {
                                     messagePlayer(player, notReady.toString());
+                                    player.sendTitle("§c§lNot Ready.", "We'll try again soon.", 0, 60, 40);
                                 }
                             } else {
                                 for (Player player : Bukkit.getOnlinePlayers()) {
                                     messagePlayer(player, "Everyone is ready!");
+                                    player.sendTitle("§a§lReady!", "Hooray!", 0, 60, 40);
                                 }
                             }
                         case 0:
@@ -2111,4 +2289,29 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 //        p.setHealth(0.0);
 //        p.getInventory().setContents(currentInv);
 //    }
+
+
+    public void glowTeams() throws ReflectiveOperationException {
+        for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){
+            for(String player : TeamsConfig.get().getStringList("teams." + team + ".players")) {
+                for(String player2 : TeamsConfig.get().getStringList("teams." + team + ".players")) {
+                    if(Bukkit.getPlayer(player) != null && Bukkit.getPlayer(player2) != null) {
+                        glowingEntities.setGlowing(Bukkit.getPlayer(player), Bukkit.getPlayer(player2), teamGlowColors.get(team));
+                    }
+                }
+            }
+        }
+    }
+
+    public void unGlowTeams() throws ReflectiveOperationException {
+        for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){
+            for(String player : TeamsConfig.get().getStringList("teams." + team + ".players")) {
+                for(String player2 : TeamsConfig.get().getStringList("teams." + team + ".players")) {
+                    if(Bukkit.getPlayer(player) != null && Bukkit.getPlayer(player2) != null) {
+                        glowingEntities.unsetGlowing(Bukkit.getPlayer(player), Bukkit.getPlayer(player2));
+                    }
+                }
+            }
+        }
+    }
 }

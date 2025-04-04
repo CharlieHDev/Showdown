@@ -114,6 +114,7 @@ public class InventoryEvent implements Listener {
 
                                     PlayerConfig.get().set("players." + e.getCurrentItem().getItemMeta().getDisplayName(), null);
                                     PlayerConfig.save();//
+
                                     plugin.updateTeamGUI();
                                     e.getWhoClicked().openInventory(plugin.gui);
                                 }
@@ -151,6 +152,7 @@ public class InventoryEvent implements Listener {
                         PlayerConfig.get().set("players." + playername + ".team", TeamsConfig.get().getString("teams." + teamname + ".name"));
                         PlayerConfig.save();
                         TeamsConfig.save();
+
                         plugin.updateTeamGUI();
                         e.getWhoClicked().openInventory(plugin.gui);
                     }
