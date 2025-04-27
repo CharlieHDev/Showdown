@@ -7,10 +7,7 @@ import me.chazzagram.showdown2.files.TeamsConfig;
 import me.chazzagram.showdown2.files.TeleportConfig;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
@@ -100,6 +97,7 @@ public class MainCommand implements CommandExecutor {
                         if(plugin.runningTimers.containsKey("bridgebuilders")) {
                             if (!plugin.bridgeJumpRegister.get(Integer.parseInt(args[1])).contains(args[2])) {
                                 plugin.bridgeJumpRegister.get(Integer.parseInt(args[1])).add(args[2]);
+                                plugin.summonFirework(Bukkit.getPlayer(args[2]).getLocation(), PlayerConfig.get().getString("players." + args[2] + ".team"));
                                 int register = 0;
                                 for (String player : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")) {
                                     if (plugin.bridgeJumpRegister.get(Integer.parseInt(args[1])).contains(player)) {
@@ -137,6 +135,7 @@ public class MainCommand implements CommandExecutor {
                                 for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")) {
                                     if (Bukkit.getServer().getPlayer(player2) != null) {
                                         Player p = Bukkit.getServer().getPlayer(player2);
+                                        p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1f, 1f + (0.2f * register));
                                         p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§eCompletions§f: " + playerCompletions));
                                     }
                                 }
@@ -149,6 +148,7 @@ public class MainCommand implements CommandExecutor {
                         if(plugin.runningTimers.containsKey("bridgebuilders")) {
                             if (!plugin.bridgeJumpRegister.get(plugin.bridgeJumpRegister.size()).contains(args[1])) {
                                 plugin.bridgeJumpRegister.get(plugin.bridgeJumpRegister.size()).add(args[1]);
+                                plugin.summonFirework(Bukkit.getPlayer(args[1]).getLocation(), PlayerConfig.get().getString("players." + args[1] + ".team"));
                                 int register = 0;
                                 for (String player : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players")) {
                                     if (plugin.bridgeJumpRegister.get(plugin.bridgeJumpRegister.size()).contains(player)) {
@@ -200,6 +200,7 @@ public class MainCommand implements CommandExecutor {
                                 for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players")) {
                                     if (Bukkit.getServer().getPlayer(player2) != null) {
                                         Player p = Bukkit.getServer().getPlayer(player2);
+                                        p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1f, 1f + (0.2f * register));
                                         p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§eCompletions§f: " + playerCompletions));
                                     }
                                 }
@@ -312,6 +313,11 @@ public class MainCommand implements CommandExecutor {
                             /mcevent whitelist
                             /mcevent unwhitelist
                             """);
+                    break;
+                case "boss":
+                    if(args.length > 1){
+                        plugin.bossBarBgTest();
+                    }
                     break;
                 case "offglow":
                     for(Player player : Bukkit.getServer().getOnlinePlayers()) {
@@ -724,6 +730,9 @@ public class MainCommand implements CommandExecutor {
                             for (String player : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
                                 if (Bukkit.getServer().getPlayer(player) != null) {
                                     Player p = Bukkit.getServer().getPlayer(player);
+                                    p.getInventory().clear();
+                                    p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_WORK_FLETCHER, 1f, 1f);
+                                    plugin.summonFirework(p.getLocation(), args[2]);
                                     p.sendTitle("§a[✔] \uD83C\uDF09-" + args[1], "§7Now get running!", 0, 40, 0);
                                     plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Build Complete!");
                                     plugin.messagePlayer(p, "§cCreative removed, move onto the next build.");

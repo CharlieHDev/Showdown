@@ -4,8 +4,12 @@ import me.chazzagram.showdown2.commands.MainCommand;
 import me.chazzagram.showdown2.expansions.SpigotExpansion;
 import me.chazzagram.showdown2.files.*;
 import me.chazzagram.showdown2.listeners.*;
+import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -13,6 +17,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -23,6 +28,11 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Team;
+import org.bukkit.util.Transformation;
+import org.bukkit.util.Vector;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
+
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -109,6 +119,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public Player slimeBallVote;
 
     public List<String> killRecord = new ArrayList<>();
+
+    TextDisplay textDisplay;
+
+    BossBar bossBar = Bukkit.createBossBar("Initial Title", BarColor.BLUE, BarStyle.SOLID);
+
+    public HashMap<String, BossBar> bossBars = new HashMap<>();
 
     @Override
     public void onEnable() {
@@ -372,15 +388,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                 if(runningTimers.containsKey(name)) {
                     if (!pausedTimers.contains(name)) {
                         runningTimers.get(name).setValue(timeLeft);
+                        bossBarBgTest();
                         timeLeft--;
                         if (timeLeft == 0) {
                             messageConsole("Timer finished.");
                             gameEnd();
                             runningTimers.remove(name);
                             cancel();
-                        } else {
-
-                            messageConsole(timeLeft + " seconds left..");
                         }
                     }
                 } else {
@@ -395,18 +409,42 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     }
 
     public void startStopwatch(int seconds, String name){
+        if(name.equals("slimegolf")){
+            Location textLoc = new Location(Bukkit.getWorld("build"), 727.9, -58, 27.5);
+            textDisplay = Bukkit.getWorld("build").spawn(textLoc, TextDisplay.class);
+            textDisplay.setText("00:00");
+            textDisplay.setRotation(90, 0);
+            textDisplay.setBackgroundColor(org.bukkit.Color.fromARGB(0, 0, 0, 0));
+            Quaternionf quat = new Quaternionf();
+            Transformation transform = new Transformation(
+                    new Vector3f(0, 0, 0),
+                    quat,
+                    new Vector3f(10.0f, 10.0f, 10.0f),
+                    quat
+            );
+
+            textDisplay.setTransformation(transform);
+        }
         BukkitTask task = new BukkitRunnable() {
             int timeElapsed = -1;
             @Override
             public void run() {
-                if(!pausedTimers.contains(name)) {
-                    timeElapsed++;
-                    runningTimers.get(name).setValue(timeElapsed);
-                    if (timeElapsed == seconds) {
-                        messageConsole("Timer finished.");
-                        runningTimers.remove(name);
-                        cancel();
+                if (runningTimers.containsKey(name)) {
+                    if (!pausedTimers.contains(name)) {
+                        timeElapsed++;
+                        runningTimers.get(name).setValue(timeElapsed);
+                        if (name.equals("slimegolf")) {
+                            textDisplay.setText(getTimer("slimegolf"));
+                        }
+                        if (timeElapsed == seconds) {
+                            messageConsole("Timer finished.");
+                            runningTimers.remove(name);
+                            cancel();
+                        }
                     }
+                } else {
+                    messageConsole("Stopwatch removed by external factor.");
+                    cancel();
                 }
             }
 
@@ -857,6 +895,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                 if(!pausedTimers.contains("bridgebuildersstart")) {
                     timeLeft--;
                     runningTimers.get("bridgebuildersstart").setValue(timeLeft);
+                    bossBarBgTest();
                     switch (timeLeft) {
                         case 60:
                             teamTeleport("bridgebuilders", 5);
@@ -879,6 +918,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
 
                         case 50:
+                            for(int i = 361; i >= 171; i-=38){
+                                for(int j = 709; j <= 954; j+=35){
+                                    Bukkit.getServer().getWorld("build").getBlockAt(j, -42, i).setType(Material.REDSTONE_BLOCK);
+                                }
+                            }
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
                                 messagePlayer(player, """
@@ -887,6 +931,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                         §8[§e§l?§8] §eWelcome to §a§lBridge Builders§e! Creative mode is your ally! In this mode you build the course which you will race across! A mix of building and parkour skills!
                                         §8
                                         """);
+                            }
+                            break;
+                        case 49:
+                            for(int i = 361; i >= 171; i-=38){
+                                for(int j = 709; j <= 954; j+=35){
+                                    Bukkit.getServer().getWorld("build").getBlockAt(j, -42, i).setType(Material.AIR);
+                                }
                             }
                             break;
                         case 30:
@@ -903,9 +954,6 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         case 10:
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             for (Player player : getPlayers()) {
-                                ItemStack infiniteBlocks = new ItemStack(Material.getMaterial(TeamsConfig.get().getString("teams." + PlayerConfig.get().getString("players." + player.getName() + ".team") + ".colourname") + "_CONCRETE"));
-                                infiniteBlocks.setAmount(64);
-                                player.getInventory().addItem(infiniteBlocks);
                                 messagePlayer(player, """
                                         §8
                                         §8
@@ -926,7 +974,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 player.setGameMode(GameMode.CREATIVE);
                                 player.sendTitle("§a§l▶ BUILD! ◀", "", 0, 40, 0);
                             }
-                            startTimer(90, "bridgebuilders");
+                            startTimer(360, "bridgebuilders");
                             runningTimers.remove("bridgebuildersstart");
                             cancel();
                             break;
@@ -946,15 +994,15 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         bridgeJumpCheckpoints.clear();
         bridgeJumpRegister.clear();
 
-        for(int i = 1; i <= 5; i++){
+        for(int i = 1; i <= 7; i++){
             bridgeCheckpoints.put(i, 1);
         }
 
-        for(int i = 1; i <= 5; i++){
+        for(int i = 1; i <= 7; i++){
             bridgeJumpCheckpoints.put(i, 1);
         }
 
-        for(int i = 1; i <= 5; i++){
+        for(int i = 1; i <= 7; i++){
             List<String> list = new ArrayList<>();
             bridgeJumpRegister.put(i, list);
         }
@@ -1989,13 +2037,15 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         case 60:
                             pvpEnabled = false;
                             doubleJumpEnabled = false;
-//                            plugin.killRecord.clear();
+                            killRecord.clear();
                             try {
                                 unGlowTeams();
                             } catch (ReflectiveOperationException e) {
                                 throw new RuntimeException(e);
                             }
                             for (Player player : getPlayers()) {
+                                bossBars.get(player.getName()).removeAll();
+                                bossBars.put(player.getName(), null);
                                 if(currentMode.equals("Zoomo Go")){
                                     player.setAllowFlight(false);
                                 }
@@ -2314,4 +2364,69 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             }
         }
     }
+
+    public void bossBarBgTest() {
+        StringBuilder output = new StringBuilder();
+        int width;
+        int blocks;
+        for(Player player : Bukkit.getOnlinePlayers()) {
+            if (bossBars.get(player.getName()) == null) {
+                BossBar boss = Bukkit.createBossBar("", BarColor.GREEN, BarStyle.SOLID);
+                boss.addPlayer(player);
+                bossBars.put(player.getName(), boss);
+            }
+
+            switch (currentMode) {
+                case "Bridge Builders":
+                    width = FontUtils.getStringWidth("\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"));
+                    blocks = Math.round((float) width / 6);
+                    output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(blocks)).append("\uD83C\uDF59");
+                    output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
+
+                    output.append("§e§l\uD83D\uDCB0").append(PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"));
+                    output.append(" ".repeat(5)).append("§r");
+
+                    width = FontUtils.getStringWidth("ʙʀɪᴅɢᴇ ʙᴜɪʟᴅᴇʀs Abandoned Mineshaft");
+                    blocks = Math.round((float) width / 6);
+                    output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(blocks)).append("\uD83C\uDF59");
+                    output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
+
+                    output.append("§rʙʀɪᴅɢᴇ ʙᴜɪʟᴅᴇʀs §7§oAbandoned Mineshaft");
+                    output.append(" ".repeat(6)).append("§r");
+
+                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_bridgebuilders%"));
+                    blocks = Math.round((float) width / 6);
+                    output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(blocks)).append("\uD83C\uDF59");
+                    output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
+
+                    output.append("§a§l⏱ §a").append(PlaceholderAPI.setPlaceholders(player, "%mce24_timer_bridgebuilders%"));
+                    break;
+                default:
+                    break;
+            }
+            bossBars.get(player.getName()).setTitle(output.toString());
+        }
+    }
+
+    public void summonFirework(Location location, String team){
+        World world = location.getWorld();
+
+        Firework firework = (Firework) world.spawnEntity(location, EntityType.FIREWORK_ROCKET);
+
+        FireworkMeta fireworkMeta = firework.getFireworkMeta();
+
+        FireworkEffect effect = FireworkEffect.builder()
+                .withColor(plugin.teamColors.get(team))
+                .withFade(plugin.teamColors.get(team))
+                .with(FireworkEffect.Type.BURST)
+                .build();
+
+        fireworkMeta.addEffect(effect);
+        fireworkMeta.setPower(0);
+        firework.setFireworkMeta(fireworkMeta);
+
+        firework.detonate();
+    }
 }
+
+

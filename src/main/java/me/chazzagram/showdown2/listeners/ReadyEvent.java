@@ -36,29 +36,9 @@ public class ReadyEvent implements Listener {
                     }
                     plugin.messagePlayer(e.getPlayer(), "§aYou are now ready!");
                     e.getPlayer().sendTitle("§a§lYOU'RE READY!", "Good Job!", 0, 60, 40);
-                    summonFirework(e.getPlayer().getLocation(), PlayerConfig.get().getString("players." + e.getPlayer().getName() + ".team"));
+                    plugin.summonFirework(e.getPlayer().getLocation(), PlayerConfig.get().getString("players." + e.getPlayer().getName() + ".team"));
                 }
             }
         }
-    }
-
-    public void summonFirework(Location location, String team){
-        World world = location.getWorld();
-
-        Firework firework = (Firework) world.spawnEntity(location, EntityType.FIREWORK_ROCKET);
-
-        FireworkMeta fireworkMeta = firework.getFireworkMeta();
-
-        FireworkEffect effect = FireworkEffect.builder()
-                .withColor(plugin.teamColors.get(team))
-                .withFade(plugin.teamColors.get(team))
-                .with(FireworkEffect.Type.BURST)
-                .build();
-
-        fireworkMeta.addEffect(effect);
-        fireworkMeta.setPower(0);
-        firework.setFireworkMeta(fireworkMeta);
-
-        firework.detonate();
     }
 }

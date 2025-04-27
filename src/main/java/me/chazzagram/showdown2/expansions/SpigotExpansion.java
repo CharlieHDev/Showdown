@@ -131,6 +131,17 @@ public class SpigotExpansion extends PlaceholderExpansion {
                         return teamicon;
                     }
                 }
+            case "teammodepoints":
+                if(SpectatorConfig.get().getStringList("spectators").contains(p.getName())){
+                    return "N/A";
+                } else {
+                    String playersTeam = PlayerConfig.get().getString("players." + p.getName() + ".team");
+                    if (playersTeam == null) {
+                        return "N/A";
+                    } else {
+                        return plugin.modeTeamPoints.get(playersTeam).toString();
+                    }
+                }
             case "timer_bridgebuilders":
                 if (plugin.runningTimers.containsKey("bridgebuildersstart")) {
                     return plugin.getTimer("bridgebuildersstart");
