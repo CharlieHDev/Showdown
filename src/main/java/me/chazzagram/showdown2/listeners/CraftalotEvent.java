@@ -50,7 +50,7 @@ public class CraftalotEvent implements Listener {
                         plugin.itemToCraft.put(p.getName(), craftList.get(r.nextInt(craftList.size())));
                         String newItem = plugin.itemToCraft.get(p.getName()).replaceAll("_", " ");
                         for(Player players : plugin.getPlayers()){
-                            plugin.messagePlayer(players, "§8[§c§l!§8] " + plugin.getPlayerDisplayName(players.getName()) + " §7has crafted an item! (§e" + currentItem + "§7)");
+                            plugin.messagePlayer(players, "§8[§c§l!§8] " + plugin.getPlayerDisplayName(e.getPlayer().getName()) + " §7has crafted an item! (§e" + currentItem + "§7)");
                         }
                         plugin.messagePlayer(p, """
                                         §8

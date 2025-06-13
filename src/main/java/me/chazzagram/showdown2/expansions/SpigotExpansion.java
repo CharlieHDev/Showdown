@@ -55,6 +55,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
         List<Integer> leaderteampoints = new ArrayList<>(plugin.sortByValue().values());
         List<String> modeteams = new ArrayList<>(plugin.sortMap(plugin.modeTeamPoints).keySet());
         List<Integer> modeteampoints = new ArrayList<>(plugin.sortMap(plugin.modeTeamPoints).values());
+        List<String> indivNames = new ArrayList<>(plugin.getSortedIndivs().keySet());
+        List<Integer> indivPoints = new ArrayList<>(plugin.getSortedIndivs().values());
         StringBuilder teamplayers = new StringBuilder();
         StringBuilder teamsplayersalive = new StringBuilder();
         int count = 0;
@@ -62,6 +64,30 @@ public class SpigotExpansion extends PlaceholderExpansion {
         int index = 0;
         if(p == null){
             return "";
+        }
+        if (params.startsWith("indivplayer_")) {
+            try {
+                int number = Integer.parseInt(params.substring("indivplayer_".length()))-1;
+                if (number >= 0 && number < indivNames.size()) {
+                    return plugin.getPlayerDisplayName(indivNames.get(number));
+                } else {
+                    return "§7N/A";
+                }
+            } catch (NumberFormatException e) {
+                return "§7I/N";
+            }
+        }
+        if (params.startsWith("indivpoints_")) {
+            try {
+                int number = Integer.parseInt(params.substring("indivpoints_".length()))-1;
+                if (number >= 0 && number < indivPoints.size()) {
+                    return "§e§l\uD83D\uDCB0" + indivPoints.get(number).toString();
+                } else {
+                    return "§7N/A";
+                }
+            } catch (NumberFormatException e) {
+                return "§7I/N";
+            }
         }
         if (params.startsWith("killrecord_")) {
             try {
@@ -177,8 +203,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "timer_slimegolf":
                 if (plugin.runningTimers.containsKey("slimegolfstart")) {
                     return plugin.getTimer("slimegolfstart");
-                } else if (plugin.runningTimers.containsKey("slimegolf")){
-                    return plugin.getTimer("slimegolf");
+                } else if (plugin.runningTimers.containsKey("slimegolftimer")){
+                    return plugin.getTimer("slimegolftimer");
                 } else {
                     return "Waiting..";
                 }

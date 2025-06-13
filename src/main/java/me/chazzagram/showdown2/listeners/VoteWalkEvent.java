@@ -1,6 +1,8 @@
 package me.chazzagram.showdown2.listeners;
 
 import me.chazzagram.showdown2.Showdown2;
+import me.chazzagram.showdown2.files.PlayerConfig;
+import me.chazzagram.showdown2.files.TeleportConfig;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
@@ -25,6 +27,19 @@ public class VoteWalkEvent implements Listener {
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) throws ReflectiveOperationException {
         if(event.getTo() != null) {
+            if(plugin.currentMode.equals("Gub Game") && plugin.runningTimers.containsKey("gubgamestart")){
+                if(plugin.getPlayers().contains(Bukkit.getPlayer(event.getPlayer().getName()))) {
+                    boolean onBlock = false;
+                    for (Material concrete : getConcreteColours()) {
+                        if (event.getTo().getBlock().getRelative(BlockFace.DOWN).getType().equals(concrete)) {
+                            onBlock = true;
+                        }
+                    }
+                    if(!onBlock){
+                        event.getPlayer().teleport(TeleportConfig.get().getLocation("teams." + PlayerConfig.get().getString("players." + event.getPlayer().getName() + ".team") + ".gubgame"));
+                    }
+                }
+            }
             if(plugin.currentMode.equals("Voting")) {
                 for (Material concrete : getConcreteColours()) {
                     if (event.getTo().getBlock().getRelative(BlockFace.DOWN).getType().equals(concrete)) {

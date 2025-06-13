@@ -1,10 +1,7 @@
 package me.chazzagram.showdown2.commands;
 
 import me.chazzagram.showdown2.Showdown2;
-import me.chazzagram.showdown2.files.PlayerConfig;
-import me.chazzagram.showdown2.files.SpectatorConfig;
-import me.chazzagram.showdown2.files.TeamsConfig;
-import me.chazzagram.showdown2.files.TeleportConfig;
+import me.chazzagram.showdown2.files.*;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
@@ -26,7 +23,7 @@ public class MainCommand implements CommandExecutor {
         this.plugin = plugin;
     }
 
-    Location safeSpace = new Location(Bukkit.getServer().getWorld("world"), -585, 97, 351);
+    Location safeSpace = new Location(Bukkit.getServer().getWorld("build"), -71, 159, 581);
 
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args) {
@@ -116,14 +113,20 @@ public class MainCommand implements CommandExecutor {
 
                                             int pointsEarned = 51 - placement;
                                             plugin.earnTeamPoints(PlayerConfig.get().getString("players." + args[2] + ".team"), pointsEarned);
+                                            List<Material> blocks = plugin.getBridgeBlocks(Integer.parseInt(args[1]), PlayerConfig.get().getString("players." + args[2] + ".team"));
 
                                             for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")) {
                                                 if (Bukkit.getServer().getPlayer(player2) != null) {
                                                     Player p = Bukkit.getServer().getPlayer(player2);
                                                     p.sendTitle("§a[✔] \uD83C\uDF09-" + args[1], "§7Now build!", 0, 40, 0);
                                                     plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Jump Complete!");
-                                                    plugin.messagePlayer(p, "§cCreative attained, get building!");
-                                                    p.setGameMode(GameMode.CREATIVE);
+                                                    plugin.messagePlayer(p, "§cBuild mode attained, get building!");
+                                                    p.setGameMode(GameMode.SURVIVAL);
+                                                    p.setAllowFlight(true);
+
+                                                    for(Material block : blocks) {
+                                                        p.getInventory().addItem(new ItemStack(block, 64));
+                                                    }
                                                 }
                                             }
                                             plugin.bridgeJumpCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);
@@ -187,6 +190,7 @@ public class MainCommand implements CommandExecutor {
                                                     Player p = Bukkit.getServer().getPlayer(player2);
                                                     p.sendTitle("§aFINISH", "", 0, 100, 5);
                                                     plugin.messagePlayer(p, "§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lCourse Completed!");
+                                                    p.setAllowFlight(true);
                                                     p.setGameMode(GameMode.SPECTATOR);
                                                 }
                                             }
@@ -257,7 +261,7 @@ public class MainCommand implements CommandExecutor {
                                 for (Player player2 : Bukkit.getServer().getOnlinePlayers()) {
                                     plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + " §chave been eliminated.\n§f");
                                 }
-                                plugin.deadTeams.add(PlayerConfig.get().getString("players." + args[1]) + ".team");
+                                plugin.deadTeams.add(PlayerConfig.get().getString("players." + args[1] + ".team"));
                             }
 
                             List<String> teamList = new ArrayList<>(List.of());
@@ -272,7 +276,7 @@ public class MainCommand implements CommandExecutor {
                                 plugin.gameEnd();
                             }
                         }
-                    } else {
+                    } else if (plugin.runningTimers.containsKey("zoomogostart")) {
                         Bukkit.getPlayer(args[1]).teleport(safeSpace);
                         plugin.messagePlayer(Bukkit.getPlayer(args[1]), "§7[§e!§7] §eYou cannot die yet! You've been saved! But grace period will end when the game starts.");
                     }
@@ -314,9 +318,18 @@ public class MainCommand implements CommandExecutor {
                             /mcevent unwhitelist
                             """);
                     break;
+                case "togglepvp":
+                    plugin.pvpEnabled = !plugin.pvpEnabled;
+                    plugin.messagePlayer(p, "PVP Enabled: " + plugin.pvpEnabled);
+                    break;
                 case "boss":
                     if(args.length > 1){
                         plugin.bossBarBgTest();
+                    }
+                    break;
+                case "border":
+                    if(args.length > 1){
+                        plugin.newBorderRadius = Integer.parseInt(args[1]);
                     }
                     break;
                 case "offglow":
@@ -579,6 +592,15 @@ public class MainCommand implements CommandExecutor {
                         plugin.teamTeleport(args[1], 5);
                     }
                     break;
+                case "addgubtp":
+                    if(GubTPConfig.get().getConfigurationSection("teleports") != null) {
+                        int tpCount = GubTPConfig.get().getConfigurationSection("teleports").getKeys(false).size() + 1;
+                        GubTPConfig.get().set("teleports.loc" + tpCount, p.getLocation());
+                    } else {
+                        GubTPConfig.get().set("teleports.loc1", p.getLocation());
+                    }
+                    GubTPConfig.save();
+                    break;
                 case "slimefinishers":
                     plugin.slimeGolfTimes();
                     break;
@@ -649,7 +671,7 @@ public class MainCommand implements CommandExecutor {
                                 }
                             }
 
-                            int pointsEarned = 21 - placement;
+                            int pointsEarned = 80 - placement*3;
                             plugin.earnTeamPoints(args[2], pointsEarned);
                             plugin.teamCheckpoints.put(args[2], Integer.parseInt(args[1]));
 
@@ -735,8 +757,10 @@ public class MainCommand implements CommandExecutor {
                                     plugin.summonFirework(p.getLocation(), args[2]);
                                     p.sendTitle("§a[✔] \uD83C\uDF09-" + args[1], "§7Now get running!", 0, 40, 0);
                                     plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Build Complete!");
-                                    plugin.messagePlayer(p, "§cCreative removed, move onto the next build.");
+                                    plugin.messagePlayer(p, "§cBuild mode removed, move onto the next build.");
                                     p.setGameMode(GameMode.ADVENTURE);
+                                    p.setAllowFlight(false);
+                                    p.setFlying(false);
                                 }
                             }
                             plugin.bridgeCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);

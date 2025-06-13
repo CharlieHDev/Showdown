@@ -1,6 +1,7 @@
 package me.chazzagram.showdown2.listeners;
 
 import me.chazzagram.showdown2.Showdown2;
+import me.chazzagram.showdown2.files.GubTPConfig;
 import me.chazzagram.showdown2.files.PlayerConfig;
 import me.chazzagram.showdown2.files.TeamsConfig;
 import me.chazzagram.showdown2.files.TeleportConfig;
@@ -16,6 +17,8 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
@@ -34,15 +37,15 @@ public class LastHitEvent implements Listener {
 
     @EventHandler
     public void onPlayerHit(EntityDamageByEntityEvent e) {
-        if(plugin.currentMode.equals("Voting") && plugin.runningTimers.containsKey("slimeBall") && plugin.runningTimers.get("slimeBall").getValue() > 6){
+        if (plugin.currentMode.equals("Voting") && plugin.runningTimers.containsKey("slimeBall") && plugin.runningTimers.get("slimeBall").getValue() > 6) {
             e.setCancelled(true);
-            if(e.getDamager() instanceof Player hitter && e.getEntity() instanceof LivingEntity chicken){
-                if(chicken.getType().equals(EntityType.CHICKEN)) {
+            if (e.getDamager() instanceof Player hitter && e.getEntity() instanceof LivingEntity chicken) {
+                if (chicken.getType().equals(EntityType.CHICKEN)) {
                     plugin.slimeBallVote = hitter;
                     Vector velocity = new Vector(-1 + (rand.nextDouble() * 2), 1.0, -1 + (rand.nextDouble() * 2));
                     chicken.setVelocity(velocity);
                     hitter.playSound(hitter, Sound.ENTITY_CHICKEN_HURT, 10, 1);
-                    if(plugin.chickenBall.getLocation().clone().subtract(0, 1, 0).getBlock().getType() != Material.AIR) {
+                    if (plugin.chickenBall.getLocation().clone().subtract(0, 1, 0).getBlock().getType() != Material.AIR) {
                         Bukkit.getScheduler().runTaskLater(plugin, () -> {
                             for (Player player : Bukkit.getOnlinePlayers()) {
                                 try {
@@ -63,8 +66,7 @@ public class LastHitEvent implements Listener {
                     }
                 }
             }
-        }
-        if (plugin.currentMode.equals("Zoomo Go")) {
+        } else if (plugin.currentMode.equals("Zoomo Go")) {
             if (e.getDamager() instanceof Player killer && e.getEntity() instanceof Player victim) {
                 if (PlayerConfig.get().getString("players." + killer.getName() + ".team").equals(PlayerConfig.get().getString("players." + victim.getName() + ".team"))) {
                     e.setCancelled(true);
@@ -72,9 +74,119 @@ public class LastHitEvent implements Listener {
                     plugin.lastHitPlayer.put(victim.getName(), killer.getName());
                 }
             }
+        } else if (plugin.currentMode.equals("Craftalot")) {
+            e.setCancelled(true);
+            if(e.getDamager() instanceof Player && (e.getEntity() instanceof Cow || e.getEntity() instanceof Sheep)) {
+                e.setCancelled(false);
+            }
         } else if (plugin.currentMode.equals("Slime Golf")) {
-            if (e.getDamager() instanceof Slime slime && e.getEntity() instanceof Player victim) {
+            if (e.getDamager() instanceof Slime && e.getEntity() instanceof Player) {
                 e.setCancelled(true);
+            }
+        } else if (plugin.currentMode.equals("Colour Dash")) {
+            if(e.getDamager() instanceof Player attacker && e.getEntity() instanceof EnderCrystal enderCrystal){
+                if(!plugin.runningTimers.containsKey(attacker.getName() + "mysterybox")) {
+                    plugin.summonFirework(enderCrystal.getLocation(), PlayerConfig.get().getString("players." + attacker.getName() + ".team"));
+
+                    Location itemBoxLoc = enderCrystal.getLocation().clone();
+                    enderCrystal.remove();
+                    BukkitTask task1 = new BukkitRunnable() {
+                        int timeLeft = 4;
+
+                        @Override
+                        public void run() {
+                            if (plugin.runningTimers.containsKey(attacker.getName() + "mysteryboxdisappear")) {
+                                if (!plugin.pausedTimers.contains(attacker.getName() + "mysteryboxdisappear")) {
+                                    plugin.runningTimers.get(attacker.getName() + "mysteryboxdisappear").setValue(timeLeft);
+                                    timeLeft--;
+                                    if (timeLeft == 0) {
+                                        Bukkit.getWorld("build").spawnEntity(itemBoxLoc, EntityType.END_CRYSTAL);
+                                        plugin.runningTimers.remove(attacker.getName() + "mysteryboxdisappear");
+                                        cancel();
+                                    }
+                                }
+                            } else {
+                                plugin.messageConsole("Timer removed by external factor.");
+                                cancel();
+                            }
+                        }
+
+                    }.runTaskTimer(plugin, 0L, 20L);
+
+                    plugin.runningTimers.put(attacker.getName() + "mysteryboxdisappear", new AbstractMap.SimpleEntry<>(task1, 4));
+
+                    enderCrystal.remove();
+                    e.setCancelled(true);
+
+
+                    BukkitTask task = new BukkitRunnable() {
+                        int timeLeft = 90;
+                        Random rand = new Random();
+                        int base;
+                        int offset;
+                        int unicodeChar;
+
+                        @Override
+                        public void run() {
+                            if (plugin.runningTimers.containsKey(attacker.getName() + "mysterybox")) {
+                                if (!plugin.pausedTimers.contains(attacker.getName() + "mysterybox")) {
+                                    plugin.runningTimers.get(attacker.getName() + "mysterybox").setValue(timeLeft);
+                                    timeLeft--;
+                                    switch (timeLeft) {
+                                        case 90, 88, 86, 84, 82, 80, 78, 76, 74, 72, 70, 65, 60, 40, 20:
+                                            attacker.playSound(attacker.getLocation(), Sound.BLOCK_NOTE_BLOCK_SNARE, 10, 1);
+                                            base = 0xE000;
+                                            offset = rand.nextInt(5);
+                                            unicodeChar = base + offset;
+                                            String character = new String(Character.toChars(unicodeChar));
+                                            attacker.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(character));
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                    if (timeLeft == 0) {
+                                        attacker.playSound(attacker.getLocation(), Sound.BLOCK_NOTE_BLOCK_FLUTE, 10, 1);
+                                        base = 0xE000;
+                                        offset = rand.nextInt(5);
+                                        unicodeChar = base + offset;
+                                        String character = new String(Character.toChars(unicodeChar));
+                                        attacker.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(character));
+
+                                        if (offset == 1) {
+                                            PotionEffect PotionEffect = new PotionEffect(PotionEffectType.JUMP_BOOST, 120, 1, false, false);
+                                            attacker.addPotionEffect(PotionEffect);
+                                        } else if (offset == 3) {
+                                            PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SPEED, 90, 1, false, false);
+                                            attacker.addPotionEffect(PotionEffect);
+                                        } else if (offset == 4) {
+                                            PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOWNESS, 90, 1, false, false);
+                                            attacker.addPotionEffect(PotionEffect);
+                                        } else if (offset == 0) {
+                                            for (ItemStack item : getCDItems().get(offset)) {
+                                                attacker.getInventory().addItem(item);
+                                            }
+                                        } else if (offset == 2) {
+                                            for (ItemStack item : getCDItems().get(1)) {
+                                                attacker.getInventory().addItem(item);
+                                            }
+                                            }
+                                        attacker.sendTitle("", getCDItemNames().get(offset), 0, 20, 0);
+                                        plugin.runningTimers.remove(attacker.getName() + "mysterybox");
+                                        cancel();
+                                    }
+                                }
+                            } else {
+                                plugin.messageConsole("Timer removed by external factor.");
+                                cancel();
+                            }
+                        }
+
+                    }.runTaskTimer(plugin, 0L, 1L);
+
+                    plugin.runningTimers.put(attacker.getName() + "mysterybox", new AbstractMap.SimpleEntry<>(task, 90));
+                } else {
+                    e.setCancelled(true);
+                }
             }
         } else {
             if(plugin.pvpEnabled) {
@@ -82,6 +194,9 @@ public class LastHitEvent implements Listener {
                     handlePlayerDamage(killer, victim, e);
                 } else if (e.getDamager() instanceof Projectile projectile && projectile.getShooter() instanceof Player killer) {
                     if (e.getEntity() instanceof Player victim) {
+                        if (victim.getHealth() - e.getFinalDamage() <= 0) {
+                            projectile.remove();
+                        }
                         handlePlayerDamage(killer, victim, e);
                     }
                 }
@@ -96,8 +211,8 @@ public class LastHitEvent implements Listener {
             e.setCancelled(true);
         } else {
             if (plugin.currentMode.equals("Gub Game")) {
-                killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(plugin.getPlayerDisplayName(victim.getName()) + " §7| §r" + PlaceholderAPI.setPlaceholders(victim, "%player_health_scale%")));
                 if (victim.getHealth() - e.getFinalDamage() <= 0) {
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(plugin.getPlayerDisplayName(victim.getName()) + " §7| §c♥§c§l0.0")), 1L);
                     for (Player p : plugin.getPlayers()) {
                         plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
                     }
@@ -140,7 +255,9 @@ public class LastHitEvent implements Listener {
                                         plugin.messageConsole("Timer finished.");
                                         victim.setGameMode(GameMode.ADVENTURE);
                                         victim.sendTitle("", "", 0, 30, 0);
-                                        victim.teleport(TeleportConfig.get().getLocation("teams." + PlayerConfig.get().getString("players." + victim.getName() + ".team") + ".gubgame"));
+                                        Random rand = new Random();
+                                        int index = rand.nextInt(GubTPConfig.get().getConfigurationSection("teleports").getKeys(false).size()) + 1;
+                                        victim.teleport(GubTPConfig.get().getLocation("teleports.loc" + index));
                                         plugin.runningTimers.remove(victim.getName() + "respawn");
                                         cancel();
                                     } else {
@@ -157,18 +274,33 @@ public class LastHitEvent implements Listener {
                     }.runTaskTimer(plugin, 0L, 20L);
 
                     plugin.runningTimers.put(victim.getName() + "respawn", new AbstractMap.SimpleEntry<>(task, 6));
+                } else {
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(plugin.getPlayerDisplayName(victim.getName()) + " §7| §c♥§c§l" + PlaceholderAPI.setPlaceholders(victim, "%player_health_rounded%"))), 1L);
                 }
             } else if (plugin.currentMode.equals("Survival Games")) {
                 if (victim.getHealth() - e.getFinalDamage() <= 0) {
                     plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died to " + plugin.getPlayerDisplayName(killer.getName()));
                     victim.sendTitle("§c§lYOU DIED.", "", 0, 40, 10);
+
+                    Location location = victim.getLocation();
+
+                    for (ItemStack item : victim.getInventory().getContents()) {
+                        if (item != null && !item.getType().isAir()) {
+                            victim.getWorld().dropItemNaturally(location, item);
+                        }
+                    }
+
+                    victim.getInventory().clear();
+                    victim.getInventory().setArmorContents(null);
+                    victim.getInventory().setItemInOffHand(null);
+
                     e.setCancelled(true);
                     victim.setGameMode(GameMode.SPECTATOR);
                     plugin.deadPlayers.add(victim.getName());
                     plugin.earnPoints(killer.getName(), 30, true);
                     killer.sendTitle("", "§e\uD83D\uDCB030" + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
                     for (Player p : plugin.getPlayers()) {
-                        if (!p.getGameMode().equals(GameMode.SPECTATOR) && p.getName().equals(killer.getName())) {
+                        if (!p.getGameMode().equals(GameMode.SPECTATOR) && !p.getName().equals(killer.getName())) {
                             plugin.messagePlayer(p, "§e\uD83D\uDCB05 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
                             plugin.earnPoints(p.getName(), 5, true);
                         } else {
@@ -178,25 +310,25 @@ public class LastHitEvent implements Listener {
                     plugin.killRecord.add(plugin.getPlayerDisplayName(killer.getName()) + " §c⚔ " + plugin.getPlayerDisplayName(victim.getName()));
                     switch (plugin.deadPlayers.size()) {
                         case 8:
-                            Bukkit.getWorld("world").getWorldBorder().setSize(100, 60);
+                            plugin.newBorderRadius = 25;
                             for (Player p : plugin.getPlayers()) {
                                 p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
                             }
                             break;
                         case 16:
-                            Bukkit.getWorld("world").getWorldBorder().setSize(80, 60);
+                            plugin.newBorderRadius = 56;
                             for (Player p : plugin.getPlayers()) {
                                 p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
                             }
                             break;
                         case 24:
-                            Bukkit.getWorld("world").getWorldBorder().setSize(60, 60);
+                            plugin.newBorderRadius = 116;
                             for (Player p : plugin.getPlayers()) {
                                 p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
                             }
                             break;
                         case 32:
-                            Bukkit.getWorld("world").getWorldBorder().setSize(40, 60);
+                            plugin.newBorderRadius = 176;
                             for (Player p : plugin.getPlayers()) {
                                 p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
                             }
@@ -237,6 +369,35 @@ public class LastHitEvent implements Listener {
                 }
             }
         }
+    }
+
+
+    public ArrayList<ItemStack[]> getCDItems() {
+        ArrayList<ItemStack[]> items = new ArrayList<>();
+
+        ItemStack[] item1 = new ItemStack[1];
+        item1[0] = new ItemStack(Material.BLUE_ICE);
+        item1[0].setAmount(4);
+        items.add(item1);
+
+        ItemStack[] item2 = new ItemStack[1];
+        item2[0] = new ItemStack(Material.STICK);
+        item2[0].addUnsafeEnchantment(Enchantment.KNOCKBACK, 2);
+        items.add(item2);
+
+        return items;
+    }
+
+    public ArrayList<String> getCDItemNames(){
+        ArrayList<String> itemNames = new ArrayList<>();
+
+        itemNames.add("§b§lIce Blocks");
+        itemNames.add("§a§lJump Boost");
+        itemNames.add("§d§lKnockback Stick");
+        itemNames.add("§e§lSpeed");
+        itemNames.add("§c§lSlowness");
+
+        return itemNames;
     }
 
     public ArrayList<ItemStack[]> getGubKits() {
