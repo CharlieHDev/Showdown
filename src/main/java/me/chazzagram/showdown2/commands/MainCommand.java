@@ -671,8 +671,8 @@ public class MainCommand implements CommandExecutor {
                                 }
                             }
 
-                            int pointsEarned = 80 - placement*3;
-                            plugin.earnTeamPoints(args[2], pointsEarned);
+                            int pointsEarned = 80 - placement*4;
+                            int dividedPointsEarned = pointsEarned / 4;
                             plugin.teamCheckpoints.put(args[2], Integer.parseInt(args[1]));
 
                             for (String player : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
@@ -680,6 +680,7 @@ public class MainCommand implements CommandExecutor {
                                     Player p = Bukkit.getServer().getPlayer(player);
                                     p.sendTitle("§a[✔] \uD83D\uDDFB-" + args[1], "§8[§f§l⏱§8] §e§o" + plugin.getTimer("slimegolf"), 0, 100, 5);
                                     plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Checkpoint reached!");
+                                    plugin.earnPoints(player, dividedPointsEarned, true);
                                 }
                             }
                             plugin.slimeCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);
@@ -713,8 +714,8 @@ public class MainCommand implements CommandExecutor {
                                     break;
                             }
 
-                            int pointsEarned = 155 - (5 * placement);
-                            plugin.earnTeamPoints(args[1], pointsEarned);
+                            int pointsEarned = 148 - (4 * placement);
+                            int dividedPointsEarned = pointsEarned/4;
                             plugin.teamCheckpoints.put(args[1], 6);
                             plugin.slimeFinishers.put(args[1], plugin.getTimer("slimegolf"));
 
@@ -724,6 +725,7 @@ public class MainCommand implements CommandExecutor {
                                     p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("slimegolf"), 0, 100, 5);
                                     plugin.messagePlayer(p, "§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lHole Completed!");
                                     plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("slimegolf"));
+                                    plugin.earnPoints(player, dividedPointsEarned, true);
                                     p.setGameMode(GameMode.SPECTATOR);
                                 }
                             }

@@ -744,8 +744,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
                             ItemStack knockbackStick = new ItemStack(Material.STICK);
                             knockbackStick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 3);
+
+                            ItemStack fishingRod = new ItemStack(Material.FISHING_ROD);
+                            fishingRod.addUnsafeEnchantment(Enchantment.UNBREAKING, 3);
                             for (Player player : getPlayers()) {
                                 player.getInventory().addItem(knockbackStick);
+                                player.getInventory().addItem(fishingRod);
                                 messagePlayer(player, """
                                         §8
                                         §8
@@ -756,7 +760,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
                         case 5, 4, 3, 2, 1:
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*(6-timeLeft));
-                            for (Player player : getPlayers()) {
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
                             break;
@@ -787,7 +791,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
 
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 2);
-                            for (Player player : getPlayers()) {
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 player.sendTitle("§a§l▶ GO! ◀", "", 0, 40, 0);
                             }
                             startTimer(300, "slimegolftimer");
@@ -1859,7 +1863,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
 
     public void getTeamModePoints(){
-        for(Player player : getPlayers()) {
+        for(Player player : Bukkit.getOnlinePlayers()) {
             messagePlayer(player, " §f-  §e§l   ᴍᴏᴅᴇ ᴛᴇᴀᴍ ʟᴇᴀᴅᴇʀs  §f-");
             int placement = 0;
             for (String key : sortMap(modeTeamPoints).keySet()) {
@@ -1871,7 +1875,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     }
 
     public void getPlayerModePoints(){
-        for(Player player : getPlayers()) {
+        for(Player player : Bukkit.getOnlinePlayers()) {
             messagePlayer(player, " §f-  §e§lᴍᴏᴅᴇ ɪɴᴅɪᴠ ʟᴇᴀᴅᴇʀs  §f-");
             List<String> players = new ArrayList<>(sortMap(modePoints).keySet());
             List<Integer> points = new ArrayList<>(sortMap(modePoints).values());
@@ -2303,7 +2307,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
 
     public void slimeGolfTimes(){
-        for(Player p : getPlayers()) {
+        for(Player p : Bukkit.getOnlinePlayers()) {
             messagePlayer(p, " §f-  §e§lʜᴏʟᴇ ᴛɪᴍᴇs  §f-");
             for (String team : slimeFinishers.keySet()) {
                 messagePlayer(p, "§e§l⏱§e" + slimeFinishers.get(team) + " §f- " + getTeamDisplayName(team));
