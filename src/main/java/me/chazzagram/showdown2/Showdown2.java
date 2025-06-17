@@ -434,7 +434,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 if (newBorderRadius != currentBorderRadius) {
                                     currentBorderRadius-=2;
                                 }
-                                spawnCircleParticles(sgCenter, currentBorderRadius, currentBorderRadius + 10);
+                                spawnCircleParticles(sgCenter, currentBorderRadius, (int) (currentBorderRadius * .72));
                             }
                         }
                         if(timeLeft == 30){
@@ -480,9 +480,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public void spawnCircleParticles(Location center, double radius, int points) {
 
         Particle.DustOptions dustOptions = new Particle.DustOptions(Color.RED, 4.0F);
+        World world = Bukkit.getWorld("build");
+
+        Location particleLoc = center.clone();
 
         for (int level = 0; level < 50; level++) {
-            double yOffset = level * 2;
+            double yOffset = level * 4;
 
             for (int i = 0; i < points; i++) {
                 double angle = 2 * Math.PI * i / points;
@@ -490,8 +493,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                 double z = center.getZ() + radius * Math.sin(angle);
                 double y = center.getY() + yOffset;
 
-                Location particleLoc = new Location(Bukkit.getWorld("build"), x, y, z);
-                Bukkit.getWorld("build").spawnParticle(Particle.DUST, particleLoc, 1, 0, 0, 0, 0, dustOptions, false);
+                particleLoc.setX(x);
+                particleLoc.setY(y);
+                particleLoc.setZ(z);
+               world.spawnParticle(Particle.DUST, particleLoc, 1, 0, 0, 0, 0, dustOptions, false);
             }
         }
     }
