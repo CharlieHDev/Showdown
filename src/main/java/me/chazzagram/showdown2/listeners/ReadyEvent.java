@@ -12,6 +12,7 @@ import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.meta.FireworkMeta;
 
 import java.util.HashMap;
+import java.util.Random;
 
 public class ReadyEvent implements Listener {
 
@@ -20,6 +21,8 @@ public class ReadyEvent implements Listener {
     public ReadyEvent(Showdown2 plugin) {
         this.plugin = plugin;
     }
+
+    Random rand = new Random();
 
 
     @EventHandler
@@ -31,14 +34,17 @@ public class ReadyEvent implements Listener {
                     e.getPlayer().playSound(e.getPlayer().getLocation(), Sound.BLOCK_NOTE_BLOCK_BIT, 1f, (float)((float)plugin.readyPlayers.get(e.getPlayer().getName())/5));
                 }
                 if (plugin.readyPlayers.get(e.getPlayer().getName()) == 10) {
+                    plugin.readyPlayerCount++;
                     for(Player player : plugin.getPlayers()){
                         plugin.messagePlayer(player, plugin.getPlayerDisplayName(e.getPlayer().getName()) + " §fis ready!");
                     }
                     plugin.messagePlayer(e.getPlayer(), "§aYou are now ready!");
-                    e.getPlayer().sendTitle("§a§lYOU'RE READY!", "Good Job!", 0, 60, 40);
+                    e.getPlayer().sendTitle("§a§lYOU'RE READY!", "(§a#" + plugin.readyPlayerCount + "§f) " + congratsMessages[rand.nextInt(congratsMessages.length + 1)], 0, 60, 40);
                     plugin.summonFirework(e.getPlayer().getLocation(), PlayerConfig.get().getString("players." + e.getPlayer().getName() + ".team"));
                 }
             }
         }
     }
+
+    String[] congratsMessages = { "Good Job!", "Amazing!", "Class!", "Thanks!", "Smashing!", "Sneaky!", "Bravo!", "Legendary!", "Proper Job!", "Massive!", "GGs!" };
 }

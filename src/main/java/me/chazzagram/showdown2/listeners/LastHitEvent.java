@@ -228,7 +228,7 @@ public class LastHitEvent implements Listener {
                     plugin.earnPoints(killer.getName(), 40 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName())), true);
                     plugin.gubKitKills.put(plugin.gubGameKills.get(killer.getName()), plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName())) + 1);
                     victim.setHealth(20);
-                    if (plugin.gubGameKills.get(killer.getName()).equals(15)) {
+                    if (plugin.gubGameKills.get(killer.getName()).equals(14)) {
                         killer.setGameMode(GameMode.SPECTATOR);
                         killer.sendTitle("§eFINISH", "§e\uD83D\uDCB0" + (41 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName()))) + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
                         for(Player p : Bukkit.getOnlinePlayers()){
@@ -237,7 +237,7 @@ public class LastHitEvent implements Listener {
                     } else {
                         killer.sendTitle("", "§e\uD83D\uDCB0" + (41 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName()))) + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
                         killer.getInventory().clear();
-                        plugin.messagePlayer(killer, "§c\uD83D\uDC80 §7| NEXT KIT! (§e§l" + plugin.gubGameKills.get(killer.getName()) + "/15§7)");
+                        plugin.messagePlayer(killer, "§c\uD83D\uDC80 §7| NEXT KIT! (§e§l" + plugin.gubGameKills.get(killer.getName()) + "/14§7)");
                         for (ItemStack item : getGubKits().get(plugin.gubGameKills.get(killer.getName()))) {
                             killer.getInventory().addItem(item);
                         }
@@ -454,16 +454,12 @@ public class LastHitEvent implements Listener {
         kits.add(kit12);
 
         ItemStack[] kit13 = new ItemStack[1];
-        kit13[0] = new ItemStack(Material.NETHERITE_HOE);
+        kit13[0] = new ItemStack(Material.WOODEN_PICKAXE);
         kits.add(kit13);
 
         ItemStack[] kit14 = new ItemStack[1];
-        kit14[0] = new ItemStack(Material.WOODEN_PICKAXE);
+        kit14[0] = new ItemStack(Material.AIR);
         kits.add(kit14);
-
-        ItemStack[] kit15 = new ItemStack[1];
-        kit15[0] = new ItemStack(Material.AIR);
-        kits.add(kit15);
 
         for(ItemStack[] kit : kits){
             for(ItemStack item : kit){
@@ -474,6 +470,7 @@ public class LastHitEvent implements Listener {
                     }
                     if(item.getType() == Material.CROSSBOW || item.getType() == Material.BOW){
                         meta.addEnchant(Enchantment.INFINITY, 1, true);
+                        meta.addEnchant(Enchantment.POWER, 2, true);
                     }
                     if(item.getType() == Material.CROSSBOW) {
                         meta.addEnchant(Enchantment.QUICK_CHARGE, 3, true);

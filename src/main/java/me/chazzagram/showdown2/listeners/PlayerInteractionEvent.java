@@ -35,6 +35,20 @@ public class PlayerInteractionEvent implements Listener {
                     }
                 }
             }
+        } else if(plugin.currentMode.equals("Gub Game")) {
+            if (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                if (e.getItem() != null && e.getItem().getType() == Material.TRIDENT) {
+                    e.setCancelled(true);
+                } else {
+                    e.setCancelled(true);
+                }
+            }
+        } else if (plugin.currentMode.equals("Survival Games")) {
+            e.setCancelled(false);
+        } else {
+            if (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                e.setCancelled(true);
+            }
         }
     }
 }

@@ -55,6 +55,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
         List<Integer> leaderteampoints = new ArrayList<>(plugin.sortByValue().values());
         List<String> modeteams = new ArrayList<>(plugin.sortMap(plugin.modeTeamPoints).keySet());
         List<Integer> modeteampoints = new ArrayList<>(plugin.sortMap(plugin.modeTeamPoints).values());
+        List<String> craftPlayers = new ArrayList<>(plugin.sortMap(plugin.craftTop).keySet());
+        List<Integer> craftPoints = new ArrayList<>(plugin.sortMap(plugin.craftTop).values());
+        List<String> gubKillsPlayers = new ArrayList<>(plugin.sortMap(plugin.gubGameKills).keySet());
+        List<Integer> gubKillsCount = new ArrayList<>(plugin.sortMap(plugin.gubGameKills).values());
         List<String> indivNames = new ArrayList<>(plugin.getSortedIndivs().keySet());
         List<Integer> indivPoints = new ArrayList<>(plugin.getSortedIndivs().values());
         StringBuilder teamplayers = new StringBuilder();
@@ -397,6 +401,26 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "modepoints_1":
+                if(!modeteampoints.isEmpty()) {
+                    if(modeteampoints.getFirst() != null) {
+                        return "§e§l\uD83D\uDCB0" + modeteampoints.getFirst();
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "modetop_1":
+                if(!modeteams.isEmpty()) {
+                    if(modeteams.getFirst() != null) {
+                        return plugin.getTeamDisplayName(modeteams.getFirst());
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "modepoints_2":
                 if(modeteampoints.size() > 1) {
                     if(modeteampoints.get(1) != null) {
                         return "§e§l\uD83D\uDCB0" + modeteampoints.get(1);
@@ -406,7 +430,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "§8N/A";
                 }
-            case "modetop_1":
+            case "modetop_2":
                 if(modeteams.size() > 1) {
                     if(modeteams.get(1) != null) {
                         return plugin.getTeamDisplayName(modeteams.get(1));
@@ -416,7 +440,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "§8N/A";
                 }
-            case "modepoints_2":
+            case "modepoints_3":
                 if(modeteampoints.size() > 2) {
                     if(modeteampoints.get(2) != null) {
                         return "§e§l\uD83D\uDCB0" + modeteampoints.get(2);
@@ -426,7 +450,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "§8N/A";
                 }
-            case "modetop_2":
+            case "modetop_3":
                 if(modeteams.size() > 2) {
                     if(modeteams.get(2) != null) {
                         return plugin.getTeamDisplayName(modeteams.get(2));
@@ -436,7 +460,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "§8N/A";
                 }
-            case "modepoints_3":
+            case "modepoints_4":
                 if(modeteampoints.size() > 3) {
                     if(modeteampoints.get(3) != null) {
                         return "§e§l\uD83D\uDCB0" + modeteampoints.get(3);
@@ -446,30 +470,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "§8N/A";
                 }
-            case "modetop_3":
+            case "modetop_4":
                 if(modeteams.size() > 3) {
                     if(modeteams.get(3) != null) {
                         return plugin.getTeamDisplayName(modeteams.get(3));
-                    } else {
-                        return "§8N/A";
-                    }
-                } else {
-                    return "§8N/A";
-                }
-            case "modepoints_4":
-                if(modeteampoints.size() > 4) {
-                    if(modeteampoints.get(4) != null) {
-                        return "§e§l\uD83D\uDCB0" + modeteampoints.get(4);
-                    } else {
-                        return "§8N/A";
-                    }
-                } else {
-                    return "§8N/A";
-                }
-            case "modetop_4":
-                if(modeteams.size() > 4) {
-                    if(modeteams.get(4) != null) {
-                        return plugin.getTeamDisplayName(modeteams.get(4));
                     } else {
                         return "§8N/A";
                     }
@@ -664,6 +668,188 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "§8Waiting..";
                 }
+
+            case "topcrafteritem_1":
+                if(!craftPoints.isEmpty()) {
+                    if(craftPoints.getFirst() != null) {
+                        return String.valueOf(craftPoints.getFirst());
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "topcraftername_1":
+                if(!craftPlayers.isEmpty()) {
+                    if(craftPlayers.getFirst() != null) {
+                        return plugin.getPlayerDisplayName(craftPlayers.getFirst());
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "topcrafteritem_2":
+                if(craftPoints.size() > 1) {
+                    if(craftPoints.get(1) != null) {
+                        return String.valueOf(craftPoints.get(1));
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "topcraftername_2":
+                if(craftPlayers.size() > 1) {
+                    if(craftPlayers.get(1) != null) {
+                        return plugin.getPlayerDisplayName(craftPlayers.get(1));
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "topcrafteritem_3":
+                if(craftPoints.size() > 2) {
+                    if(craftPoints.get(2) != null) {
+                        return String.valueOf(craftPoints.get(2));
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "topcraftername_3":
+                if(craftPlayers.size() > 2) {
+                    if(craftPlayers.get(2) != null) {
+                        return plugin.getPlayerDisplayName(craftPlayers.get(2));
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "topcrafteritem_4":
+                if(craftPoints.size() > 3) {
+                    if(craftPoints.get(3) != null) {
+                        return String.valueOf(craftPoints.get(3));
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "topcraftername_4":
+                if(craftPlayers.size() > 3) {
+                    if(craftPlayers.get(3) != null) {
+                        return plugin.getPlayerDisplayName(craftPlayers.get(3));
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+
+            case "gubkit":
+                if(plugin.currentMode.equals("Gub Game")){
+                    if(plugin.gubGameKills.containsKey(p.getName())){
+                        return plugin.gubGameKills.get(p.getName()).toString() + "/14";
+                    } else {
+                        return "0/14";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+
+            case "gubkillscount_1":
+                if(!gubKillsCount.isEmpty()) {
+                    if(gubKillsCount.getFirst() != null) {
+                        return String.valueOf(gubKillsCount.getFirst());
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "gubkillsname_1":
+                if(!gubKillsPlayers.isEmpty()) {
+                    if(gubKillsPlayers.getFirst() != null) {
+                        return plugin.getPlayerDisplayName(gubKillsPlayers.getFirst());
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "gubkillscount_2":
+                if(gubKillsCount.size() > 1) {
+                    if(gubKillsCount.get(1) != null) {
+                        return String.valueOf(gubKillsCount.get(1));
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "gubkillsname_2":
+                if(gubKillsPlayers.size() > 1) {
+                    if(gubKillsPlayers.get(1) != null) {
+                        return plugin.getPlayerDisplayName(gubKillsPlayers.get(1));
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "gubkillscount_3":
+                if(gubKillsCount.size() > 2) {
+                    if(gubKillsCount.get(2) != null) {
+                        return String.valueOf(gubKillsCount.get(2));
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "gubkillsname_3":
+                if(gubKillsPlayers.size() > 2) {
+                    if(gubKillsPlayers.get(2) != null) {
+                        return plugin.getPlayerDisplayName(gubKillsPlayers.get(2));
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "gubkillscount_4":
+                if(gubKillsCount.size() > 3) {
+                    if(gubKillsCount.get(3) != null) {
+                        return String.valueOf(gubKillsCount.get(3));
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+            case "gubkillsname_4":
+                if(gubKillsPlayers.size() > 3) {
+                    if(gubKillsPlayers.get(3) != null) {
+                        return plugin.getPlayerDisplayName(gubKillsPlayers.get(3));
+                    } else {
+                        return "§8N/A";
+                    }
+                } else {
+                    return "§8N/A";
+                }
+
+            case "bordersize":
+                if(plugin.currentMode.equals("Survival Games")){
+                    return String.valueOf(plugin.currentBorderRadius);
+                } else {
+                    return "§8N/A";
+                }
+
+
             case "currentmode":
                 return plugin.currentMode;
             default:

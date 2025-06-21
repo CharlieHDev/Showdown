@@ -6,6 +6,7 @@ me\chazzagram\showdown2\Showdown2$14.class
 me\chazzagram\showdown2\Showdown2$20.class
 me\chazzagram\showdown2\Showdown2$10.class
 me\chazzagram\showdown2\Showdown2$8.class
+me\chazzagram\showdown2\Showdown2$24.class
 me\chazzagram\showdown2\listeners\DoubleJumpEvent.class
 me\chazzagram\showdown2\listeners\ColourDashEvent.class
 me\chazzagram\showdown2\listeners\CraftalotEvent.class
@@ -17,6 +18,7 @@ me\chazzagram\showdown2\files\GubTPConfig.class
 me\chazzagram\showdown2\listeners\LastHitEvent$2.class
 me\chazzagram\showdown2\Showdown2$13.class
 me\chazzagram\showdown2\Showdown2$9.class
+me\chazzagram\showdown2\Showdown2$25.class
 me\chazzagram\showdown2\Showdown2$17.class
 me\chazzagram\showdown2\files\FontUtils.class
 me\chazzagram\showdown2\listeners\ReadyEvent.class
@@ -28,6 +30,7 @@ me\chazzagram\showdown2\files\PlayerConfig.class
 me\chazzagram\showdown2\Showdown2$19.class
 me\chazzagram\showdown2\listeners\VoteWalkEvent.class
 me\chazzagram\showdown2\Showdown2$3.class
+me\chazzagram\showdown2\listeners\ArrowDespawnEvent$1.class
 me\chazzagram\showdown2\listeners\VoteSneakBombEvent.class
 me\chazzagram\showdown2\Showdown2$7.class
 me\chazzagram\showdown2\commands\MainCommand.class
@@ -39,8 +42,10 @@ me\chazzagram\showdown2\files\SpectatorConfig.class
 me\chazzagram\showdown2\Showdown2$18.class
 me\chazzagram\showdown2\Showdown2$21.class
 me\chazzagram\showdown2\Showdown2.class
+me\chazzagram\showdown2\Showdown2$23.class
 me\chazzagram\showdown2\files\CraftalotConfig.class
 me\chazzagram\showdown2\listeners\VoteSneakBombEvent$1.class
+me\chazzagram\showdown2\listeners\ArrowDespawnEvent.class
 me\chazzagram\showdown2\Showdown2$4.class
 me\chazzagram\showdown2\Showdown2$1.class
 me\chazzagram\showdown2\files\TeamsConfig.class
