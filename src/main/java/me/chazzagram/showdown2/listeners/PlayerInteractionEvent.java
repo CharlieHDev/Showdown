@@ -35,19 +35,34 @@ public class PlayerInteractionEvent implements Listener {
                     }
                 }
             }
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                e.setCancelled(false);
+            }
         } else if(plugin.currentMode.equals("Gub Game")) {
             if (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) {
                 if (e.getItem() != null && e.getItem().getType() == Material.TRIDENT) {
                     e.setCancelled(true);
+                } else if (e.getItem() != null && (e.getItem().getType() == Material.BOW || e.getItem().getType() == Material.CROSSBOW)) {
+                    e.setCancelled(false);
                 } else {
                     e.setCancelled(true);
                 }
             }
         } else if (plugin.currentMode.equals("Survival Games")) {
             e.setCancelled(false);
+        } else if (plugin.currentMode.equals("Craftalot")) {
+            e.setCancelled(false);
+        } else if (plugin.currentMode.equals("Colour Dash")) {
+            e.setCancelled(false);
+        } else if (plugin.currentMode.equals("Slime Golf")) {
+            if (e.getItem() != null && e.getItem().getType() == Material.FISHING_ROD) {
+                e.setCancelled(false);
+            }
         } else {
             if (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                e.setCancelled(true);
+                if(plugin.getPlayers().contains(e.getPlayer())) {
+                    e.setCancelled(true);
+                }
             }
         }
     }

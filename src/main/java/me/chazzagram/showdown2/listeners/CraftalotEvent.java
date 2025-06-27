@@ -2,6 +2,7 @@ package me.chazzagram.showdown2.listeners;
 
 import me.chazzagram.showdown2.Showdown2;
 import me.chazzagram.showdown2.files.CraftalotConfig;
+import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -32,7 +33,7 @@ public class CraftalotEvent implements Listener {
         EntityType entity = e.getRightClicked().getType();
         Inventory inventory = p.getInventory();
         if(plugin.currentMode.equals("Craftalot")){
-            if(entity.equals(EntityType.VILLAGER)){
+            if(entity.equals(EntityType.VILLAGER) && p.getGameMode().equals(GameMode.SURVIVAL)){
                 if(!plugin.itemToCraft.get(p.getName()).isEmpty()){
                     List<String> items = new ArrayList<>();
                     for(ItemStack item : inventory){

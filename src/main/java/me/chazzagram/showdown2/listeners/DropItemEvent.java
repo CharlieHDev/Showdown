@@ -22,6 +22,7 @@ public class DropItemEvent implements Listener {
             case "Craftalot":
             case "Slime Golf":
                 event.setCancelled(true);
+                break;
         }
     }
 }

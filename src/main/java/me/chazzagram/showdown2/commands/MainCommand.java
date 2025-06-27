@@ -140,6 +140,7 @@ public class MainCommand implements CommandExecutor {
                                     if (plugin.bridgeJumpRegister.get(Integer.parseInt(args[1])).contains(player)) {
                                         register++;
                                         if (register == TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players").size()) {
+                                            plugin.bridgeTally.put(PlayerConfig.get().getString("players." + args[2] + ".team"), plugin.bridgeTally.get(PlayerConfig.get().getString("players." + args[2] + ".team")) + 1);
                                             plugin.runningTimers.remove(PlayerConfig.get().getString("players." + args[2] + ".team") + args[1]);
                                             plugin.buildTimeStamps.put(args[2], plugin.runningTimers.get("bridgebuilders").getValue());
                                             Integer placement = plugin.bridgeJumpCheckpoints.get(Integer.parseInt(args[1]));
@@ -213,7 +214,8 @@ public class MainCommand implements CommandExecutor {
                                     if (plugin.bridgeJumpRegister.get(plugin.bridgeJumpRegister.size()).contains(player)) {
                                         register++;
                                         if (register == TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players").size()) {
-
+                                            plugin.runningTimers.remove(PlayerConfig.get().getString("players." + args[2] + ".team") + "6");
+                                            plugin.bridgeTally.put(PlayerConfig.get().getString("players." + args[2] + ".team"), plugin.bridgeTally.get(PlayerConfig.get().getString("players." + args[2] + ".team")) + 1);
                                             Integer placement = plugin.bridgeCheckpoints.get(plugin.bridgeCheckpoints.size());
                                             switch (placement) {
                                                 case 1:
@@ -238,14 +240,14 @@ public class MainCommand implements CommandExecutor {
                                                     break;
                                             }
 
-                                            int pointsEarned = 155 - (5 * placement);
-                                            plugin.earnTeamPoints(PlayerConfig.get().getString("players." + args[1] + ".team"), pointsEarned);
 
                                             for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players")) {
                                                 if (Bukkit.getServer().getPlayer(player2) != null) {
                                                     Player p = Bukkit.getServer().getPlayer(player2);
+                                                    plugin.earnPoints(player2, 5, true);
+                                                    plugin.messagePlayer(p, "§e\uD83D\uDCB05 §7| §eYour entire team completed the jump! Bonus points awarded.");
                                                     p.sendTitle("§aFINISH", "", 0, 100, 5);
-                                                    plugin.messagePlayer(p, "§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lCourse Completed!");
+                                                    plugin.messagePlayer(p, "§e\uD83D\uDCB030 §8| §a§lCourse Completed!");
                                                     p.setAllowFlight(true);
                                                     p.setGameMode(GameMode.SPECTATOR);
                                                 }
@@ -255,6 +257,12 @@ public class MainCommand implements CommandExecutor {
                                         }
                                     }
                                 }
+                                plugin.earnPoints(args[2], 30, true);
+                                if (Bukkit.getServer().getPlayer(args[2]) != null) {
+                                    Player p2 = Bukkit.getServer().getPlayer(args[2]);
+                                    plugin.messagePlayer(p2, "§e\uD83D\uDCB020 §7| §eYou have completed this jump!");
+                                }
+
                                 StringBuilder playerCompletions = new StringBuilder();
                                 playerCompletions.append("§a✔ ".repeat(register));
                                 for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players")) {
@@ -373,6 +381,9 @@ public class MainCommand implements CommandExecutor {
                             /mcevent whitelist
                             /mcevent unwhitelist
                             """);
+                    break;
+                case "startevent":
+                    plugin.startEvent();
                     break;
                 case "togglepvp":
                     plugin.pvpEnabled = !plugin.pvpEnabled;
@@ -692,7 +703,19 @@ public class MainCommand implements CommandExecutor {
                     plugin.startSurvivalGames();
                     break;
                 case "countvotes":
-                    plugin.startVoting();
+                    if(args.length > 1){
+                        if(args[1].equals("least")){
+                            plugin.leastVotes = true;
+                            plugin.startVoting();
+                        } else if (args[1].equals("audience")){
+                            plugin.audienceVote = true;
+                            plugin.startVoting();
+                        } else {
+                            plugin.messagePlayer(p, "Incorrect argument. (least or audience)");
+                        }
+                    } else {
+                        plugin.startVoting();
+                    }
                     break;
                 case "readycheck":
                     plugin.getReadyPlayers();
@@ -816,6 +839,10 @@ public class MainCommand implements CommandExecutor {
                     if (args.length > 2) {
                         if(plugin.runningTimers.containsKey("bridgebuilders")) {
                             Integer placement = plugin.bridgeCheckpoints.get(Integer.parseInt(args[1]));
+                            if(!plugin.bridgeTally.containsKey(args[2])){
+                                plugin.bridgeTally.put(args[2], 0);
+                            }
+                            plugin.bridgeTally.put(args[2], plugin.bridgeTally.get(args[2]) + 1);
                             plugin.startBridgeJump(args[2], Integer.parseInt(args[1]));
                             if (placement == 1) {
                                 for (Player p : plugin.getPlayers()) {

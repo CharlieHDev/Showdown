@@ -27,7 +27,7 @@ public class VoteWalkEvent implements Listener {
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) throws ReflectiveOperationException {
         if(event.getTo() != null) {
-            if(plugin.currentMode.equals("Gub Game") && plugin.runningTimers.containsKey("gubgamestart")){
+            if(plugin.currentMode.equals("Gub Game") && plugin.runningTimers.containsKey("gubgamestart") && plugin.runningTimers.get("gubgamestart").getValue() <= 55){
                 if(plugin.getPlayers().contains(Bukkit.getPlayer(event.getPlayer().getName()))) {
                     boolean onBlock = false;
                     for (Material concrete : getConcreteColours()) {

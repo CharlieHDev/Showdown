@@ -37,30 +37,32 @@ public class LastHitEvent implements Listener {
 
     @EventHandler
     public void onPlayerHit(EntityDamageByEntityEvent e) {
-        if (plugin.currentMode.equals("Voting") && plugin.runningTimers.containsKey("slimeBall") && plugin.runningTimers.get("slimeBall").getValue() > 6) {
+        if(plugin.currentMode.equals("Voting")){
             e.setCancelled(true);
-            if (e.getDamager() instanceof Player hitter && e.getEntity() instanceof LivingEntity chicken) {
-                if (chicken.getType().equals(EntityType.CHICKEN)) {
-                    plugin.slimeBallVote = hitter;
-                    Vector velocity = new Vector(-1 + (rand.nextDouble() * 2), 1.0, -1 + (rand.nextDouble() * 2));
-                    chicken.setVelocity(velocity);
-                    hitter.playSound(hitter, Sound.ENTITY_CHICKEN_HURT, 10, 1);
-                    if (plugin.chickenBall.getLocation().clone().subtract(0, 1, 0).getBlock().getType() != Material.AIR) {
-                        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (plugin.runningTimers.containsKey("slimeBall") && plugin.runningTimers.get("slimeBall").getValue() > 6) {
+                if (e.getDamager() instanceof Player hitter && e.getEntity() instanceof LivingEntity chicken) {
+                    if (chicken.getType().equals(EntityType.CHICKEN)) {
+                        plugin.slimeBallVote = hitter;
+                        Vector velocity = new Vector(-1 + (rand.nextDouble() * 2), 1.0, -1 + (rand.nextDouble() * 2));
+                        chicken.setVelocity(velocity);
+                        hitter.playSound(hitter, Sound.ENTITY_CHICKEN_HURT, 10, 1);
+                        if (plugin.chickenBall.getLocation().clone().subtract(0, 1, 0).getBlock().getType() != Material.AIR) {
+                            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    try {
+                                        plugin.glowingEntities.setGlowing(plugin.chickenBall, player, plugin.modeColors.get(plugin.woolModes.get(plugin.playerVote.get(hitter))));
+                                    } catch (ReflectiveOperationException ex) {
+                                        throw new RuntimeException(ex);
+                                    }
+                                }
+                            }, 20L);
+                        } else {
                             for (Player player : Bukkit.getOnlinePlayers()) {
                                 try {
                                     plugin.glowingEntities.setGlowing(plugin.chickenBall, player, plugin.modeColors.get(plugin.woolModes.get(plugin.playerVote.get(hitter))));
                                 } catch (ReflectiveOperationException ex) {
                                     throw new RuntimeException(ex);
                                 }
-                            }
-                        }, 20L);
-                    } else {
-                        for (Player player : Bukkit.getOnlinePlayers()) {
-                            try {
-                                plugin.glowingEntities.setGlowing(plugin.chickenBall, player, plugin.modeColors.get(plugin.woolModes.get(plugin.playerVote.get(hitter))));
-                            } catch (ReflectiveOperationException ex) {
-                                throw new RuntimeException(ex);
                             }
                         }
                     }
@@ -212,6 +214,8 @@ public class LastHitEvent implements Listener {
         } else {
             if (plugin.currentMode.equals("Gub Game")) {
                 if (victim.getHealth() - e.getFinalDamage() <= 0) {
+                    Bukkit.getWorld("build").spawnParticle(Particle.RAID_OMEN, victim.getLocation().clone().add(0,1,0), 20, 0.2, 0.5, 0.2, 0);
+                    killer.playSound(killer.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 2);
                     Bukkit.getScheduler().runTaskLater(plugin, () -> killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(plugin.getPlayerDisplayName(victim.getName()) + " §7| §c♥§c§l0.0")), 1L);
                     for (Player p : plugin.getPlayers()) {
                         plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
@@ -279,6 +283,8 @@ public class LastHitEvent implements Listener {
                 }
             } else if (plugin.currentMode.equals("Survival Games")) {
                 if (victim.getHealth() - e.getFinalDamage() <= 0) {
+                    Bukkit.getWorld("build").spawnParticle(Particle.RAID_OMEN, victim.getLocation().clone().add(0,1,0), 20, 0.2, 0.5, 0.2, 0);
+                    killer.playSound(killer.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 2);
                     plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died to " + plugin.getPlayerDisplayName(killer.getName()));
                     victim.sendTitle("§c§lYOU DIED.", "", 0, 40, 10);
 

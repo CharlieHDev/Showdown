@@ -20,7 +20,7 @@ public class DoubleJumpEvent implements Listener {
     @EventHandler
     public void onToggleFlight(PlayerToggleFlightEvent e) {
         Player p = e.getPlayer();
-        if (p.getGameMode().equals(GameMode.ADVENTURE) && plugin.currentMode.equals("Zoomo Go") && plugin.doubleJumpEnabled) {
+        if (p.getGameMode().equals(GameMode.ADVENTURE) && (plugin.currentMode.equals("Zoomo Go") || plugin.currentMode.equals("Slime Golf")) && plugin.doubleJumpEnabled) {
             p.setAllowFlight(false);
             p.setFlying(false);
             p.setVelocity(p.getLocation().getDirection().multiply(1.8).setY(1));

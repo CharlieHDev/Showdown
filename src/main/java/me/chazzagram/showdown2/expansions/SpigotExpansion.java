@@ -481,7 +481,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "playersalive":
-                if(plugin.currentMode.equals("Zoomo Go")){
+                if(plugin.currentMode.equals("Zoomo Go") || plugin.currentMode.equals("Survival Games")){
                     return String.valueOf(PlayerConfig.get().getConfigurationSection("players").getKeys(false).size() - plugin.deadPlayers.size());
                 } else {
                     return "§8N/A";
@@ -845,6 +845,111 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "bordersize":
                 if(plugin.currentMode.equals("Survival Games")){
                     return String.valueOf(plugin.currentBorderRadius);
+                } else {
+                    return "§8N/A";
+                }
+
+            case "bridge_ruby":
+                if(plugin.currentMode.equals("Bridge Builders")){
+                    StringBuilder tally = new StringBuilder();
+                    if(plugin.bridgeTally.containsKey("RubyRaiders")) {
+                        tally.append("§c§l✔".repeat(plugin.bridgeTally.get("RubyRaiders")));
+                        tally.append("§8§l✔".repeat(12 - plugin.bridgeTally.get("RubyRaiders")));
+                    } else {
+                        tally.append("§8§l✔".repeat(12));
+                    }
+                    return tally.toString();
+                } else {
+                    return "§8N/A";
+                }
+            case "bridge_amber":
+                if(plugin.currentMode.equals("Bridge Builders")){
+                    StringBuilder tally = new StringBuilder();
+                    if(plugin.bridgeTally.containsKey("AmberAmbushers")) {
+                        tally.append("§6§l✔".repeat(plugin.bridgeTally.get("AmberAmbushers")));
+                        tally.append("§8§l✔".repeat(12 - plugin.bridgeTally.get("AmberAmbushers")));
+                    } else {
+                        tally.append("§8§l✔".repeat(12));
+                    }
+                    return tally.toString();
+                } else {
+                    return "§8N/A";
+                }
+            case "bridge_topaz":
+                if(plugin.currentMode.equals("Bridge Builders")){
+                    StringBuilder tally = new StringBuilder();
+                    if(plugin.bridgeTally.containsKey("TopazTroopers")) {
+                        tally.append("§e§l✔".repeat(plugin.bridgeTally.get("TopazTroopers")));
+                        tally.append("§8§l✔".repeat(12 - plugin.bridgeTally.get("TopazTroopers")));
+                    } else {
+                        tally.append("§8§l✔".repeat(12));
+                    }
+                    return tally.toString();
+                } else {
+                    return "§8N/A";
+                }
+            case "bridge_kyanite":
+                if(plugin.currentMode.equals("Bridge Builders")){
+                    StringBuilder tally = new StringBuilder();
+                    if(plugin.bridgeTally.containsKey("KyaniteKillers")) {
+                        tally.append("§a§l✔".repeat(plugin.bridgeTally.get("KyaniteKillers")));
+                        tally.append("§8§l✔".repeat(12 - plugin.bridgeTally.get("KyaniteKillers")));
+                    } else {
+                        tally.append("§8§l✔".repeat(12));
+                    }
+                    return tally.toString();
+                } else {
+                    return "§8N/A";
+                }
+            case "bridge_diamond":
+                if(plugin.currentMode.equals("Bridge Builders")){
+                    StringBuilder tally = new StringBuilder();
+                    if(plugin.bridgeTally.containsKey("DiamondDestroyers")) {
+                        tally.append("§b§l✔".repeat(plugin.bridgeTally.get("DiamondDestroyers")));
+                        tally.append("§8§l✔".repeat(12 - plugin.bridgeTally.get("DiamondDestroyers")));
+                    } else {
+                        tally.append("§8§l✔".repeat(12));
+                    }
+                    return tally.toString();
+                } else {
+                    return "§8N/A";
+                }
+            case "bridge_sapphire":
+                if(plugin.currentMode.equals("Bridge Builders")){
+                    StringBuilder tally = new StringBuilder();
+                    if(plugin.bridgeTally.containsKey("SapphireSoldiers")) {
+                        tally.append("§9§l✔".repeat(plugin.bridgeTally.get("SapphireSoldiers")));
+                        tally.append("§8§l✔".repeat(12 - plugin.bridgeTally.get("SapphireSoldiers")));
+                    } else {
+                        tally.append("§8§l✔".repeat(12));
+                    }
+                    return tally.toString();
+                } else {
+                    return "§8N/A";
+                }
+            case "bridge_smithsonite":
+                if(plugin.currentMode.equals("Bridge Builders")){
+                    StringBuilder tally = new StringBuilder();
+                    if(plugin.bridgeTally.containsKey("SmithsoniteSlayers")) {
+                        tally.append("§d§l✔".repeat(plugin.bridgeTally.get("SmithsoniteSlayers")));
+                        tally.append("§8§l✔".repeat(12 - plugin.bridgeTally.get("SmithsoniteSlayers")));
+                    } else {
+                        tally.append("§8§l✔".repeat(12));
+                    }
+                    return tally.toString();
+                } else {
+                    return "§8N/A";
+                }
+            case "bridge_crystal":
+                if(plugin.currentMode.equals("Bridge Builders")){
+                    StringBuilder tally = new StringBuilder();
+                    if(plugin.bridgeTally.containsKey("CrystalCrashers")) {
+                        tally.append("§f§l✔".repeat(plugin.bridgeTally.get("CrystalCrashers")));
+                        tally.append("§8§l✔".repeat(12 - plugin.bridgeTally.get("CrystalCrashers")));
+                    } else {
+                        tally.append("§8§l✔".repeat(12));
+                    }
+                    return tally.toString();
                 } else {
                     return "§8N/A";
                 }
