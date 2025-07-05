@@ -1,6 +1,7 @@
 me\chazzagram\showdown2\listeners\LastHitEvent$3.class
 me\chazzagram\showdown2\listeners\LastHitEvent.class
 me\chazzagram\showdown2\listeners\PlayerInteractionEvent.class
+me\chazzagram\showdown2\commands\TabCompleterCMD.class
 me\chazzagram\showdown2\Showdown2$5.class
 me\chazzagram\showdown2\Showdown2$14.class
 me\chazzagram\showdown2\Showdown2$20.class
