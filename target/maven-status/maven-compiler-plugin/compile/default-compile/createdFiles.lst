@@ -51,5 +51,6 @@ me\chazzagram\showdown2\Showdown2$1.class
 me\chazzagram\showdown2\files\TeamsConfig.class
 me\chazzagram\showdown2\Showdown2$15.class
 me\chazzagram\showdown2\listeners\BreakBlockEvent.class
+me\chazzagram\showdown2\listeners\RiptideEvent.class
 me\chazzagram\showdown2\Showdown2$12.class
 me\chazzagram\showdown2\files\DeathMessagesConfig.class

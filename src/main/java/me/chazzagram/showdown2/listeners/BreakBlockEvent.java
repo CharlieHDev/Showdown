@@ -7,6 +7,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.inventory.ItemStack;
 
 public class BreakBlockEvent implements Listener {
 
@@ -25,6 +26,8 @@ public class BreakBlockEvent implements Listener {
                 e.setCancelled(true);
                 for (Material block : getCraftalotBlocks()) {
                     if (block == e.getBlock().getType()) {
+                        ItemStack item = new ItemStack(block);
+                        p.getInventory().addItem(item);
                         e.setCancelled(false);
                         break;
                     }

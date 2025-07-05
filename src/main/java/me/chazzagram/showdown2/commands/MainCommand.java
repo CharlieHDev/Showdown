@@ -34,27 +34,54 @@ public class MainCommand implements CommandExecutor {
             plugin.messageConsole("Invalid command.");
         } else {
             switch (args[0].toLowerCase()) {
+                case "givetrident":
+                    if(plugin.currentMode.equals("Colour Dash")) {
+                        if (args.length > 1) {
+                            if (Bukkit.getPlayer(args[1]) != null) {
+                                Player p = Bukkit.getPlayer(args[1]);
+                                ItemStack trident = new ItemStack(Material.TRIDENT);
+                                p.getInventory().addItem(trident);
+                                p.sendTitle("", "§b§l+ ᴛʀɪᴅᴇɴᴛ", 0, 40, 0);
+                            }
+                        }
+                    }
+                    break;
+                case "taketrident":
+                    if(plugin.currentMode.equals("Colour Dash")) {
+                        if (args.length > 1) {
+                            if (Bukkit.getPlayer(args[1]) != null) {
+                                Player p = Bukkit.getPlayer(args[1]);
+                                ItemStack trident = new ItemStack(Material.TRIDENT);
+                                p.getInventory().remove(trident);
+                                p.sendTitle("", "§b§l- ᴛʀɪᴅᴇɴᴛ", 0, 40, 0);
+                            }
+                        }
+                    }
                 case "cdcp":
                     if (args.length > 2) {
                         if(plugin.runningTimers.containsKey("colourdash")) {
+                            int checkpoint = Integer.parseInt(args[1]);
+                            if(plugin.currentRound == 2){
+                                checkpoint = 7 - checkpoint;
+                            }
                             if (!plugin.colourDashCheckpoints.containsKey(args[2])) {
                                 plugin.colourDashCheckpoints.put(args[2], 0);
                             }
-                            if (plugin.colourDashCheckpoints.get(args[2]) < Integer.parseInt(args[1])) {
+                            if (plugin.colourDashCheckpoints.get(args[2]) < checkpoint) {
                                 int placement = 1;
-                                for (Integer checkpoint : plugin.colourDashCheckpoints.values()) {
-                                    if (checkpoint == Integer.parseInt(args[1])) {
+                                for (Integer checkpointNum : plugin.colourDashCheckpoints.values()) {
+                                    if (checkpointNum == checkpoint) {
                                         placement++;
                                     }
                                 }
                                 int pointsEarned = 41 - placement;
                                 plugin.earnPoints(args[2], pointsEarned, true);
                                 Player p = Bukkit.getServer().getPlayer(args[2]);
-                                p.sendTitle("§a[✔] \uD83C\uDFC3-" + args[1], "§8[§f§l⏱§8] §e§o" + plugin.getTimer("colourdashwatch"), 0, 100, 5);
-                                plugin.messagePlayer(p, "§a[\uD83C\uDFC3-" + args[1] + "] Dashpoint reached!");
-                                plugin.colourDashCheckpoints.put(args[2], Integer.parseInt(args[1]));
+                                p.sendTitle("§a[✔] \uD83C\uDFC3-" + checkpoint, "§8[§f§l⏱§8] §e§o" + plugin.getTimer("colourdashwatch"), 0, 100, 5);
+                                plugin.messagePlayer(p, "§a[\uD83C\uDFC3-" + checkpoint + "] Dashpoint reached!");
+                                plugin.colourDashCheckpoints.put(args[2], checkpoint);
                                 for (Player player : plugin.getPlayers()) {
-                                    plugin.messagePlayer(player, "§a§l⏱ §8| " + plugin.getPlayerDisplayName(p.getName()) + "§7 has reached §a\uD83C\uDFC3-" + args[1] + "§7!");
+                                    plugin.messagePlayer(player, "§a§l⏱ §8| " + plugin.getPlayerDisplayName(p.getName()) + "§7 has reached §a\uD83C\uDFC3-" + checkpoint + "§7!");
                                 }
 
                             }
@@ -63,35 +90,37 @@ public class MainCommand implements CommandExecutor {
 
                     break;
                 case "cdfinish":
-                    if (args.length > 1) {
-                        if(plugin.runningTimers.containsKey("colourdash")) {
-                            if (plugin.colourDashCheckpoints.get(args[1]) < 10) {
-                                plugin.cdCompletions++;
-                                int placement = 1;
-                                for (Integer checkpoint : plugin.colourDashCheckpoints.values()) {
-                                    if (checkpoint == 10) {
-                                        placement++;
+                    if (args.length > 2) {
+                        if (plugin.runningTimers.containsKey("colourdash")) {
+                            if(plugin.currentRound == Integer.parseInt(args[2])) {
+                                if (plugin.colourDashCheckpoints.get(args[1]) < 10) {
+                                    plugin.cdCompletions++;
+                                    int placement = 1;
+                                    for (Integer checkpoint : plugin.colourDashCheckpoints.values()) {
+                                        if (checkpoint == 10) {
+                                            placement++;
+                                        }
                                     }
-                                }
-                                int pointsEarned = 102 - (2 * placement);
-                                plugin.earnPoints(args[1], pointsEarned, true);
+                                    int pointsEarned = 102 - (2 * placement);
+                                    plugin.earnPoints(args[1], pointsEarned, true);
 
-                                Player p = Bukkit.getServer().getPlayer(args[1]);
-                                String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
-                                plugin.modeCompletions.put(team, (plugin.modeCompletions.get(team) + 1));
-                                p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("colourdashwatch"), 0, 100, 5);
-                                plugin.messagePlayer(p, "\n§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lCourse Completed!");
-                                plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("colourdashwatch") + "\n");
-                                plugin.colourDashCheckpoints.put(args[1], 10);
-                                p.setGameMode(GameMode.SPECTATOR);
-                                for (Player player : plugin.getPlayers()) {
-                                    plugin.messagePlayer(player, "§f\uD83D\uDC51 §8| " + plugin.getPlayerDisplayName(p.getName()) + "§e was §f§l#" + placement + " §eto finish!");
-                                }
+                                    Player p = Bukkit.getServer().getPlayer(args[1]);
+                                    String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
+                                    plugin.modeCompletions.put(team, (plugin.modeCompletions.get(team) + 1));
+                                    p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("colourdashwatch"), 0, 100, 5);
+                                    plugin.messagePlayer(p, "\n§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lCourse Completed!");
+                                    plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("colourdashwatch") + "\n");
+                                    plugin.colourDashCheckpoints.put(args[1], 10);
+                                    p.setGameMode(GameMode.SPECTATOR);
+                                    for (Player player : plugin.getPlayers()) {
+                                        plugin.messagePlayer(player, "§f\uD83D\uDC51 §8| " + plugin.getPlayerDisplayName(p.getName()) + "§e was §f§l#" + placement + " §eto finish!");
+                                    }
 
-                                if(plugin.cdCompletions == PlayerConfig.get().getConfigurationSection("players").getKeys(false).size()) {
-                                    plugin.runningTimers.remove("colourdash");
-                                    plugin.runningTimers.remove("colourdashwatch");
-                                    plugin.gameEnd();
+                                    if (plugin.cdCompletions == PlayerConfig.get().getConfigurationSection("players").getKeys(false).size()) {
+                                        plugin.runningTimers.remove("colourdash");
+                                        plugin.runningTimers.remove("colourdashwatch");
+                                        plugin.gameEnd();
+                                    }
                                 }
                             }
                         }
@@ -214,8 +243,8 @@ public class MainCommand implements CommandExecutor {
                                     if (plugin.bridgeJumpRegister.get(plugin.bridgeJumpRegister.size()).contains(player)) {
                                         register++;
                                         if (register == TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players").size()) {
-                                            plugin.runningTimers.remove(PlayerConfig.get().getString("players." + args[2] + ".team") + "6");
-                                            plugin.bridgeTally.put(PlayerConfig.get().getString("players." + args[2] + ".team"), plugin.bridgeTally.get(PlayerConfig.get().getString("players." + args[2] + ".team")) + 1);
+                                            plugin.runningTimers.remove(PlayerConfig.get().getString("players." + args[1] + ".team") + "6");
+                                            plugin.bridgeTally.put(PlayerConfig.get().getString("players." + args[1] + ".team"), plugin.bridgeTally.get(PlayerConfig.get().getString("players." + args[1] + ".team")) + 1);
                                             Integer placement = plugin.bridgeCheckpoints.get(plugin.bridgeCheckpoints.size());
                                             switch (placement) {
                                                 case 1:
@@ -257,9 +286,9 @@ public class MainCommand implements CommandExecutor {
                                         }
                                     }
                                 }
-                                plugin.earnPoints(args[2], 30, true);
-                                if (Bukkit.getServer().getPlayer(args[2]) != null) {
-                                    Player p2 = Bukkit.getServer().getPlayer(args[2]);
+                                plugin.earnPoints(args[1], 30, true);
+                                if (Bukkit.getServer().getPlayer(args[1]) != null) {
+                                    Player p2 = Bukkit.getServer().getPlayer(args[1]);
                                     plugin.messagePlayer(p2, "§e\uD83D\uDCB020 §7| §eYou have completed this jump!");
                                 }
 
@@ -668,6 +697,23 @@ public class MainCommand implements CommandExecutor {
                     }
                     GubTPConfig.save();
                     break;
+                case "resetmodes":
+                    if(args.length > 1){
+                        if(args[1].equals("confirm")){
+                             plugin.resetBridgeBuilders();
+                             plugin.resetColourDash();
+                             plugin.resetCraftalot();
+                             plugin.resetGubGame();
+                             plugin.resetSlimeGolf();
+                             plugin.resetSurvivalGames();
+                             plugin.resetZoomoGo();
+                        } else {
+                            plugin.messagePlayer(p, "Invalid argument /mce resetmodes confirm");
+                        }
+                    } else {
+                        plugin.messagePlayer(p, "Invalid argument /mce resetmodes confirm");
+                    }
+                    break;
                 case "slimefinishers":
                     plugin.slimeGolfTimes();
                     break;
@@ -679,7 +725,34 @@ public class MainCommand implements CommandExecutor {
                     plugin.currentRound = 2;
                     plugin.startSlimeGolf();
                     break;
-                case "startcolourdash":
+                case "startcolourdash1":
+                    plugin.currentRound = 1;
+                    World world = Bukkit.getWorld("build");
+                    for(int i = 2; i <= 4; i++) {
+                        world.getBlockAt(plugin.cdWallCoords[i][0], plugin.cdWallCoords[i][1] - 1, plugin.cdWallCoords[i][2]).setType(Material.REDSTONE_BLOCK);
+                        world.getBlockAt(plugin.cdWallCoords[i][0], plugin.cdWallCoords[i][1] - 1, plugin.cdWallCoords[i][2]).setType(Material.DIRT);
+                    }
+                    for(int i = 0; i <= 1; i++) {
+                        world.getBlockAt(plugin.cdWallCoords[i][0], plugin.cdWallCoords[i][1], plugin.cdWallCoords[i][2]).setType(Material.REDSTONE_BLOCK);
+                        world.getBlockAt(plugin.cdWallCoords[i][0], plugin.cdWallCoords[i][1], plugin.cdWallCoords[i][2]).setType(Material.DIRT);
+                    }
+                    world.getBlockAt(78, 139, 1235).setType(Material.REDSTONE_BLOCK);
+                    world.getBlockAt(78, 139, 1235).setType(Material.AIR);
+                    plugin.startColourDash();
+                    break;
+                case "startcolourdash2":
+                    plugin.currentRound = 2;
+                    World world2 = Bukkit.getWorld("build");
+                    for(int i = 0; i <= 1; i++) {
+                        world2.getBlockAt(plugin.cdWallCoords[i][0], plugin.cdWallCoords[i][1] - 1, plugin.cdWallCoords[i][2]).setType(Material.REDSTONE_BLOCK);
+                        world2.getBlockAt(plugin.cdWallCoords[i][0], plugin.cdWallCoords[i][1] - 1, plugin.cdWallCoords[i][2]).setType(Material.DIRT);
+                    }
+                    for(int i = 2; i <= 4; i++) {
+                        world2.getBlockAt(plugin.cdWallCoords[i][0], plugin.cdWallCoords[i][1], plugin.cdWallCoords[i][2]).setType(Material.REDSTONE_BLOCK);
+                        world2.getBlockAt(plugin.cdWallCoords[i][0], plugin.cdWallCoords[i][1], plugin.cdWallCoords[i][2]).setType(Material.DIRT);
+                    }
+                    world2.getBlockAt(78, 138, 1235).setType(Material.REDSTONE_BLOCK);
+                    world2.getBlockAt(78, 138, 1235).setType(Material.AIR);
                     plugin.startColourDash();
                     break;
                 case "startbridgebuilders":

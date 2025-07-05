@@ -148,6 +148,14 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     };
 
+    public int[][] cdWallCoords = {
+            {31, 142, 1038}, // Route 2
+            {80, 143, 1009}, // Route 2
+            {59, 142, 990}, // Route 1
+            {46, 142, 1020}, // Route 1
+            {103, 143, 1023} // Route 1
+    };
+
     List<Slime> slimeGolfSlime = new ArrayList<>();
 
     public Map<String, Map<Integer, Integer>> bridgeCourseTimes = new HashMap<>();
@@ -168,6 +176,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public boolean audienceVote = false;
 
     public HashMap<String, Integer> bridgeTally = new HashMap<>();
+
+    public List<Material> colourDashBlocks = Arrays.asList(Material.BLUE_ICE, Material.RED_CONCRETE, Material.ORANGE_CONCRETE, Material.YELLOW_CONCRETE, Material.LIME_CONCRETE, Material.LIGHT_BLUE_CONCRETE, Material.BLUE_CONCRETE, Material.MAGENTA_CONCRETE, Material.WHITE_CONCRETE);
 
 
     // Spawn the particle
@@ -241,6 +251,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         teamJump.put("SmithsoniteSlayers", new int[] { 457, -19, 659 });
         teamJump.put("CrystalCrashers", new int[] { 492, -19, 659 });
 
+        getServer().getPluginManager().registerEvents(new RiptideEvent(this), this);
         getServer().getPluginManager().registerEvents(new ArrowDespawnEvent(this), this);
         getServer().getPluginManager().registerEvents(new BreakBlockEvent(this), this);
         getServer().getPluginManager().registerEvents(new PlayerInteractionEvent(this), this);
@@ -887,9 +898,25 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }
     }
 
+    public void resetColourDash(){
+        colourDashCheckpoints.clear();
+        cdCompletions = 0;
+    }
 
     public void startColourDash(){
         fillVotingSpace(4);
+        World world = Bukkit.getWorld("build");
+        Block block;
+        for(int x = 137; x >= -27; x--){
+            for(int y = 195; y >= 127; y--){
+                for(int z = 804; z <= 1345; z++){
+                    block = world.getBlockAt(x,y,z);
+                    if(colourDashBlocks.contains(block.getType())){
+                        block.setType(Material.AIR);
+                    }
+                }
+            }
+        }
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 61;
             @Override
@@ -901,11 +928,19 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         bossBarBgTest();
                         switch (timeLeft) {
                             case 60:
-                                cdCompletions = 0;
-                                Bukkit.getWorld("build").getBlockAt(121, 139, 790).setType(Material.REDSTONE_BLOCK);
-                                Bukkit.getWorld("build").getBlockAt(121, 139, 790).setType(Material.AIR);
-                                teleportPlayers(TeleportConfig.get().getLocation("players.colourdash"), 5);
-                                teleportSpectators(TeleportConfig.get().getLocation("spectators.colourdash"), 5);
+                                if(plugin.currentRound == 1) {
+                                    Bukkit.getWorld("build").getBlockAt(121, 139, 790).setType(Material.REDSTONE_BLOCK);
+                                    Bukkit.getWorld("build").getBlockAt(121, 139, 790).setType(Material.AIR);
+                                    teleportPlayers(TeleportConfig.get().getLocation("players.colourdash"), 5);
+                                    teleportSpectators(TeleportConfig.get().getLocation("spectators.colourdash"), 5);
+                                }
+                                if(plugin.currentRound == 2){
+                                    Bukkit.getWorld("build").getBlockAt(79, 170, 1324).setType(Material.REDSTONE_BLOCK);
+                                    Bukkit.getWorld("build").getBlockAt(79, 170, 1324).setType(Material.AIR);
+                                    teleportPlayers(TeleportConfig.get().getLocation("players.colourdash2"), 5);
+                                    teleportSpectators(TeleportConfig.get().getLocation("spectators.colourdash2"), 5);
+                                }
+                                resetColourDash();
                                 resetTeamCompletions();
                                 resetModePoints();
                                 break;
@@ -925,13 +960,26 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 break;
                             case 50:
                                 playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                                for (Player player : getPlayers()) {
-                                    messagePlayer(player, """
+                                if(plugin.currentRound == 1) {
+                                    for (Player player : getPlayers()) {
+                                        messagePlayer(player, """
+                                                §8
+                                                §8
+                                                §8[§e§l?§8] §eWelcome to §a§lColour Dash§e! This is a race to the finish, the map is bigger, and there's multiple routes for your team to take so make the right choice!
+                                                §8
+                                                """);
+                                    }
+                                }
+                                if(plugin.currentRound == 2){
+                                    for (Player player : getPlayers()) {
+                                        messagePlayer(player, """
                                             §8
                                             §8
-                                            §8[§e§l?§8] §eWelcome to §a§lColour Dash§e! This is a race to the finish, the map is bigger, and there's multiple routes for your team to take so make the right choice!
+                                            §8[§e§l?§8] §eWelcome to §a§lColour Dash §c§lʀᴏᴜɴᴅ ᴛᴡᴏ§e! Now you know the course.. or do you? This time we're going backwards on a different route! Good luck!
                                             §8
                                             """);
+                                    }
+                                    timeLeft = 16;
                                 }
                                 break;
                             case 30:
@@ -963,8 +1011,14 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 }
                                 break;
                             case 0:
-                                Bukkit.getWorld("build").getBlockAt(121, 139, 791).setType(Material.REDSTONE_BLOCK);
-                                Bukkit.getWorld("build").getBlockAt(121, 139, 791).setType(Material.AIR);
+                                if(plugin.currentRound == 1) {
+                                    Bukkit.getWorld("build").getBlockAt(121, 139, 791).setType(Material.REDSTONE_BLOCK);
+                                    Bukkit.getWorld("build").getBlockAt(121, 139, 791).setType(Material.AIR);
+                                }
+                                if(plugin.currentRound == 2){
+                                    Bukkit.getWorld("build").getBlockAt(79, 171, 1324).setType(Material.REDSTONE_BLOCK);
+                                    Bukkit.getWorld("build").getBlockAt(79, 171, 1324).setType(Material.AIR);
+                                }
                                 playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 2);
                                 playMusicAll(Sound.MUSIC_DISC_BLOCKS);
                                 pvpEnabled = true;
@@ -2474,7 +2528,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                     player.sendTitle("§c§lGAME OVER!", "§7Build times:", 0, 60, 40);
                                 }
                             } else {
-                                if(currentMode.equals("Slime Golf") && currentRound == 1){
+                                if((currentMode.equals("Slime Golf") || currentMode.equals("Colour Dash") || currentMode.equals("Zoomo Go")) && currentRound == 1){
                                     for(Player player : Bukkit.getOnlinePlayers()){
                                         player.sendTitle("§c§lROUND OVER!", "", 0, 60, 40);
                                     }
@@ -2655,9 +2709,6 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         ItemStack axe = new ItemStack(Material.IRON_AXE);
         ItemStack shovel = new ItemStack(Material.IRON_SHOVEL);
         ItemStack trident = new ItemStack(Material.TRIDENT);
-        ItemMeta tridentMeta = trident.getItemMeta();
-        tridentMeta.addEnchant(Enchantment.RIPTIDE, 3, true);
-        trident.setItemMeta(tridentMeta);
         ItemMeta swordMeta = sword.getItemMeta();
         swordMeta.addEnchant(Enchantment.LOOTING, 3, true);
         sword.setItemMeta(swordMeta);
