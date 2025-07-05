@@ -791,7 +791,23 @@ public class MainCommand implements CommandExecutor {
                     }
                     break;
                 case "readycheck":
-                    plugin.getReadyPlayers();
+                    plugin.jumpStates.clear();
+                    if(args.length > 1) {
+                        switch(args[1]){
+                            case "jump":
+                                plugin.readyType = "jump";
+                                break;
+                            case "sneak":
+                                plugin.readyType = "sneak";
+                                break;
+                            case "punch":
+                                plugin.readyType = "punch";
+                                break;
+                        }
+                        plugin.getReadyPlayers();
+                    } else {
+                        plugin.messagePlayer(p, "Missing Args.");
+                    }
                     break;
                 case "pause":
                     plugin.pauseEvent();

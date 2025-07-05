@@ -1,6 +1,7 @@
 package me.chazzagram.showdown2;
 import fr.skytasul.glowingentities.GlowingEntities;
 import me.chazzagram.showdown2.commands.MainCommand;
+import me.chazzagram.showdown2.commands.TabCompleterCMD;
 import me.chazzagram.showdown2.expansions.SpigotExpansion;
 import me.chazzagram.showdown2.files.*;
 import me.chazzagram.showdown2.listeners.*;
@@ -178,6 +179,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public HashMap<String, Integer> bridgeTally = new HashMap<>();
 
     public List<Material> colourDashBlocks = Arrays.asList(Material.BLUE_ICE, Material.RED_CONCRETE, Material.ORANGE_CONCRETE, Material.YELLOW_CONCRETE, Material.LIME_CONCRETE, Material.LIGHT_BLUE_CONCRETE, Material.BLUE_CONCRETE, Material.MAGENTA_CONCRETE, Material.WHITE_CONCRETE);
+    public String readyType = "sneak";
+
+    public HashMap<Player, Boolean> jumpStates = new HashMap<>();
 
 
     // Spawn the particle
@@ -191,6 +195,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         glowingEntities = new GlowingEntities(plugin);
 
         this.getCommand("mcevent").setExecutor(new MainCommand(this));
+        this.getCommand("mcevent").setTabCompleter(new TabCompleterCMD());
 
         teamColors.put("RubyRaiders", Color.RED);
         teamColors.put("AmberAmbushers", Color.ORANGE);
@@ -2744,8 +2749,20 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     runningTimers.get("readytimer").setValue(timeLeft);
                     switch (timeLeft) {
                         case 30:
+                            String readyTypeString = "";
+                            switch(readyType){
+                                case "jump":
+                                    readyTypeString = "Spam Jump!";
+                                    break;
+                                case "sneak":
+                                    readyTypeString = "Spam Crouch!";
+                                    break;
+                                case "punch":
+                                    readyTypeString = "Spam Punch!";
+                                    break;
+                            }
                             for (Player player : getPlayers()) {
-                                player.sendTitle("§b§lReady to play?", "Spam Crouch!", 0, 560, 40);
+                                player.sendTitle("§b§lReady to play?", readyTypeString, 0, 560, 40);
                             }
                             break;
                         case 1:
