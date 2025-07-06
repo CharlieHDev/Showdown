@@ -491,20 +491,29 @@ public class SpigotExpansion extends PlaceholderExpansion {
 
 
             case "teamlist_1":
-                teamplayers.append("§0     ");
+                teamplayers.append("§r§0     ");
                 for(String player : TeamsConfig.get().getStringList("teams.RubyRaiders.players")){
                     index++;
                     if(Bukkit.getPlayer(player) != null){
                         if(plugin.getPlayerDisplayName(player).length() > 13) {
-                            teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§0     ");
+                            if(plugin.deadPlayers.contains(player)) {
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.RubyRaiders.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                            } else {
+                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§r§0     ");
+                            }
+
                         } else {
-                            teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§0     ");
+                            if(plugin.deadPlayers.contains(player)) {
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.RubyRaiders.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                            } else {
+                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§r§0     ");
+                            }
                         }
                     } else {
                         if(player.length() > 10) {
-                            teamplayers.append("§8").append(player, 0, 10).append("§0     ");
+                            teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
                         } else {
-                            teamplayers.append("§8").append(player).append("§0     ");
+                            teamplayers.append("§8").append(player).append("§r§0     ");
                         }
                     }
                 }
@@ -512,151 +521,208 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 return teamplayers.toString();
 
             case "teamlist_2":
-                teamplayers.append("§0     ");
-                for(String player : TeamsConfig.get().getStringList("teams.AmberAmbushers.players")){
+                teamplayers.append("§r§0     ");
+                for (String player : TeamsConfig.get().getStringList("teams.AmberAmbushers.players")) {
                     index++;
-                    if(Bukkit.getPlayer(player) != null){
-                        if(plugin.getPlayerDisplayName(player).length() > 13) {
-                            teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§0     ");
+                    if (Bukkit.getPlayer(player) != null) {
+                        if (plugin.getPlayerDisplayName(player).length() > 13) {
+                            if (plugin.deadPlayers.contains(player)) {
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.AmberAmbushers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                            } else {
+                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§r§0     ");
+                            }
                         } else {
-                            teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§0     ");
+                            if (plugin.deadPlayers.contains(player)) {
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.AmberAmbushers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                            } else {
+                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§r§0     ");
+                            }
                         }
                     } else {
-                        if(player.length() > 10) {
-                            teamplayers.append("§8").append(player, 0, 10).append("§0     ");
+                        if (player.length() > 10) {
+                            teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
                         } else {
-                            teamplayers.append("§8").append(player).append("§0     ");
+                            teamplayers.append("§8").append(player).append("§r§0     ");
                         }
                     }
                 }
-                teamplayers.repeat("§8NoPlayer§0     ", 4-index);
+                teamplayers.repeat("§8NoPlayer§0     ", 4 - index);
                 return teamplayers.toString();
 
             case "teamlist_3":
-                teamplayers.append("§0     ");
-                for(String player : TeamsConfig.get().getStringList("teams.TopazTroopers.players")){
+                teamplayers.append("§r§0     ");
+                for (String player : TeamsConfig.get().getStringList("teams.TopazTroopers.players")) {
                     index++;
-                    if(Bukkit.getPlayer(player) != null){
-                        if(plugin.getPlayerDisplayName(player).length() > 13) {
-                            teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§0     ");
+                    if (Bukkit.getPlayer(player) != null) {
+                        if (plugin.getPlayerDisplayName(player).length() > 13) {
+                            if (plugin.deadPlayers.contains(player)) {
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.TopazTroopers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                            } else {
+                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§r§0     ");
+                            }
                         } else {
-                            teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§0     ");
+                            if (plugin.deadPlayers.contains(player)) {
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.TopazTroopers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                            } else {
+                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§r§0     ");
+                            }
                         }
                     } else {
-                        if(player.length() > 10) {
-                            teamplayers.append("§8").append(player, 0, 10).append("§0     ");
+                        if (player.length() > 10) {
+                            teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
                         } else {
-                            teamplayers.append("§8").append(player).append("§0     ");
+                            teamplayers.append("§8").append(player).append("§r§0     ");
                         }
                     }
                 }
-                teamplayers.repeat("§8NoPlayer§0     ", 4-index);
+                teamplayers.repeat("§8NoPlayer§0     ", 4 - index);
                 return teamplayers.toString();
 
             case "teamlist_4":
-                teamplayers.append("§0     ");
-                for(String player : TeamsConfig.get().getStringList("teams.KyaniteKillers.players")){
+                teamplayers.append("§r§0     ");
+                for (String player : TeamsConfig.get().getStringList("teams.KyaniteKillers.players")) {
                     index++;
-                    if(Bukkit.getPlayer(player) != null){
-                        if(plugin.getPlayerDisplayName(player).length() > 13) {
-                            teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§0     ");
+                    if (Bukkit.getPlayer(player) != null) {
+                        if (plugin.getPlayerDisplayName(player).length() > 13) {
+                            if (plugin.deadPlayers.contains(player)) {
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.KyaniteKillers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                            } else {
+                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§r§0     ");
+                            }
                         } else {
-                            teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§0     ");
+                            if (plugin.deadPlayers.contains(player)) {
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.KyaniteKillers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                            } else {
+                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§r§0     ");
+                            }
                         }
                     } else {
-                        if(player.length() > 10) {
-                            teamplayers.append("§8").append(player, 0, 10).append("§0     ");
+                        if (player.length() > 10) {
+                            teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
                         } else {
-                            teamplayers.append("§8").append(player).append("§0     ");
+                            teamplayers.append("§8").append(player).append("§r§0     ");
                         }
                     }
                 }
-                teamplayers.repeat("§8NoPlayer§0     ", 4-index);
+                teamplayers.repeat("§8NoPlayer§0     ", 4 - index);
                 return teamplayers.toString();
 
             case "teamlist_5":
-                teamplayers.append("§0     ");
-                for(String player : TeamsConfig.get().getStringList("teams.DiamondDestroyers.players")){
+                teamplayers.append("§r§0     ");
+                for (String player : TeamsConfig.get().getStringList("teams.DiamondDestroyers.players")) {
                     index++;
-                    if(Bukkit.getPlayer(player) != null){
-                        if(plugin.getPlayerDisplayName(player).length() > 13) {
-                            teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§0     ");
+                    if (Bukkit.getPlayer(player) != null) {
+                        if (plugin.getPlayerDisplayName(player).length() > 13) {
+                            if (plugin.deadPlayers.contains(player)) {
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.DiamondDestroyers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                            } else {
+                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§r§0     ");
+                            }
                         } else {
-                            teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§0     ");
+                            if (plugin.deadPlayers.contains(player)) {
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.DiamondDestroyers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                            } else {
+                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§r§0     ");
+                            }
                         }
                     } else {
-                        if(player.length() > 10) {
-                            teamplayers.append("§8").append(player, 0, 10).append("§0     ");
+                        if (player.length() > 10) {
+                            teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
                         } else {
-                            teamplayers.append("§8").append(player).append("§0     ");
+                            teamplayers.append("§8").append(player).append("§r§0     ");
                         }
                     }
                 }
-                teamplayers.repeat("§8NoPlayer§0     ", 4-index);
+                teamplayers.repeat("§8NoPlayer§0     ", 4 - index);
                 return teamplayers.toString();
 
             case "teamlist_6":
-                teamplayers.append("§0     ");
-                for(String player : TeamsConfig.get().getStringList("teams.SapphireSoldiers.players")){
+                teamplayers.append("§r§0     ");
+                for (String player : TeamsConfig.get().getStringList("teams.SapphireSoldiers.players")) {
                     index++;
-                    if(Bukkit.getPlayer(player) != null){
-                        if(plugin.getPlayerDisplayName(player).length() > 13) {
-                            teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§0     ");
+                    if (Bukkit.getPlayer(player) != null) {
+                        if (plugin.getPlayerDisplayName(player).length() > 13) {
+                            if (plugin.deadPlayers.contains(player)) {
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.SapphireSoldiers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                            } else {
+                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§r§0     ");
+                            }
                         } else {
-                            teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§0     ");
+                            if (plugin.deadPlayers.contains(player)) {
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.SapphireSoldiers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                            } else {
+                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§r§0     ");
+                            }
                         }
                     } else {
-                        if(player.length() > 10) {
-                            teamplayers.append("§8").append(player, 0, 10).append("§0     ");
+                        if (player.length() > 10) {
+                            teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
                         } else {
-                            teamplayers.append("§8").append(player).append("§0     ");
+                            teamplayers.append("§8").append(player).append("§r§0     ");
                         }
                     }
                 }
-                teamplayers.repeat("§8NoPlayer§0     ", 4-index);
+                teamplayers.repeat("§8NoPlayer§0     ", 4 - index);
                 return teamplayers.toString();
 
             case "teamlist_7":
-                teamplayers.append("§0     ");
-                for(String player : TeamsConfig.get().getStringList("teams.SmithsoniteSlayers.players")){
+                teamplayers.append("§r§0     ");
+                for (String player : TeamsConfig.get().getStringList("teams.SmithsoniteSlayers.players")) {
                     index++;
-                    if(Bukkit.getPlayer(player) != null){
-                        if(plugin.getPlayerDisplayName(player).length() > 13) {
-                            teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§0     ");
+                    if (Bukkit.getPlayer(player) != null) {
+                        if (plugin.getPlayerDisplayName(player).length() > 13) {
+                            if (plugin.deadPlayers.contains(player)) {
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.SmithsoniteSlayers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                            } else {
+                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§r§0     ");
+                            }
                         } else {
-                            teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§0     ");
+                            if (plugin.deadPlayers.contains(player)) {
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.SmithsoniteSlayers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                            } else {
+                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§r§0     ");
+                            }
                         }
                     } else {
-                        if(player.length() > 10) {
-                            teamplayers.append("§8").append(player, 0, 10).append("§0     ");
+                        if (player.length() > 10) {
+                            teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
                         } else {
-                            teamplayers.append("§8").append(player).append("§0     ");
+                            teamplayers.append("§8").append(player).append("§r§0     ");
                         }
                     }
                 }
-                teamplayers.repeat("§8NoPlayer§0     ", 4-index);
+                teamplayers.repeat("§8NoPlayer§0     ", 4 - index);
                 return teamplayers.toString();
 
             case "teamlist_8":
-                teamplayers.append("§0     ");
-                for(String player : TeamsConfig.get().getStringList("teams.CrystalCrashers.players")){
+                teamplayers.append("§r§0     ");
+                for (String player : TeamsConfig.get().getStringList("teams.CrystalCrashers.players")) {
                     index++;
-                    if(Bukkit.getPlayer(player) != null){
-                        if(plugin.getPlayerDisplayName(player).length() > 13) {
-                            teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§0     ");
+                    if (Bukkit.getPlayer(player) != null) {
+                        if (plugin.getPlayerDisplayName(player).length() > 13) {
+                            if (plugin.deadPlayers.contains(player)) {
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.CrystalCrashers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                            } else {
+                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§r§0     ");
+                            }
                         } else {
-                            teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§0     ");
+                            if (plugin.deadPlayers.contains(player)) {
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.CrystalCrashers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                            } else {
+                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§r§0     ");
+                            }
                         }
                     } else {
-                        if(player.length() > 10) {
-                            teamplayers.append("§8").append(player, 0, 10).append("§0     ");
+                        if (player.length() > 10) {
+                            teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
                         } else {
-                            teamplayers.append("§8").append(player).append("§0     ");
+                            teamplayers.append("§8").append(player).append("§r§0     ");
                         }
                     }
                 }
-                teamplayers.repeat("§8NoPlayer§0     ", 4-index);
+                teamplayers.repeat("§8NoPlayer§0     ", 4 - index);
                 return teamplayers.toString();
+
 
             case "votedmode":
                 return plugin.woolModes.getOrDefault(plugin.playerVote.get(p), "Selecting...");

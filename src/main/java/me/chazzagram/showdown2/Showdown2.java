@@ -20,6 +20,7 @@ import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
@@ -183,6 +184,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<Player, Boolean> jumpStates = new HashMap<>();
 
+    public String winningTeam = "";
+
 
     // Spawn the particle
 
@@ -299,6 +302,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         GubTPConfig.get().options().copyDefaults(true);
         GubTPConfig.save();
 
+        PhilipConfig.setup();
+        PhilipConfig.get().options().copyDefaults(true);
+        PhilipConfig.save();
+
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             Bukkit.getPluginManager().registerEvents(this, this);
             new SpigotExpansion(this).register();
@@ -351,6 +358,16 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     }
 
     @EventHandler
+    public void onPlayerLeave(PlayerQuitEvent e) {
+        Player player = e.getPlayer();
+        e.setQuitMessage("""
+                    §f
+                    §7  [§c§l-§7] §c§l""" + player.getName() + """
+                    §f
+                    """);
+    }
+
+    @EventHandler
     public void onPlayerJoin(PlayerJoinEvent e) {
         e.getPlayer().sendTitle("§7§oLoading...", "", 0, 10, 0);
         boolean playerFound = false;
@@ -376,6 +393,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             }
         }
 
+        Player player = e.getPlayer();
+        e.setJoinMessage("""
+                    §f
+                    §7  [§a§l+§7] §a§l""" + player.getName() + """
+                    §f
+                    """);
 
 
     }
@@ -875,6 +898,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
 
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 2);
+                            playMusicAll(Sound.MUSIC_DISC_CAT);
                             for (Player player : Bukkit.getOnlinePlayers()) {
                                 player.sendTitle("§a§l▶ GO! ◀", "", 0, 40, 0);
                             }
@@ -1483,6 +1507,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     if (!pausedTimers.contains("zoomogo")) {
                         timeLeft--;
                         runningTimers.get("zoomogo").setValue(timeLeft);
+                        bossBarBgTest();
                         switch (timeLeft) {
                             case 140:
                                 destroyIsland(zoomoIslands(27));
@@ -2072,10 +2097,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     }
 
     public void getPlayerModePoints(){
+        int index = 1;
+        List<String> players = new ArrayList<>(sortMap(modePoints).keySet());
+        List<Integer> points = new ArrayList<>(sortMap(modePoints).values());
         for(Player player : Bukkit.getOnlinePlayers()) {
             messagePlayer(player, " §f-  §e§lᴍᴏᴅᴇ ɪɴᴅɪᴠ ʟᴇᴀᴅᴇʀs  §f-");
-            List<String> players = new ArrayList<>(sortMap(modePoints).keySet());
-            List<Integer> points = new ArrayList<>(sortMap(modePoints).values());
             for (int i = 0; i <= 7; i++) {
                 if(players.size() >= i+1) {
                     if (players.get(i) != null && points.get(i) != null) {
@@ -2084,6 +2110,16 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                 }
             }
             messagePlayer(player, "§f--------------------------");
+        }
+        for(Player p : getPlayers()) {
+            for (String player2 : players) {
+                if (p.getName().equals(player2)){
+                    messagePlayer(p, String.format("%-15s%15s", index + ". " + getPlayerDisplayName(players.get(index-1)), "§e§l\uD83D\uDCB0" + points.get(index-1)));
+                    break;
+                }
+                index++;
+            }
+            messagePlayer(p, "§f--------------------------");
         }
     }
 
@@ -2534,12 +2570,28 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 }
                             } else {
                                 if((currentMode.equals("Slime Golf") || currentMode.equals("Colour Dash") || currentMode.equals("Zoomo Go")) && currentRound == 1){
+                                    if(currentMode.equals("Zoomo Go")){
+                                        for(Player player : Bukkit.getOnlinePlayers()){
+                                            player.sendTitle("§c§lROUND OVER!", "§e★ " + plugin.getTeamDisplayName(winningTeam), 0, 60, 40);
+                                        }
+                                    } else {
+                                        for (Player player : Bukkit.getOnlinePlayers()) {
+                                            player.sendTitle("§c§lROUND OVER!", "", 0, 60, 40);
+                                        }
+                                    }
+                                } else if (currentMode.equals("Survival Games")) {
                                     for(Player player : Bukkit.getOnlinePlayers()){
-                                        player.sendTitle("§c§lROUND OVER!", "", 0, 60, 40);
+                                        player.sendTitle("§c§lGAME OVER!", "§e★ " + plugin.getTeamDisplayName(winningTeam), 0, 60, 40);
                                     }
                                 } else {
-                                    for (Player player : Bukkit.getOnlinePlayers()) {
-                                        player.sendTitle("§c§lGAME OVER!", "", 0, 60, 40);
+                                    if(currentMode.equals("Zoomo Go")){
+                                        for(Player player : Bukkit.getOnlinePlayers()){
+                                            player.sendTitle("§c§lGAME OVER!", "§e★ " + plugin.getTeamDisplayName(winningTeam), 0, 60, 40);
+                                        }
+                                    } else {
+                                        for (Player player : Bukkit.getOnlinePlayers()) {
+                                            player.sendTitle("§c§lGAME OVER!", "", 0, 60, 40);
+                                        }
                                     }
                                 }
                                 timeLeft = 51;
@@ -2550,13 +2602,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             bridgeBuildTimeHandling(bridgeCourseId);
                             break;
                         case 50:
+                            winningTeam = "";
                             if(currentMode.equals("Survival Games")){
                                 Bukkit.getWorld("build").getBlockAt(-199, 32, -730).setType(Material.AIR);
                             }
                             if(currentMode.equals("Slime Golf")) {
                                 slimeGolfTimes();
-                            } else if (currentMode.equals("Bridge Builders")) {
-                                // Nothing.
                             } else {
                                 getPlayerModePoints();
                             }
@@ -2931,6 +2982,66 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     timeLeft--;
                     runningTimers.get("startevent").setValue(timeLeft);
                     switch (timeLeft) {
+                        case 3599:
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle("§9§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ʙᴜɪʟᴅᴇʀ - ᴍᴀʟᴠᴀʀᴇ", 0, 50, 0);
+                            }
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
+                            break;
+                        case 3560:
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle("§9§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ʙᴜɪʟᴅᴇʀ - ᴅᴇʀᴘᴍᴀsᴋ", 0, 50, 0);
+                            }
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
+                            break;
+                        case 3520:
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle("§9§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ʙᴜɪʟᴅᴇʀ - ᴊᴀʏᴅʀᴀᴡs", 0, 50, 0);
+                            }
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
+                            break;
+                        case 3480:
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle("§9§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ʙᴜɪʟᴅᴇʀ - ɢᴏᴏsᴇ", 0, 50, 0);
+                            }
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
+                            break;
+                        case 3440:
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle("§9§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ʙᴜɪʟᴅᴇʀ - ᴍᴏᴏsᴇ", 0, 50, 0);
+                            }
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
+                            break;
+                        case 3400:
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle("§9§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ʙᴜɪʟᴅᴇʀ - ᴊᴇsᴛᴇᴅ", 0, 50, 0);
+                            }
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
+                            break;
+                        case 3360:
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle("§a§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "sᴜᴘᴘᴏʀᴛ - ᴀᴊx", 0, 50, 0);
+                            }
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
+                            break;
+                        case 3320:
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle("§a§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "sᴜᴘᴘᴏʀᴛ - ᴊᴜʟᴇs", 0, 50, 20);
+                            }
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
+                            break;
+                        case 3280:
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle("§b§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ᴛʜᴇ ɢʟᴏʀɪᴏᴜs ᴛᴇsᴛᴇʀs", 0, 50, 20);
+                            }
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
+                            break;
+                        case 3120:
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle("§e§lʙʀᴏᴜɢʜᴛ ᴛᴏ ʏᴏᴜ ʙʏ", "ᴄʜᴀᴢᴢᴀɢʀᴀᴍ", 0, 50, 20);
+                            }
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
+                            break;
                         case 3200, 3100, 3000, 2900, 2800, 2700, 2600:
                             for(int[] firework : lakeFireworks) {
                                 world.getBlockAt(firework[0], firework[1]-6, firework[2]).setType(Material.REDSTONE_BLOCK);
@@ -3250,7 +3361,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             world.getBlockAt(193, 138, 793).setType(Material.REDSTONE_BLOCK);
                             world.getBlockAt(193, 138, 793).setType(Material.AIR);
                             for(Player p : Bukkit.getOnlinePlayers()){
-                                p.sendTitle("\uD83D\uDC9B", "§lsᴇᴀsᴏɴ ᴏɴᴇ", 0, 100, 40);
+                                p.sendTitle("\uD83D\uDC9B", "§l  ᴛᴇsᴛ ᴇᴠᴇɴᴛ", 0, 100, 40);
                             }
                             break;
                         case 320:

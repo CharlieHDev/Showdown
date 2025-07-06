@@ -15,6 +15,7 @@ import org.bukkit.inventory.meta.SkullMeta;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 public class MainCommand implements CommandExecutor {
 
@@ -364,6 +365,15 @@ public class MainCommand implements CommandExecutor {
                                 }
                             }
                             if (plugin.deadTeams.size() == teamList.size() - 1) {
+                                for(Player p2 : plugin.getPlayers()) {
+                                    if(!p2.getGameMode().equals(GameMode.SPECTATOR)) {
+                                        plugin.winningTeam = PlayerConfig.get().getString("players." + p2.getName() + ".team");
+                                        break;
+                                    }
+                                }
+                                if(Objects.equals(plugin.winningTeam, "")) {
+                                    plugin.winningTeam = "NO TEAM";
+                                }
                                 plugin.deadTeams.clear();
                                 plugin.runningTimers.remove("zoomogo");
                                 plugin.gameEnd();
@@ -681,6 +691,19 @@ public class MainCommand implements CommandExecutor {
                 case "tpp":
                     if(args.length > 1) {
                         plugin.teleportPlayers(TeleportConfig.get().getLocation("players." + args[1]), 5);
+                    }
+                    break;
+                case "addshopitem":
+                    if(args.length > 1){
+                        if(p.getInventory().getItemInMainHand().getType() != Material.AIR){
+                            int key = 0;
+                            if(PhilipConfig.get().getConfigurationSection("cosmetics") != null) {
+                                key = PhilipConfig.get().getConfigurationSection("cosmetics").getKeys(false).size() + 1;
+                            }
+                            PhilipConfig.get().set("cosmetics." + key + ".item", p.getInventory().getItemInMainHand());
+                            PhilipConfig.get().set("cosmetics." + key + ".cost", Integer.parseInt(args[1]));
+                            PhilipConfig.save();
+                        }
                     }
                     break;
                 case "tpt":

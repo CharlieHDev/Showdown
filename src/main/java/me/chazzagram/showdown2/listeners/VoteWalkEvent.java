@@ -40,7 +40,7 @@ public class VoteWalkEvent implements Listener {
                     }
                 }
             }
-            if(plugin.currentMode.equals("Voting")) {
+            if(plugin.currentMode.equals("Voting") && plugin.runningTimers.get("voting").getValue() <= 75) {
                 for (Material concrete : getConcreteColours()) {
                     if (event.getTo().getBlock().getRelative(BlockFace.DOWN).getType().equals(concrete)) {
                         String colour = concrete.toString().toUpperCase().replace("CONCRETE", "WOOL");
@@ -66,7 +66,7 @@ public class VoteWalkEvent implements Listener {
                         }
                     }
                 }
-            } else if (plugin.currentMode.equals("Zoomo Go") && plugin.doubleJumpEnabled && event.getPlayer().getGameMode().equals(GameMode.ADVENTURE)) {
+            } else if ((plugin.currentMode.equals("Zoomo Go") || plugin.currentMode.equals("Slime Golf")) && plugin.doubleJumpEnabled && (event.getPlayer().getGameMode().equals(GameMode.ADVENTURE) || event.getPlayer().getGameMode().equals(GameMode.SURVIVAL))) {
                 Block block = event.getPlayer().getLocation().subtract(0, 1, 0).getBlock();
                 if (block.getType() != Material.AIR) {
                     event.getPlayer().setAllowFlight(true);

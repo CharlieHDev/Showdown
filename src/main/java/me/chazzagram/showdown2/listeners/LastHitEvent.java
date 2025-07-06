@@ -303,12 +303,12 @@ public class LastHitEvent implements Listener {
                     e.setCancelled(true);
                     victim.setGameMode(GameMode.SPECTATOR);
                     plugin.deadPlayers.add(victim.getName());
-                    plugin.earnPoints(killer.getName(), 30, true);
-                    killer.sendTitle("", "§e\uD83D\uDCB030" + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
+                    plugin.earnPoints(killer.getName(), 35, true);
+                    killer.sendTitle("", "§e\uD83D\uDCB035" + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
                     for (Player p : plugin.getPlayers()) {
                         if (!p.getGameMode().equals(GameMode.SPECTATOR) && !p.getName().equals(killer.getName())) {
-                            plugin.messagePlayer(p, "§e\uD83D\uDCB05 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
-                            plugin.earnPoints(p.getName(), 5, true);
+                            plugin.messagePlayer(p, "§e\uD83D\uDCB010 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
+                            plugin.earnPoints(p.getName(), 10, true);
                         } else {
                             plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
                         }
@@ -367,6 +367,15 @@ public class LastHitEvent implements Listener {
                     }
 
                     if (plugin.deadTeams.size() == teamList.size() - 1) {
+                        for(Player p : plugin.getPlayers()) {
+                            if(!p.getGameMode().equals(GameMode.SPECTATOR)) {
+                                plugin.winningTeam = PlayerConfig.get().getString("players." + p.getName() + ".team");
+                                break;
+                            }
+                        }
+                        if(Objects.equals(plugin.winningTeam, "")) {
+                            plugin.winningTeam = "NO TEAM";
+                        }
                         plugin.deadTeams.clear();
                         plugin.runningTimers.remove("survivalgames");
                         plugin.gameEnd();

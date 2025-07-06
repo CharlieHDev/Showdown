@@ -26,8 +26,11 @@ public class BreakBlockEvent implements Listener {
                 e.setCancelled(true);
                 for (Material block : getCraftalotBlocks()) {
                     if (block == e.getBlock().getType()) {
-                        ItemStack item = new ItemStack(block);
-                        p.getInventory().addItem(item);
+                        if(block == Material.STONE) {
+                            p.getInventory().addItem(new ItemStack(Material.COBBLESTONE));
+                        } else {
+                            p.getInventory().addItem(new ItemStack(block));
+                        }
                         e.setCancelled(false);
                         break;
                     }

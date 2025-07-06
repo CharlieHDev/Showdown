@@ -1,6 +1,7 @@
 package me.chazzagram.showdown2.listeners;
 
 import me.chazzagram.showdown2.Showdown2;
+import me.chazzagram.showdown2.files.PhilipConfig;
 import me.chazzagram.showdown2.files.PlayerConfig;
 import me.chazzagram.showdown2.files.SpectatorConfig;
 import me.chazzagram.showdown2.files.TeamsConfig;
@@ -30,6 +31,53 @@ public class InventoryEvent implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent e) {
+        if((plugin.currentMode.equals("Lobby") || plugin.currentMode.equals("Voting")) && PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(e.getWhoClicked().getName())) {
+            e.setCancelled(true);
+        }
+        if(e.getView().getTitle().equalsIgnoreCase("§eCosmetics")) {
+            e.setCancelled(true);
+            if(e.getCurrentItem() != null && !e.getCurrentItem().getType().equals(Material.AIR)) {
+                if (!PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(e.getWhoClicked().getName()) || PhilipConfig.get().getInt("cosmetics." + (e.getSlot() + 1) + ".cost") <= PlayerConfig.get().getInt("players." + e.getWhoClicked().getName() + ".points")) {
+                    switch (e.getSlot()) {
+                        case 0:
+                            if(e.getWhoClicked().getInventory().getItemInOffHand().equals(PhilipConfig.get().getItemStack("cosmetics.1.item"))){
+                                e.getWhoClicked().getInventory().setItemInOffHand(new ItemStack(Material.AIR));
+                                plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic unequipped.");
+                            } else {
+                                e.getWhoClicked().getInventory().setItemInOffHand(PhilipConfig.get().getItemStack("cosmetics.1.item"));
+                                plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic equipped.");
+                            }
+                            break;
+                        case 1:
+                            if(e.getWhoClicked().getInventory().getArmorContents()[3] != null){
+                                if(e.getWhoClicked().getInventory().getArmorContents()[3].equals(PhilipConfig.get().getItemStack("cosmetics.2.item"))) {
+                                    ItemStack[] armour = new ItemStack[]{
+                                            e.getWhoClicked().getInventory().getArmorContents()[0],
+                                            e.getWhoClicked().getInventory().getArmorContents()[1],
+                                            e.getWhoClicked().getInventory().getArmorContents()[2],
+                                            new ItemStack(Material.AIR)
+                                    };
+                                    e.getWhoClicked().getInventory().setArmorContents(armour);
+                                    plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic unequipped.");
+                                }
+                            } else {
+                                ItemStack[] armour = new ItemStack[]{
+                                        e.getWhoClicked().getInventory().getArmorContents()[0],
+                                        e.getWhoClicked().getInventory().getArmorContents()[1],
+                                        e.getWhoClicked().getInventory().getArmorContents()[2],
+                                        PhilipConfig.get().getItemStack("cosmetics.2.item")
+                                };
+                                e.getWhoClicked().getInventory().setArmorContents(armour);
+                                plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic equipped.");
+                            }
+
+                            break;
+                    }
+                } else {
+                    plugin.messagePlayer((Player) e.getWhoClicked(), "You cannot afford this cosmetic.");
+                }
+            }
+        }
         if(e.getView().getTitle().equalsIgnoreCase("§eTeams")) {
             e.setCancelled(true);
             switch (e.getSlot()){
