@@ -23,6 +23,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
@@ -185,6 +186,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public HashMap<Player, Boolean> jumpStates = new HashMap<>();
 
     public String winningTeam = "";
+
+    public boolean shopAllowed = true;
 
 
     // Spawn the particle
@@ -370,6 +373,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent e) {
         e.getPlayer().sendTitle("§7§oLoading...", "", 0, 10, 0);
+        List<String> cos3white = PhilipConfig.get().getStringList("cosmetics.3.whitelist");
+        if(!cos3white.contains(e.getPlayer().getName())){
+            cos3white.add(e.getPlayer().getName());
+            PhilipConfig.get().set("cosmetics.3.whitelist", cos3white);
+        }
+        PhilipConfig.save();
+
         boolean playerFound = false;
         Player p = e.getPlayer();
         for(String player : PlayerConfig.get().getConfigurationSection("players").getKeys(false)){
@@ -488,9 +498,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             public void run() {
                 if(runningTimers.containsKey(name)) {
                     if (!pausedTimers.contains(name)) {
+                        timeLeft--;
                         runningTimers.get(name).setValue(timeLeft);
                         bossBarBgTest();
-                        timeLeft--;
                         if(currentMode.equals("Survival Games")){
                             for (Player player : getPlayers()) {
                                 List<Player> playersInCircle = getPlayersInCircle2D(sgCenter, currentBorderRadius);
@@ -505,7 +515,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 if (newBorderRadius != currentBorderRadius) {
                                     currentBorderRadius-=2;
                                 }
-                                spawnCircleParticles(sgCenter, currentBorderRadius, (int) (currentBorderRadius * .72));
+                                spawnCircleParticles(sgCenter, currentBorderRadius, (int) (currentBorderRadius * 1.1));
                             }
                         }
                         if(currentMode.equals("Slime Golf") && currentRound == 2){
@@ -770,14 +780,34 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         return TeamsConfig.get().getString("teams." + team + ".colour") + TeamsConfig.get().getString("teams." + team + ".icon") + TeamsConfig.get().getString("teams." + team + ".colour") + "§l" + team;
     }
 
-    public String getPlayerDisplayName(String player){
-        String team = PlayerConfig.get().getString("players." + player + ".team");
-        return TeamsConfig.get().getString("teams." + team + ".colour") + TeamsConfig.get().getString("teams." + team + ".icon") + player;
+    public String getPlayerDisplayName(String player) {
+        if (PlayerConfig.get().getConfigurationSection("players").contains(player)) {
+            String team = PlayerConfig.get().getString("players." + player + ".team");
+            return TeamsConfig.get().getString("teams." + team + ".colour") + TeamsConfig.get().getString("teams." + team + ".icon") + player;
+        } else {
+            return "§7" + player;
+        }
+    }
+
+    public void clearInventories(){
+        PlayerInventory inv;
+        ItemStack air = new ItemStack(Material.AIR);
+        ItemStack[] armour = new ItemStack[]{
+                air, air, air, air
+        };
+        for(Player player : getPlayers()){
+            inv = player.getInventory();
+            inv.clear();
+            inv.setArmorContents(armour);
+            inv.setItemInOffHand(air);
+        }
     }
 
 
     public void startSlimeGolf(){
         fillVotingSpace(3);
+        plugin.shopAllowed = false;
+        clearInventories();
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 61;
             @Override
@@ -900,6 +930,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 2);
                             playMusicAll(Sound.MUSIC_DISC_CAT);
                             for (Player player : Bukkit.getOnlinePlayers()) {
+                                PotionEffect PotionEffect = new PotionEffect(PotionEffectType.RESISTANCE, 12000, 1, false, false);
+                                player.addPotionEffect(PotionEffect);
                                 player.sendTitle("§a§l▶ GO! ◀", "", 0, 40, 0);
                             }
                             startTimer(300, "slimegolftimer");
@@ -934,6 +966,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void startColourDash(){
         fillVotingSpace(4);
+        plugin.shopAllowed = false;
+        clearInventories();
         World world = Bukkit.getWorld("build");
         Block block;
         for(int x = 137; x >= -27; x--){
@@ -964,8 +998,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                     teleportSpectators(TeleportConfig.get().getLocation("spectators.colourdash"), 5);
                                 }
                                 if(plugin.currentRound == 2){
-                                    Bukkit.getWorld("build").getBlockAt(79, 170, 1324).setType(Material.REDSTONE_BLOCK);
-                                    Bukkit.getWorld("build").getBlockAt(79, 170, 1324).setType(Material.AIR);
+                                    Bukkit.getWorld("build").getBlockAt(75, 175, 1331).setType(Material.REDSTONE_BLOCK);
+                                    Bukkit.getWorld("build").getBlockAt(75, 175, 1331).setType(Material.AIR);
                                     teleportPlayers(TeleportConfig.get().getLocation("players.colourdash2"), 5);
                                     teleportSpectators(TeleportConfig.get().getLocation("spectators.colourdash2"), 5);
                                 }
@@ -1045,8 +1079,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                     Bukkit.getWorld("build").getBlockAt(121, 139, 791).setType(Material.AIR);
                                 }
                                 if(plugin.currentRound == 2){
-                                    Bukkit.getWorld("build").getBlockAt(79, 171, 1324).setType(Material.REDSTONE_BLOCK);
-                                    Bukkit.getWorld("build").getBlockAt(79, 171, 1324).setType(Material.AIR);
+                                    Bukkit.getWorld("build").getBlockAt(75, 174, 1331).setType(Material.REDSTONE_BLOCK);
+                                    Bukkit.getWorld("build").getBlockAt(75, 174, 1331).setType(Material.AIR);
                                 }
                                 playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 2);
                                 playMusicAll(Sound.MUSIC_DISC_BLOCKS);
@@ -1086,6 +1120,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void startCraftalot(){
         fillVotingSpace(2);
+        plugin.shopAllowed = false;
+        clearInventories();
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 61;
             @Override
@@ -1181,7 +1217,6 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                         Bukkit.getWorld("build").getBlockAt(x, y, 834).setType(Material.AIR);
                                     }
                                 }
-                                Bukkit.getWorld("build").setGameRule(GameRule.DO_TILE_DROPS, true);
                                 startTimer(600, "craftalot");
                                 runningTimers.remove("craftalotstart");
                                 cancel();
@@ -1210,6 +1245,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void startBridgeBuilders(){
         fillVotingSpace(0);
+        plugin.shopAllowed = false;
+        clearInventories();
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 61;
             @Override
@@ -1364,6 +1401,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void startZoomoGo(){
         fillVotingSpace(1);
+        plugin.shopAllowed = false;
+        clearInventories();
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 61;
             @Override
@@ -1794,6 +1833,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void startGubGame(){
         fillVotingSpace(5);
+        plugin.shopAllowed = false;
+        clearInventories();
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 61;
             @Override
@@ -1905,6 +1946,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void startSurvivalGames(){
         fillVotingSpace(6);
+        plugin.shopAllowed = false;
+        clearInventories();
         currentBorderRadius = 236;
         newBorderRadius = 236;
         BukkitTask task = new BukkitRunnable() {
@@ -2154,7 +2197,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             @Override
             public void run() {
                 percentElapsed++;
-                if(percentElapsed <= totalOutOfTwenty || totalOutOfTwenty < 1) {
+                if(percentElapsed <= totalOutOfTwenty || (totalOutOfTwenty < 1 && percentElapsed <= 20)) {
                     for(Player player : Bukkit.getOnlinePlayers()) {
                         StringBuilder percentprogress = new StringBuilder();
                         percentprogress.append("§e|".repeat(percentElapsed));
@@ -2215,134 +2258,138 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             int timeLeft = 91;
             @Override
             public void run() {
-                if(!pausedTimers.contains("voting")) {
-                    timeLeft--;
-                    runningTimers.get("voting").setValue(timeLeft);
-                    switch (timeLeft) {
-                        case 90:
-                            currentMode = "Voting";
-                            playSoundAll(Sound.ITEM_GOAT_HORN_SOUND_0, 1);
-                            for(int i = 187; i <= 230; i++){
-                                for(int j = 713; j <= 756; j++){
-                                    Bukkit.getServer().getWorld("build").getBlockAt(i, 139, j).setType(Material.BLACK_WOOL);
-                                }
-                            }
-                            for (Player player : Bukkit.getOnlinePlayers()) {
-                                player.sendTitle("§e§lVoting Time!", "", 0, 60, 40);
-                            }
-                            break;
-                        case 87:
-                            if(leastVotes){
+                if(runningTimers.containsKey("voting")) {
+                    if (!pausedTimers.contains("voting")) {
+                        timeLeft--;
+                        runningTimers.get("voting").setValue(timeLeft);
+                        switch (timeLeft) {
+                            case 90:
+                                currentMode = "Voting";
                                 playSoundAll(Sound.ITEM_GOAT_HORN_SOUND_0, 1);
+                                for (int i = 187; i <= 230; i++) {
+                                    for (int j = 713; j <= 756; j++) {
+                                        Bukkit.getServer().getWorld("build").getBlockAt(i, 139, j).setType(Material.BLACK_WOOL);
+                                    }
+                                }
                                 for (Player player : Bukkit.getOnlinePlayers()) {
-                                    player.sendTitle("§7Modifier:", "§c§lʟᴇᴀsᴛ ᴠᴏᴛᴇs ᴡɪɴs", 0, 60, 40);
-                                    messagePlayer(player, """
-                                        §8
-                                        §8
-                                        §c§lLeast Votes Wins!
-                                        §fThe mode with the least amount of votes will be played, strategise to make sure the modes you don't want played aren't played!
-                                        §8
-                                        """);
+                                    player.sendTitle("§e§lVoting Time!", "", 0, 60, 40);
                                 }
-                            }
-                            if(audienceVote){
-                                playSoundAll(Sound.ITEM_GOAT_HORN_SOUND_0, 1);
+                                break;
+                            case 87:
+                                if (leastVotes) {
+                                    playSoundAll(Sound.ITEM_GOAT_HORN_SOUND_0, 1);
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
+                                        player.sendTitle("§7Modifier:", "§c§lʟᴇᴀsᴛ ᴠᴏᴛᴇs ᴡɪɴs", 0, 60, 40);
+                                        messagePlayer(player, """
+                                                §8
+                                                §8
+                                                §c§lLeast Votes Wins!
+                                                §fThe mode with the least amount of votes will be played, strategise to make sure the modes you don't want played aren't played!
+                                                §8
+                                                """);
+                                    }
+                                }
+                                if (audienceVote) {
+                                    playSoundAll(Sound.ITEM_GOAT_HORN_SOUND_0, 1);
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
+                                        player.sendTitle("§f§l☁ AUDIENCE VOTE ☁", "§b§lX §f| §a@MCShowdownTeam", 0, 7200, 0);
+                                        messagePlayer(player, """
+                                                §8
+                                                §8
+                                                §f§lAudience Votes!
+                                                §fHead over to Twitter/X and vote using the poll in our latest post for which mode you want played!
+                                                §8
+                                                """);
+                                    }
+                                    timeLeft = 1;
+                                }
+                                break;
+                            case 75:
+                                teleportPlayers(TeleportConfig.get().getLocation("players.votearena"), 0);
+                                teleportSpectators(TeleportConfig.get().getLocation("spectators.votearena"), 0);
                                 for (Player player : Bukkit.getOnlinePlayers()) {
-                                    player.sendTitle("§f§l☁ AUDIENCE VOTE ☁", "§b§lX §f| §a@MCShowdownTeam", 0, 7200, 0);
+                                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "usc setScoreboard " + player.getName() + " Voting");
                                     messagePlayer(player, """
-                                        §8
-                                        §8
-                                        §f§lAudience Votes!
-                                        §fHead over to Twitter/X and vote using the poll in our latest post for which mode you want played!
-                                        §8
-                                        """);
+                                            §8
+                                            §8
+                                            §e§lVoting Time!
+                                            §fWalk into your mode of choice and paint the floor with as many blocks as possible by running around! If you change your mind simply run back to the mode selection and get painting!
+                                            §8
+                                            """);
                                 }
-                                timeLeft = 1;
-                            }
-                            break;
-                        case 75:
-                            teleportPlayers(TeleportConfig.get().getLocation("players.votearena"), 0);
-                            teleportSpectators(TeleportConfig.get().getLocation("spectators.votearena"), 0);
-                            for (Player player : Bukkit.getOnlinePlayers()) {
-                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "usc setScoreboard " + player.getName() + " Voting");
-                                messagePlayer(player, """
-                                        §8
-                                        §8
-                                        §e§lVoting Time!
-                                        §fWalk into your mode of choice and paint the floor with as many blocks as possible by running around! If you change your mind simply run back to the mode selection and get painting!
-                                        §8
-                                        """);
-                            }
-                            break;
-                        case 74:
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                            break;
-                        case 60:
-                            playSoundAll(Sound.ITEM_GOAT_HORN_SOUND_1, 1);
-                            votingEnabled = true;
-                            for (Player player : Bukkit.getOnlinePlayers()) {
-                                messagePlayer(player, """
-                                        §8
-                                        §8
-                                        §6§lVoting Enabled.
-                                        §fVotes will be counted in 30 seconds!
-                                        §8
-                                        """);
-                            }
-                            break;
-                        case 57:
-                            messageConsole("case 57 reached.");
-                            try {
-                                summonSlimeBall(27);
-                            } catch (ReflectiveOperationException e) {
-                                throw new RuntimeException(e);
-                            }
-                        case 55:
-                            summonPowerUp(25);
-                            break;
-                        case 50:
-                            summonPowerUp(20);
-                            break;
-                        case 40:
-                            summonPowerUp(10);
-                            break;
-                        case 30:
-                            playSoundAll(Sound.BLOCK_FIRE_EXTINGUISH, 1);
-                            votingEnabled = false;
-                            for (Player player : Bukkit.getOnlinePlayers()) {
-                                messagePlayer(player, """
-                                        §8
-                                        §8
-                                        §c§lVoting Period Ended.
-                                        §fVotes will now be calculated!
-                                        §8
-                                        """);
-                            }
-                            powerUpHolders.clear();
-                            for (Entity entity : Bukkit.getWorld("build").getEntities()) {
-                                if (entity instanceof Item) {
-                                    entity.remove();
+                                break;
+                            case 74:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
+                                break;
+                            case 60:
+                                playSoundAll(Sound.ITEM_GOAT_HORN_SOUND_1, 1);
+                                votingEnabled = true;
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    messagePlayer(player, """
+                                            §8
+                                            §8
+                                            §6§lVoting Enabled.
+                                            §fVotes will be counted in 30 seconds!
+                                            §8
+                                            """);
                                 }
-                            }
-                            break;
-                        case 25:
-                            playSoundAll(Sound.ENTITY_CREEPER_PRIMED, 1);
-                            for (Player player : Bukkit.getOnlinePlayers()) {
-                                player.sendTitle("§7§k000000000", "", 0, 100, 40);
-                            }
-                            break;
-                        case 20:
-                            countVotes();
-                            break;
-                        case 0:
-                            leastVotes = false;
-                            audienceVote = false;
-                            runningTimers.remove("voting");
-                            cancel();
-                            break;
-                        default:
-                            break;
+                                break;
+                            case 57:
+                                messageConsole("case 57 reached.");
+                                try {
+                                    summonSlimeBall(27);
+                                } catch (ReflectiveOperationException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            case 55:
+                                summonPowerUp(25);
+                                break;
+                            case 50:
+                                summonPowerUp(20);
+                                break;
+                            case 40:
+                                summonPowerUp(10);
+                                break;
+                            case 30:
+                                playSoundAll(Sound.BLOCK_FIRE_EXTINGUISH, 1);
+                                votingEnabled = false;
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    messagePlayer(player, """
+                                            §8
+                                            §8
+                                            §c§lVoting Period Ended.
+                                            §fVotes will now be calculated!
+                                            §8
+                                            """);
+                                }
+                                powerUpHolders.clear();
+                                for (Entity entity : Bukkit.getWorld("build").getEntities()) {
+                                    if (entity instanceof Item) {
+                                        entity.remove();
+                                    }
+                                }
+                                break;
+                            case 25:
+                                playSoundAll(Sound.ENTITY_CREEPER_PRIMED, 1);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.sendTitle("§7§k000000000", "", 0, 100, 40);
+                                }
+                                break;
+                            case 20:
+                                countVotes();
+                                break;
+                            case 0:
+                                leastVotes = false;
+                                audienceVote = false;
+                                runningTimers.remove("voting");
+                                cancel();
+                                break;
+                            default:
+                                break;
+                        }
                     }
+                } else {
+                    cancel();
                 }
             }
 
@@ -2506,7 +2553,6 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void gameEnd(){
         runningTimers.clear();
-        Bukkit.getWorld("build").setGameRule(GameRule.DO_TILE_DROPS, false);
         for(Player player : Bukkit.getOnlinePlayers()) {
             player.stopAllSounds();
         }
@@ -2627,6 +2673,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             teleportPlayers(TeleportConfig.get().getLocation("players.lobby"), 5);
                             teleportSpectators(TeleportConfig.get().getLocation("spectators.lobby"), 5);
+                            plugin.shopAllowed = true;
                             break;
                         case 35:
                             for (Player player : getPlayers()) {

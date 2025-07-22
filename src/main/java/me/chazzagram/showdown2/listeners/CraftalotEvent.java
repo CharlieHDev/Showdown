@@ -121,9 +121,9 @@ public class CraftalotEvent implements Listener {
         }
         if(entity.equals(EntityType.VILLAGER)){
             Villager villager = (Villager) e.getRightClicked();
-            if(villager.getProfession().equals(Villager.Profession.LIBRARIAN)){
+            if(villager.getProfession().equals(Villager.Profession.LIBRARIAN) && plugin.shopAllowed){
                 e.setCancelled(true);
-                Inventory gui = Bukkit.createInventory(p, 36, "§eCosmetics");
+                Inventory gui = Bukkit.createInventory(p, 27, "§eCosmetics");
                 ItemStack item;
                 for(String cosmetic : PhilipConfig.get().getConfigurationSection("cosmetics").getKeys(false)){
                     item = new ItemStack(PhilipConfig.get().getItemStack("cosmetics." + cosmetic + ".item"));
@@ -155,7 +155,8 @@ public class CraftalotEvent implements Listener {
             "In my journey I encountered a space station. The S.S.A.Q, otherwise known as Space Station Alpha Quadrant. You know space is a dangerous place! I even found creepers up there… meteor showers… and worst of all… sky bases. ",
             "I've heard many strange tales in my travels, but nothing stranger than the tale of an army. Countless warriors dressed in suits of yellow? Sounds ridiculous to me! I am usually very capable of distinguishing legendary tales, but this one just sounds like a myth to me.",
             "8 guilds rule over the land, but they always seem to be fighting for power amongst themselves.. Surely they've heard of democracy right? It could be possible to bring back previous guilds! WitheriteWarriors, Green G- actually.. nevermind.",
-            "While I travelled through old forgotten land, it wasn't in the best of shape. I heard it was abandoned after the guilds suffered from immense lag spikes. Relocations were sporadic, I couldn't find where they went next.. rumours of a cave system? Travelling out to the stars? Neon lights? Grayscale environments?? I'm overwhelmed with information."
+            "While I travelled through old forgotten land, it wasn't in the best of shape. I heard it was abandoned after the guilds suffered from immense lag spikes. Relocations were sporadic, I couldn't find where they went next.. rumours of a cave system? Travelling out to the stars? Neon lights? Grayscale environments?? I'm overwhelmed with information.",
+            "I realise you don't actually know who I am, I'm §e§lLyla§a! A distant relative of that guy who works for Sir Craftalot yknow, but I treat everyone I know like family because we all are! I setup shelter here a while back, but the place seems to have gained a lot of toursists like me! I'm very pleased, a man by the name of Chazzagram was kind enough to welcome me here. He seems very excited to be welcoming people here, 'it's been a while' he said."
     };
 
 }

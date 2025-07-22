@@ -36,11 +36,14 @@ public class InventoryEvent implements Listener {
         }
         if(e.getView().getTitle().equalsIgnoreCase("§eCosmetics")) {
             e.setCancelled(true);
-            if(e.getCurrentItem() != null && !e.getCurrentItem().getType().equals(Material.AIR)) {
+            if(e.getCurrentItem() != null && !e.getCurrentItem().getType().equals(Material.AIR) &&  plugin.shopAllowed) {
                 if (!PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(e.getWhoClicked().getName()) || PhilipConfig.get().getInt("cosmetics." + (e.getSlot() + 1) + ".cost") <= PlayerConfig.get().getInt("players." + e.getWhoClicked().getName() + ".points")) {
                     switch (e.getSlot()) {
                         case 0:
-                            if(e.getWhoClicked().getInventory().getItemInOffHand().equals(PhilipConfig.get().getItemStack("cosmetics.1.item"))){
+                            if(e.getWhoClicked().getInventory().contains(PhilipConfig.get().getItemStack("cosmetics.1.item"))){
+                                e.getWhoClicked().getInventory().remove(PhilipConfig.get().getItemStack("cosmetics.1.item"));
+                                plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic unequipped.");
+                            } else if (e.getWhoClicked().getInventory().getItemInOffHand().equals(PhilipConfig.get().getItemStack("cosmetics.1.item"))) {
                                 e.getWhoClicked().getInventory().setItemInOffHand(new ItemStack(Material.AIR));
                                 plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic unequipped.");
                             } else {
@@ -59,6 +62,15 @@ public class InventoryEvent implements Listener {
                                     };
                                     e.getWhoClicked().getInventory().setArmorContents(armour);
                                     plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic unequipped.");
+                                } else {
+                                    ItemStack[] armour = new ItemStack[]{
+                                            e.getWhoClicked().getInventory().getArmorContents()[0],
+                                            e.getWhoClicked().getInventory().getArmorContents()[1],
+                                            e.getWhoClicked().getInventory().getArmorContents()[2],
+                                            PhilipConfig.get().getItemStack("cosmetics.2.item")
+                                    };
+                                    e.getWhoClicked().getInventory().setArmorContents(armour);
+                                    plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic equipped.");
                                 }
                             } else {
                                 ItemStack[] armour = new ItemStack[]{
@@ -69,6 +81,43 @@ public class InventoryEvent implements Listener {
                                 };
                                 e.getWhoClicked().getInventory().setArmorContents(armour);
                                 plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic equipped.");
+                            }
+
+                            break;
+                        case 2:
+                            if(PhilipConfig.get().getStringList("cosmetics.3.whitelist").contains(e.getWhoClicked().getName())) {
+                                if (e.getWhoClicked().getInventory().getArmorContents()[3] != null) {
+                                    if (e.getWhoClicked().getInventory().getArmorContents()[3].equals(PhilipConfig.get().getItemStack("cosmetics.3.item"))) {
+                                        ItemStack[] armour = new ItemStack[]{
+                                                e.getWhoClicked().getInventory().getArmorContents()[0],
+                                                e.getWhoClicked().getInventory().getArmorContents()[1],
+                                                e.getWhoClicked().getInventory().getArmorContents()[2],
+                                                new ItemStack(Material.AIR)
+                                        };
+                                        e.getWhoClicked().getInventory().setArmorContents(armour);
+                                        plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic unequipped.");
+                                    } else {
+                                        ItemStack[] armour = new ItemStack[]{
+                                                e.getWhoClicked().getInventory().getArmorContents()[0],
+                                                e.getWhoClicked().getInventory().getArmorContents()[1],
+                                                e.getWhoClicked().getInventory().getArmorContents()[2],
+                                                PhilipConfig.get().getItemStack("cosmetics.3.item")
+                                        };
+                                        e.getWhoClicked().getInventory().setArmorContents(armour);
+                                        plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic equipped.");
+                                    }
+                                } else {
+                                    ItemStack[] armour = new ItemStack[]{
+                                            e.getWhoClicked().getInventory().getArmorContents()[0],
+                                            e.getWhoClicked().getInventory().getArmorContents()[1],
+                                            e.getWhoClicked().getInventory().getArmorContents()[2],
+                                            PhilipConfig.get().getItemStack("cosmetics.3.item")
+                                    };
+                                    e.getWhoClicked().getInventory().setArmorContents(armour);
+                                    plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic equipped.");
+                                }
+                            } else {
+                                plugin.messagePlayer((Player) e.getWhoClicked(), "This item is exclusive to testers! As a thank you for their efforts and support :)");
                             }
 
                             break;

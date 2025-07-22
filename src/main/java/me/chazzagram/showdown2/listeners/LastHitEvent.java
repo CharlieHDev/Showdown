@@ -68,7 +68,7 @@ public class LastHitEvent implements Listener {
                     }
                 }
             }
-        } else if (plugin.currentMode.equals("Zoomo Go")) {
+        } else if (plugin.currentMode.equals("Zoomo Go") && plugin.pvpEnabled) {
             if (e.getDamager() instanceof Player killer && e.getEntity() instanceof Player victim) {
                 if (PlayerConfig.get().getString("players." + killer.getName() + ".team").equals(PlayerConfig.get().getString("players." + victim.getName() + ".team"))) {
                     e.setCancelled(true);
@@ -85,7 +85,7 @@ public class LastHitEvent implements Listener {
             if (e.getDamager() instanceof Slime && e.getEntity() instanceof Player) {
                 e.setCancelled(true);
             }
-        } else if (plugin.currentMode.equals("Colour Dash")) {
+        } else if (plugin.currentMode.equals("Colour Dash")  && plugin.pvpEnabled) {
             if(e.getDamager() instanceof Player attacker && e.getEntity() instanceof EnderCrystal enderCrystal){
                 if(!plugin.runningTimers.containsKey(attacker.getName() + "mysterybox")) {
                     plugin.summonFirework(enderCrystal.getLocation(), PlayerConfig.get().getString("players." + attacker.getName() + ".team"));
@@ -155,14 +155,15 @@ public class LastHitEvent implements Listener {
                                         attacker.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(character));
 
                                         if (offset == 1) {
-                                            PotionEffect PotionEffect = new PotionEffect(PotionEffectType.JUMP_BOOST, 120, 1, false, false);
+                                            PotionEffect PotionEffect = new PotionEffect(PotionEffectType.JUMP_BOOST, 120, 2, false, false);
                                             attacker.addPotionEffect(PotionEffect);
                                         } else if (offset == 3) {
-                                            PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SPEED, 90, 1, false, false);
+                                            PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SPEED, 120, 2, false, false);
                                             attacker.addPotionEffect(PotionEffect);
                                         } else if (offset == 4) {
-                                            PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOWNESS, 90, 1, false, false);
-                                            attacker.addPotionEffect(PotionEffect);
+                                            for (ItemStack item : getCDItems().get(3)) {
+                                                attacker.getInventory().addItem(item);
+                                            }
                                         } else if (offset == 0) {
                                             for (ItemStack item : getCDItems().get(offset)) {
                                                 attacker.getInventory().addItem(item);
@@ -190,6 +191,8 @@ public class LastHitEvent implements Listener {
                     e.setCancelled(true);
                 }
             }
+        } else if (plugin.currentMode.equals("Lobby")) {
+            e.setCancelled(true);
         } else {
             if(plugin.pvpEnabled) {
                 if (e.getDamager() instanceof Player killer && e.getEntity() instanceof Player victim) {
@@ -316,7 +319,7 @@ public class LastHitEvent implements Listener {
                     plugin.killRecord.add(plugin.getPlayerDisplayName(killer.getName()) + " §c⚔ " + plugin.getPlayerDisplayName(victim.getName()));
                     switch (plugin.deadPlayers.size()) {
                         case 8:
-                            plugin.newBorderRadius = 25;
+                            plugin.newBorderRadius = 26;
                             for (Player p : plugin.getPlayers()) {
                                 p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
                             }
@@ -400,6 +403,11 @@ public class LastHitEvent implements Listener {
         item2[0].addUnsafeEnchantment(Enchantment.KNOCKBACK, 2);
         items.add(item2);
 
+        ItemStack[] item3 = new ItemStack[1];
+        item3[0] = new ItemStack(Material.WIND_CHARGE);
+        item3[0].setAmount(3);
+        items.add(item3);
+
         return items;
     }
 
@@ -410,7 +418,7 @@ public class LastHitEvent implements Listener {
         itemNames.add("§a§lJump Boost");
         itemNames.add("§d§lKnockback Stick");
         itemNames.add("§e§lSpeed");
-        itemNames.add("§c§lSlowness");
+        itemNames.add("§f§lWind Charges");
 
         return itemNames;
     }
