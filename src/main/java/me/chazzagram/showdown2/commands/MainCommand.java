@@ -195,71 +195,73 @@ public class MainCommand implements CommandExecutor {
                         if (Bukkit.getPlayer(args[2]) != null) {
                             if (plugin.getPlayers().contains(Bukkit.getPlayer(args[2]))) {
                                 if (plugin.runningTimers.containsKey("bridgebuilders")) {
-                                    if (!plugin.bridgeJumpRegister.get(Integer.parseInt(args[1])).contains(args[2])) {
-                                        plugin.bridgeJumpRegister.get(Integer.parseInt(args[1])).add(args[2]);
-                                        plugin.summonFirework(Bukkit.getPlayer(args[2]).getLocation(), PlayerConfig.get().getString("players." + args[2] + ".team"));
-                                        int register = 0;
-                                        for (String player : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")) {
-                                            if (plugin.bridgeJumpRegister.get(Integer.parseInt(args[1])).contains(player)) {
-                                                register++;
-                                                if (register == TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players").size()) {
-                                                    plugin.bridgeTally.put(PlayerConfig.get().getString("players." + args[2] + ".team"), plugin.bridgeTally.get(PlayerConfig.get().getString("players." + args[2] + ".team")) + 1);
-                                                    plugin.runningTimers.remove(PlayerConfig.get().getString("players." + args[2] + ".team") + args[1]);
-                                                    plugin.buildTimeStamps.put(args[2], plugin.runningTimers.get("bridgebuilders").getValue());
-                                                    Integer placement = plugin.bridgeJumpCheckpoints.get(Integer.parseInt(args[1]));
-                                                    if (placement == 1) {
-                                                        for (Player p : plugin.getPlayers()) {
-                                                            plugin.messagePlayer(p, "§e§l⏱ §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[2] + ".team")) + "§7 crossed §a\uD83C\uDF09-" + args[1] + "§7!");
-                                                        }
-                                                    } else {
-                                                        for (Player p : plugin.getPlayers()) {
-                                                            plugin.messagePlayer(p, "§f§l⏱ §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[2] + ".team")) + "§7 crossed §a\uD83C\uDF09-" + args[1] + "§7!");
-                                                        }
-                                                    }
-
-                                                    List<Material> blocks = plugin.getBridgeBlocks(Integer.parseInt(args[1]), PlayerConfig.get().getString("players." + args[2] + ".team"));
-
-                                                    for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")) {
-                                                        if (Bukkit.getServer().getPlayer(player2) != null) {
-                                                            Player p = Bukkit.getServer().getPlayer(player2);
-                                                            plugin.earnPoints(player2, 5, true);
-                                                            plugin.messagePlayer(p, "§e\uD83D\uDCB05 §7| §eYour entire team completed the jump! Bonus points awarded.");
-                                                            p.sendTitle("§a[✔] \uD83C\uDF09-" + args[1], "§7Now build!", 0, 40, 0);
-                                                            plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Jump Complete!");
-                                                            plugin.messagePlayer(p, "§cBuild mode attained, get building!");
-                                                            p.setGameMode(GameMode.SURVIVAL);
-                                                            p.setAllowFlight(true);
-                                                            Location teleportLoc = Bukkit.getServer().getPlayer(args[2]).getLocation().clone().subtract(0, 0, 2);
-                                                            teleportLoc.setYaw(180);
-                                                            p.teleport(teleportLoc);
-
-                                                            for (Material block : blocks) {
-                                                                p.getInventory().addItem(new ItemStack(block, 64));
+                                    if(plugin.bridgeTally.get(PlayerConfig.get().getString("players." + args[2] + ".team")) < (Integer.parseInt(args[1]) * 2)) {
+                                        if (!plugin.bridgeJumpRegister.get(Integer.parseInt(args[1])).contains(args[2])) {
+                                            plugin.bridgeJumpRegister.get(Integer.parseInt(args[1])).add(args[2]);
+                                            plugin.summonFirework(Bukkit.getPlayer(args[2]).getLocation(), PlayerConfig.get().getString("players." + args[2] + ".team"));
+                                            int register = 0;
+                                            for (String player : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")) {
+                                                if (plugin.bridgeJumpRegister.get(Integer.parseInt(args[1])).contains(player)) {
+                                                    register++;
+                                                    if (register == TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players").size()) {
+                                                        plugin.bridgeTally.put(PlayerConfig.get().getString("players." + args[2] + ".team"), plugin.bridgeTally.get(PlayerConfig.get().getString("players." + args[2] + ".team")) + 1);
+                                                        plugin.runningTimers.remove(PlayerConfig.get().getString("players." + args[2] + ".team") + args[1]);
+                                                        plugin.buildTimeStamps.put(args[2], plugin.runningTimers.get("bridgebuilders").getValue());
+                                                        Integer placement = plugin.bridgeJumpCheckpoints.get(Integer.parseInt(args[1]));
+                                                        if (placement == 1) {
+                                                            for (Player p : Bukkit.getOnlinePlayers()) {
+                                                                plugin.messagePlayer(p, "§e§l⏱ §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[2] + ".team")) + "§7 crossed §a\uD83C\uDF09-" + args[1] + "§7!");
+                                                            }
+                                                        } else {
+                                                            for (Player p : Bukkit.getOnlinePlayers()) {
+                                                                plugin.messagePlayer(p, "§f§l⏱ §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[2] + ".team")) + "§7 crossed §a\uD83C\uDF09-" + args[1] + "§7!");
                                                             }
                                                         }
-                                                    }
-                                                    String team = PlayerConfig.get().getString("players." + args[2] + ".team");
-                                                    for (int x = plugin.teamJump.get(team)[0] - 3; x <= plugin.teamJump.get(team)[0] + 3; x++) {
-                                                        for (int y = plugin.teamJump.get(team)[1] - 2; y <= plugin.teamJump.get(team)[1] + 7; y++) {
-                                                            Bukkit.getWorld("build").getBlockAt(x, y, (plugin.teamJump.get(team)[2] - (38 * (Integer.valueOf(args[1]) - 1))) - 16).setType(Material.BARRIER);
+
+                                                        List<Material> blocks = plugin.getBridgeBlocks(Integer.parseInt(args[1]), PlayerConfig.get().getString("players." + args[2] + ".team"));
+
+                                                        for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")) {
+                                                            if (Bukkit.getServer().getPlayer(player2) != null) {
+                                                                Player p = Bukkit.getServer().getPlayer(player2);
+                                                                plugin.earnPoints(player2, 5, true);
+                                                                plugin.messagePlayer(p, "§e\uD83D\uDCB05 §7| §eYour entire team completed the jump! Bonus points awarded.");
+                                                                p.sendTitle("§a[✔] \uD83C\uDF09-" + args[1], "§7Now build!", 0, 40, 0);
+                                                                plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Jump Complete!");
+                                                                plugin.messagePlayer(p, "§cBuild mode attained, get building!");
+                                                                p.setGameMode(GameMode.SURVIVAL);
+                                                                p.setAllowFlight(true);
+                                                                Location teleportLoc = Bukkit.getServer().getPlayer(args[2]).getLocation().clone().subtract(0, 0, 2);
+                                                                teleportLoc.setYaw(180);
+                                                                p.teleport(teleportLoc);
+
+                                                                for (Material block : blocks) {
+                                                                    p.getInventory().addItem(new ItemStack(block, 64));
+                                                                }
+                                                            }
                                                         }
+                                                        String team = PlayerConfig.get().getString("players." + args[2] + ".team");
+                                                        for (int x = plugin.teamJump.get(team)[0] - 3; x <= plugin.teamJump.get(team)[0] + 3; x++) {
+                                                            for (int y = plugin.teamJump.get(team)[1] - 2; y <= plugin.teamJump.get(team)[1] + 7; y++) {
+                                                                Bukkit.getWorld("build").getBlockAt(x, y, (plugin.teamJump.get(team)[2] - (38 * (Integer.valueOf(args[1]) - 1))) - 16).setType(Material.BARRIER);
+                                                            }
+                                                        }
+                                                        plugin.bridgeJumpCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);
                                                     }
-                                                    plugin.bridgeJumpCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);
                                                 }
                                             }
-                                        }
-                                        plugin.earnPoints(args[2], 20, true);
-                                        if (Bukkit.getServer().getPlayer(args[2]) != null) {
-                                            Player p2 = Bukkit.getServer().getPlayer(args[2]);
-                                            plugin.messagePlayer(p2, "§e\uD83D\uDCB020 §7| §eYou have completed this jump!");
-                                        }
-                                        StringBuilder playerCompletions = new StringBuilder();
-                                        playerCompletions.append("§a✔ ".repeat(register));
-                                        for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")) {
-                                            if (Bukkit.getServer().getPlayer(player2) != null) {
-                                                Player p = Bukkit.getServer().getPlayer(player2);
-                                                p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1f, 1f + (0.2f * register));
-                                                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§eCompletions§f: " + playerCompletions));
+                                            plugin.earnPoints(args[2], 20, true);
+                                            if (Bukkit.getServer().getPlayer(args[2]) != null) {
+                                                Player p2 = Bukkit.getServer().getPlayer(args[2]);
+                                                plugin.messagePlayer(p2, "§e\uD83D\uDCB020 §7| §eYou have completed this jump!");
+                                            }
+                                            StringBuilder playerCompletions = new StringBuilder();
+                                            playerCompletions.append("§a✔ ".repeat(register));
+                                            for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")) {
+                                                if (Bukkit.getServer().getPlayer(player2) != null) {
+                                                    Player p = Bukkit.getServer().getPlayer(player2);
+                                                    p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1f, 1f + (0.2f * register));
+                                                    p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§eCompletions§f: " + playerCompletions));
+                                                }
                                             }
                                         }
                                     }
@@ -286,22 +288,22 @@ public class MainCommand implements CommandExecutor {
                                                     Integer placement = plugin.bridgeCheckpoints.get(plugin.bridgeCheckpoints.size());
                                                     switch (placement) {
                                                         case 1:
-                                                            for (Player p : plugin.getPlayers()) {
+                                                            for (Player p : Bukkit.getOnlinePlayers()) {
                                                                 plugin.messagePlayer(p, "§8| §e\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + "§e was §e§l1st §eto finish!");
                                                             }
                                                             break;
                                                         case 2:
-                                                            for (Player p : plugin.getPlayers()) {
+                                                            for (Player p : Bukkit.getOnlinePlayers()) {
                                                                 plugin.messagePlayer(p, "§8| §7\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + "§e was §7§l2nd §eto finish!");
                                                             }
                                                             break;
                                                         case 3:
-                                                            for (Player p : plugin.getPlayers()) {
+                                                            for (Player p : Bukkit.getOnlinePlayers()) {
                                                                 plugin.messagePlayer(p, "§8| §6\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + "§e was §6§l3rd §eto finish!");
                                                             }
                                                             break;
                                                         default:
-                                                            for (Player p : plugin.getPlayers()) {
+                                                            for (Player p : Bukkit.getOnlinePlayers()) {
                                                                 plugin.messagePlayer(p, "§8| §f\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + "§e was §f§l" + placement + "th §eto finish!");
                                                             }
                                                             break;
@@ -364,8 +366,8 @@ public class MainCommand implements CommandExecutor {
                                         }
                                     }
 
-                                    for (Player player : plugin.getPlayers()) {
-                                        if (!plugin.deadPlayers.contains(player.getName())) {
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
+                                        if (!plugin.deadPlayers.contains(player.getName()) && !plugin.getSpectators().contains(player)) {
                                             if (plugin.lastHitPlayer.containsKey(args[1])) {
                                                 if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
                                                     plugin.messagePlayer(player, "§e\uD83D\uDCB05 §7| " + plugin.formatKillMessage(plugin.lastHitPlayer.get(args[1]), p.getName()));
@@ -374,7 +376,8 @@ public class MainCommand implements CommandExecutor {
                                                 }
                                             }
                                             plugin.earnPoints(player.getName(), 5, true);
-                                        } else {
+                                        }
+                                        if(plugin.deadPlayers.contains(player.getName()) || plugin.getSpectators().contains(player)) {
                                             if (plugin.lastHitPlayer.containsKey(args[1])) {
                                                 if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
                                                     plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(plugin.lastHitPlayer.get(args[1]), p.getName()));
@@ -393,7 +396,7 @@ public class MainCommand implements CommandExecutor {
                                         }
                                     }
                                     if (teamDead) {
-                                        for (Player player2 : Bukkit.getServer().getOnlinePlayers()) {
+                                        for (Player player2 : Bukkit.getOnlinePlayers()) {
                                             plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + " §chave been eliminated.\n§f");
                                         }
                                         plugin.deadTeams.add(PlayerConfig.get().getString("players." + args[1] + ".team"));

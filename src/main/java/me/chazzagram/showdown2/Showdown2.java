@@ -785,7 +785,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             String team = PlayerConfig.get().getString("players." + player + ".team");
             return TeamsConfig.get().getString("teams." + team + ".colour") + TeamsConfig.get().getString("teams." + team + ".icon") + player;
         } else {
-            return "§7" + player;
+            return "§7§l\uD83D\uDD27§7" + player;
         }
     }
 
@@ -2155,6 +2155,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             messagePlayer(player, "§f--------------------------");
         }
         for(Player p : getPlayers()) {
+            index = 1;
             for (String player2 : players) {
                 if (p.getName().equals(player2)){
                     messagePlayer(p, String.format("%-15s%15s", index + ". " + getPlayerDisplayName(players.get(index-1)), "§e§l\uD83D\uDCB0" + points.get(index-1)));
@@ -3491,7 +3492,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             for(String player : TeamsConfig.get().getStringList("teams." + team + ".players")) {
                 for(String player2 : TeamsConfig.get().getStringList("teams." + team + ".players")) {
                     if(Bukkit.getPlayer(player) != null && Bukkit.getPlayer(player2) != null) {
-                        glowingEntities.setGlowing(Bukkit.getPlayer(player), Bukkit.getPlayer(player2), teamGlowColors.get(team));
+                        glowingEntities.setGlowing(Bukkit.getPlayer(player), Bukkit.getPlayer(player2));
                     }
                 }
             }
@@ -3852,13 +3853,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             plugin.bridgeTally.put(team, plugin.bridgeTally.get(team) + 1);
                             if(jump < 6) {
                                 theLocation.setZ(theLocation.getZ() - 2);
+                                theLocation.setYaw(180);
+                                theLocation.setYaw(0);
                                 for (String player : TeamsConfig.get().getStringList("teams." + team + ".players")) {
                                     if (Bukkit.getPlayer(player) != null) {
                                         Player p = Bukkit.getPlayer(player);
+                                        p.teleport(theLocation);
                                         if (!bridgeJumpRegister.get(jump).contains(player)) {
-                                            theLocation.setYaw(180);
-                                            p.teleport(theLocation);
-                                            theLocation.setYaw(0);
                                             messagePlayer(p, "§c✖ §7| §fYou failed to complete the jump in time!");
                                         }
                                         p.playSound(p.getLocation(), Sound.ENTITY_BAT_DEATH, 10, 1);

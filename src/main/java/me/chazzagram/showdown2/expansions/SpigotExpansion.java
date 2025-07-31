@@ -115,7 +115,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 if(PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
                     return TeamsConfig.get().get("teams." + PlayerConfig.get().getString("players." + p.getName() + ".team") + ".colour") + TeamsConfig.get().getString("teams." + PlayerConfig.get().get("players." + p.getName() + ".team") + ".icon");
                 } else if (SpectatorConfig.get().getConfigurationSection("spectators").getKeys(false).contains(p.getName())) {
-                    return "§7";
+                    return "§7§l\uD83D\uDD27§7";
                 } else {
                     return "§f";
                 }
@@ -495,19 +495,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 for(String player : TeamsConfig.get().getStringList("teams.RubyRaiders.players")){
                     index++;
                     if(Bukkit.getPlayer(player) != null){
-                        if(plugin.getPlayerDisplayName(player).length() > 13) {
-                            if(plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.RubyRaiders.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
-                            } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§r§0     ");
-                            }
-
+                        if(plugin.deadPlayers.contains(player)) {
+                            teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.RubyRaiders.icon") + player).append("§r§0     ");
                         } else {
-                            if(plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.RubyRaiders.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
-                            } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§r§0     ");
-                            }
+                            teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
                         }
                     } else {
                         if(player.length() > 10) {
@@ -525,18 +516,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 for (String player : TeamsConfig.get().getStringList("teams.AmberAmbushers.players")) {
                     index++;
                     if (Bukkit.getPlayer(player) != null) {
-                        if (plugin.getPlayerDisplayName(player).length() > 13) {
-                            if (plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.AmberAmbushers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
-                            } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§r§0     ");
-                            }
+                        if (plugin.deadPlayers.contains(player)) {
+                            teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.AmberAmbushers.icon") + Bukkit.getPlayer(player).getName()).append("§r§0     ");
                         } else {
-                            if (plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.AmberAmbushers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
-                            } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§r§0     ");
-                            }
+                            teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
                         }
                     } else {
                         if (player.length() > 10) {
@@ -554,18 +537,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 for (String player : TeamsConfig.get().getStringList("teams.TopazTroopers.players")) {
                     index++;
                     if (Bukkit.getPlayer(player) != null) {
-                        if (plugin.getPlayerDisplayName(player).length() > 13) {
-                            if (plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.TopazTroopers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
-                            } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§r§0     ");
-                            }
+                        if (plugin.deadPlayers.contains(player)) {
+                            teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.TopazTroopers.icon") + Bukkit.getPlayer(player).getName()).append("§r§0     ");
                         } else {
-                            if (plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.TopazTroopers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
-                            } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§r§0     ");
-                            }
+                            teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
                         }
                     } else {
                         if (player.length() > 10) {
@@ -583,18 +558,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 for (String player : TeamsConfig.get().getStringList("teams.KyaniteKillers.players")) {
                     index++;
                     if (Bukkit.getPlayer(player) != null) {
-                        if (plugin.getPlayerDisplayName(player).length() > 13) {
-                            if (plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.KyaniteKillers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
-                            } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§r§0     ");
-                            }
+                        if (plugin.deadPlayers.contains(player)) {
+                            teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.KyaniteKillers.icon") + Bukkit.getPlayer(player).getName()).append("§r§0     ");
                         } else {
-                            if (plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.KyaniteKillers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
-                            } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§r§0     ");
-                            }
+                            teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
                         }
                     } else {
                         if (player.length() > 10) {
@@ -612,19 +579,11 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 for (String player : TeamsConfig.get().getStringList("teams.DiamondDestroyers.players")) {
                     index++;
                     if (Bukkit.getPlayer(player) != null) {
-                        if (plugin.getPlayerDisplayName(player).length() > 13) {
                             if (plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.DiamondDestroyers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
+                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.DiamondDestroyers.icon") + Bukkit.getPlayer(player).getName()).append("§r§0     ");
                             } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§r§0     ");
+                                teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
                             }
-                        } else {
-                            if (plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.DiamondDestroyers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
-                            } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§r§0     ");
-                            }
-                        }
                     } else {
                         if (player.length() > 10) {
                             teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
@@ -641,18 +600,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 for (String player : TeamsConfig.get().getStringList("teams.SapphireSoldiers.players")) {
                     index++;
                     if (Bukkit.getPlayer(player) != null) {
-                        if (plugin.getPlayerDisplayName(player).length() > 13) {
-                            if (plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.SapphireSoldiers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
-                            } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§r§0     ");
-                            }
+                        if (plugin.deadPlayers.contains(player)) {
+                            teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.SapphireSoldiers.icon") + Bukkit.getPlayer(player).getName()).append("§r§0     ");
                         } else {
-                            if (plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.SapphireSoldiers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
-                            } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§r§0     ");
-                            }
+                            teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
                         }
                     } else {
                         if (player.length() > 10) {
@@ -670,18 +621,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 for (String player : TeamsConfig.get().getStringList("teams.SmithsoniteSlayers.players")) {
                     index++;
                     if (Bukkit.getPlayer(player) != null) {
-                        if (plugin.getPlayerDisplayName(player).length() > 13) {
-                            if (plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.SmithsoniteSlayers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
-                            } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§r§0     ");
-                            }
+                        if (plugin.deadPlayers.contains(player)) {
+                            teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.SmithsoniteSlayers.icon") + Bukkit.getPlayer(player).getName()).append("§r§0     ");
                         } else {
-                            if (plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.SmithsoniteSlayers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
-                            } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§r§0     ");
-                            }
+                            teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
                         }
                     } else {
                         if (player.length() > 10) {
@@ -699,18 +642,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 for (String player : TeamsConfig.get().getStringList("teams.CrystalCrashers.players")) {
                     index++;
                     if (Bukkit.getPlayer(player) != null) {
-                        if (plugin.getPlayerDisplayName(player).length() > 13) {
-                            if (plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.CrystalCrashers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
-                            } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName()), 0, 13).append("§r§0     ");
-                            }
+                        if (plugin.deadPlayers.contains(player)) {
+                            teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.CrystalCrashers.icon") + Bukkit.getPlayer(player).getName()).append("§r§0     ");
                         } else {
-                            if (plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.CrystalCrashers.icon") + Bukkit.getPlayer(player).getName(), 0, 15).append("§r§0     ");
-                            } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(Bukkit.getPlayer(player).getName())).append("§r§0     ");
-                            }
+                            teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
                         }
                     } else {
                         if (player.length() > 10) {

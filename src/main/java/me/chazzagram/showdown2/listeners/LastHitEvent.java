@@ -161,7 +161,7 @@ public class LastHitEvent implements Listener {
                                             PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SPEED, 120, 2, false, false);
                                             attacker.addPotionEffect(PotionEffect);
                                         } else if (offset == 4) {
-                                            for (ItemStack item : getCDItems().get(3)) {
+                                            for (ItemStack item : getCDItems().get(2)) {
                                                 attacker.getInventory().addItem(item);
                                             }
                                         } else if (offset == 0) {

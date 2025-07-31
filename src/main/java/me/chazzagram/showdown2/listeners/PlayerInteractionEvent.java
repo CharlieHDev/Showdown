@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 public class PlayerInteractionEvent implements Listener {
@@ -19,6 +20,16 @@ public class PlayerInteractionEvent implements Listener {
 
     public PlayerInteractionEvent(Showdown2 plugin) {
         this.plugin = plugin;
+    }
+
+
+    @EventHandler
+    public void onPlayerFish(PlayerFishEvent event) {
+        if (event.getState() == PlayerFishEvent.State.CAUGHT_ENTITY) {
+            if (event.getCaught() instanceof Player) {
+                event.setCancelled(true);
+            }
+        }
     }
 
     @EventHandler
