@@ -1851,10 +1851,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public void checkPlayer(Player player) {
         Location pLoc = player.getLocation();
 
-        for (Location dLoc : displayLocations) {
-            if (dLoc.getWorld() != pLoc.getWorld()) continue;
+        for (ItemDisplay wall : ppWalls) {
+            if (wall.getWorld() != pLoc.getWorld()) continue;
 
-            if (dLoc.distanceSquared(pLoc) <= RADIUS_SQUARED) {
+            if (wall.getLocation().distanceSquared(pLoc) <= RADIUS_SQUARED) {
                 // get player team
                 // get map of said wall
                 // get concrete on each side of the map
