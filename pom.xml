@@ -6,7 +6,7 @@
 
     <groupId>me.chazzagram</groupId>
     <artifactId>Showdown2</artifactId>
-    <version>0.0.0</version>
+    <version>LADS.0.0</version>
     <packaging>jar</packaging>
 
     <name>Showdown2</name>

@@ -2,6 +2,7 @@ package me.chazzagram.showdown2.expansions;
 
 import me.chazzagram.showdown2.Showdown2;
 import me.chazzagram.showdown2.files.PlayerConfig;
+import me.chazzagram.showdown2.files.PlayerInfoConfig;
 import me.chazzagram.showdown2.files.SpectatorConfig;
 import me.chazzagram.showdown2.files.TeamsConfig;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
@@ -73,6 +74,11 @@ public class SpigotExpansion extends PlaceholderExpansion {
             try {
                 int number = Integer.parseInt(params.substring("indivplayer_".length()))-1;
                 if (number >= 0 && number < indivNames.size()) {
+                    for(boolean truefalse : plugin.teamShown){
+                        if(!truefalse){
+                            return "§8§k00000000";
+                        }
+                    }
                     return plugin.getPlayerDisplayName(indivNames.get(number));
                 } else {
                     return "§7N/A";
@@ -85,6 +91,11 @@ public class SpigotExpansion extends PlaceholderExpansion {
             try {
                 int number = Integer.parseInt(params.substring("indivpoints_".length()))-1;
                 if (number >= 0 && number < indivPoints.size()) {
+                    for(boolean truefalse : plugin.teamShown){
+                        if(!truefalse){
+                            return "§8§k0000";
+                        }
+                    }
                     return "§e§l\uD83D\uDCB0" + indivPoints.get(number).toString();
                 } else {
                     return "§7N/A";
@@ -106,9 +117,75 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 return "Invalid number format!";
             }
         }
+        if(params.startsWith("placementchange_")){
+            try {
+                int number = Integer.parseInt(params.substring("placementchange_".length()))-1;
+                if (number >= 0 && number < indivNames.size()) {
+                    String name = indivNames.get(number);
+                    Integer current = plugin.currentPlacements.get(name);
+                    Integer previous = plugin.previousPlacements.get(name);
+                    if (current != null && previous != null) {
+                        for(boolean truefalse : plugin.teamShown){
+                            if(!truefalse){
+                                return "§8§k0";
+                            }
+                        }
+                        if (current < previous) {
+                            return "§b§l▲";
+                        } else if (current > previous) {
+                            return "§6§l▼";
+                        } else {
+                            return "§f§l-";
+                        }
+                    } else {
+                        return "§f§l-";
+                    }
+                } else {
+                    return "§f§l-";
+                }
+            } catch (NumberFormatException e) {
+                return "Invalid number format!";
+            }
+
+        }
         switch (params) {
             case "player":
                 return p.getName();
+            case "bestgame":
+                if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())){
+                    return PlayerInfoConfig.get().getString("players."+p.getName()+".bestgame");
+                } else {
+                    return "N/A";
+                }
+            case "kills":
+                if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())){
+                    return PlayerInfoConfig.get().getString("players."+p.getName()+".kills");
+                } else {
+                    return "N/A";
+                }
+            case "bestreadycheck":
+                if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())){
+                    return PlayerInfoConfig.get().getString("players."+p.getName()+".bestreadycheck");
+                } else {
+                    return "N/A";
+                }
+            case "highestplacement":
+                if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())){
+                    return PlayerInfoConfig.get().getString("players."+p.getName()+".highestplacement");
+                } else {
+                    return "N/A";
+                }
+            case "eventplacement":
+                if(PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())){
+                    for(int i = 0; i < indivNames.size(); i++){
+                        if(p.getName().equals(indivNames.get(i))){
+                            return Integer.toString(i+1);
+                        }
+                    }
+                    return "N/A";
+                } else {
+                    return "N/A";
+                }
             case "playerdisplay":
                 return plugin.getPlayerDisplayName(p.getName());
             case "playerprefix":
@@ -139,11 +216,21 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return Objects.requireNonNullElse(points, "N/A");
                 } else {
                     String points = PlayerConfig.get().getString("players." + p.getName() + ".points");
+                    for(boolean truefalse : plugin.teamShown){
+                        if(!truefalse){
+                            return "N/A";
+                        }
+                    }
                     return Objects.requireNonNullElse(points, "N/A");
                 }
             case "teampoints":
                 String selectTeam = PlayerConfig.get().getString("players." + p.getName() + ".team");
                 String teampoints = String.valueOf(TeamsConfig.get().getInt("teams." + selectTeam + ".points"));
+                for(boolean truefalse : plugin.teamShown){
+                    if(!truefalse){
+                        return "N/A";
+                    }
+                }
                 if (selectTeam == null) {
                     return "N/A";
                 } else {
@@ -171,6 +258,14 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     } else {
                         return plugin.modeTeamPoints.get(playersTeam).toString();
                     }
+                }
+            case "roundcount":
+                return String.valueOf(plugin.currentRound);
+            case "killcount":
+                if(plugin.playerKillCount.containsKey(p.getName())) {
+                    return String.valueOf(plugin.playerKillCount.get(p.getName()));
+                } else {
+                    return "0";
                 }
             case "timer_bridgebuilders":
                 if (plugin.runningTimers.containsKey("bridgebuildersstart")) {
@@ -242,160 +337,160 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 }
             case "topteam_1":
                 if(!leaderteams.isEmpty()) {
-                    if(leaderteams.getFirst() != null) {
+                    if(leaderteams.getFirst() != null && plugin.teamShown[0]) {
                         return plugin.getTeamDisplayName(leaderteams.getFirst());
                     } else {
-                        return "§8N/A";
+                        return "§8§k00000000000000000000";
                     }
                 } else {
                     return "§8N/A";
                 }
             case "toppoints_1":
                 if(!leaderteampoints.isEmpty()) {
-                    if (leaderteampoints.getFirst() != null) {
+                    if (leaderteampoints.getFirst() != null && plugin.teamShown[0]) {
                         return "§e§l\uD83D\uDCB0" + leaderteampoints.getFirst();
                     } else {
-                        return "§8N/A";
+                        return "§8§l\uD83D\uDCB0§8§k0000";
                     }
                 } else {
                     return "§8N/A";
                 }
             case "topteam_2":
                 if(leaderteams.size() > 1) {
-                    if (leaderteams.get(1) != null) {
+                    if (leaderteams.get(1) != null && plugin.teamShown[1]) {
                         return plugin.getTeamDisplayName(leaderteams.get(1));
                     } else {
-                        return "§8N/A";
+                        return "§8§k00000000000000000000";
                     }
                 } else {
                     return "§8N/A";
                 }
             case "toppoints_2":
                 if(leaderteampoints.size() > 1) {
-                    if(leaderteampoints.get(1) != null) {
+                    if(leaderteampoints.get(1) != null && plugin.teamShown[1]) {
                         return "§e§l\uD83D\uDCB0" + leaderteampoints.get(1);
                     } else {
-                        return "§8N/A";
+                        return "§8§l\uD83D\uDCB0§8§k0000";
                     }
                 } else {
                     return "§8N/A";
                 }
             case "topteam_3":
                 if(leaderteams.size() > 2) {
-                    if(leaderteams.get(2) != null) {
+                    if (leaderteams.get(2) != null && plugin.teamShown[2]) {
                         return plugin.getTeamDisplayName(leaderteams.get(2));
                     } else {
-                        return "§8N/A";
+                        return "§8§k00000000000000000000";
                     }
                 } else {
                     return "§8N/A";
                 }
             case "toppoints_3":
                 if(leaderteampoints.size() > 2) {
-                    if(leaderteampoints.get(2) != null) {
+                    if(leaderteampoints.get(2) != null && plugin.teamShown[2]) {
                         return "§e§l\uD83D\uDCB0" + leaderteampoints.get(2);
                     } else {
-                        return "§8N/A";
+                        return "§8§l\uD83D\uDCB0§8§k0000";
                     }
                 } else {
                     return "§8N/A";
                 }
             case "topteam_4":
                 if(leaderteams.size() > 3) {
-                    if(leaderteams.get(3) != null) {
+                    if (leaderteams.get(3) != null && plugin.teamShown[3]) {
                         return plugin.getTeamDisplayName(leaderteams.get(3));
                     } else {
-                        return "§8N/A";
+                        return "§8§k00000000000000000000";
                     }
                 } else {
                     return "§8N/A";
                 }
             case "toppoints_4":
                 if(leaderteampoints.size() > 3) {
-                    if(leaderteampoints.get(3) != null) {
+                    if(leaderteampoints.get(3) != null && plugin.teamShown[3]) {
                         return "§e§l\uD83D\uDCB0" + leaderteampoints.get(3);
                     } else {
-                        return "§8N/A";
+                        return "§8§l\uD83D\uDCB0§8§k0000";
                     }
                 } else {
                     return "§8N/A";
                 }
             case "topteam_5":
                 if(leaderteams.size() > 4) {
-                    if(leaderteams.get(4) != null) {
+                    if (leaderteams.get(4) != null && plugin.teamShown[4]) {
                         return plugin.getTeamDisplayName(leaderteams.get(4));
                     } else {
-                        return "§8N/A";
+                        return "§8§k00000000000000000000";
                     }
                 } else {
                     return "§8N/A";
                 }
             case "toppoints_5":
                 if(leaderteampoints.size() > 4) {
-                    if(leaderteampoints.get(4) != null) {
+                    if(leaderteampoints.get(4) != null && plugin.teamShown[4]) {
                         return "§e§l\uD83D\uDCB0" + leaderteampoints.get(4);
                     } else {
-                        return "§8N/A";
+                        return "§8§l\uD83D\uDCB0§8§k0000";
                     }
                 } else {
                     return "§8N/A";
                 }
             case "topteam_6":
                 if(leaderteams.size() > 5) {
-                    if(leaderteams.get(5) != null) {
+                    if (leaderteams.get(5) != null && plugin.teamShown[5]) {
                         return plugin.getTeamDisplayName(leaderteams.get(5));
                     } else {
-                        return "§8N/A";
+                        return "§8§k00000000000000000000";
                     }
                 } else {
                     return "§8N/A";
                 }
             case "toppoints_6":
                 if(leaderteampoints.size() > 5) {
-                    if(leaderteampoints.get(5) != null) {
+                    if(leaderteampoints.get(5) != null && plugin.teamShown[5]) {
                         return "§e§l\uD83D\uDCB0" + leaderteampoints.get(5);
                     } else {
-                        return "§8N/A";
+                        return "§8§l\uD83D\uDCB0§8§k0000";
                     }
                 } else {
                     return "§8N/A";
                 }
             case "topteam_7":
                 if(leaderteams.size() > 6) {
-                    if(leaderteams.get(6) != null) {
+                    if (leaderteams.get(6) != null && plugin.teamShown[6]) {
                         return plugin.getTeamDisplayName(leaderteams.get(6));
                     } else {
-                        return "§8N/A";
+                        return "§8§k00000000000000000000";
                     }
                 } else {
                     return "§8N/A";
                 }
             case "toppoints_7":
                 if(leaderteampoints.size() > 6) {
-                    if(leaderteampoints.get(6) != null) {
+                    if(leaderteampoints.get(6) != null && plugin.teamShown[6]) {
                         return "§e§l\uD83D\uDCB0" + leaderteampoints.get(6);
                     } else {
-                        return "§8N/A";
+                        return "§8§l\uD83D\uDCB0§8§k0000";
                     }
                 } else {
                     return "§8N/A";
                 }
             case "topteam_8":
                 if(leaderteams.size() > 7) {
-                    if(leaderteams.get(7) != null) {
+                    if (leaderteams.get(7) != null && plugin.teamShown[7]) {
                         return plugin.getTeamDisplayName(leaderteams.get(7));
                     } else {
-                        return "§8N/A";
+                        return "§8§k00000000000000000000";
                     }
                 } else {
                     return "§8N/A";
                 }
             case "toppoints_8":
                 if(leaderteampoints.size() > 7) {
-                    if(leaderteampoints.get(7) != null) {
+                    if(leaderteampoints.get(7) != null && plugin.teamShown[7]) {
                         return "§e§l\uD83D\uDCB0" + leaderteampoints.get(7);
                     } else {
-                        return "§8N/A";
+                        return "§8§l\uD83D\uDCB0§8§k0000";
                     }
                 } else {
                     return "§8N/A";
@@ -403,6 +498,11 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "modepoints_1":
                 if(!modeteampoints.isEmpty()) {
                     if(modeteampoints.getFirst() != null) {
+                        for(boolean truefalse : plugin.teamShown){
+                            if(!truefalse){
+                                return "§8§l\uD83D\uDCB0§8§k0000";
+                            }
+                        }
                         return "§e§l\uD83D\uDCB0" + modeteampoints.getFirst();
                     } else {
                         return "§8N/A";
@@ -413,6 +513,11 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "modetop_1":
                 if(!modeteams.isEmpty()) {
                     if(modeteams.getFirst() != null) {
+                        for(boolean truefalse : plugin.teamShown){
+                            if(!truefalse){
+                                return "§8§k0000";
+                            }
+                        }
                         return plugin.getTeamDisplayName(modeteams.getFirst());
                     } else {
                         return "§8N/A";
@@ -423,6 +528,11 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "modepoints_2":
                 if(modeteampoints.size() > 1) {
                     if(modeteampoints.get(1) != null) {
+                        for(boolean truefalse : plugin.teamShown){
+                            if(!truefalse){
+                                return "§8§l\uD83D\uDCB0§8§k0000";
+                            }
+                        }
                         return "§e§l\uD83D\uDCB0" + modeteampoints.get(1);
                     } else {
                         return "§8N/A";
@@ -433,6 +543,11 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "modetop_2":
                 if(modeteams.size() > 1) {
                     if(modeteams.get(1) != null) {
+                        for(boolean truefalse : plugin.teamShown){
+                            if(!truefalse){
+                                return "§8§k0000";
+                            }
+                        }
                         return plugin.getTeamDisplayName(modeteams.get(1));
                     } else {
                         return "§8N/A";
@@ -443,6 +558,11 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "modepoints_3":
                 if(modeteampoints.size() > 2) {
                     if(modeteampoints.get(2) != null) {
+                        for(boolean truefalse : plugin.teamShown){
+                            if(!truefalse){
+                                return "§8§l\uD83D\uDCB0§8§k0000";
+                            }
+                        }
                         return "§e§l\uD83D\uDCB0" + modeteampoints.get(2);
                     } else {
                         return "§8N/A";
@@ -453,6 +573,11 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "modetop_3":
                 if(modeteams.size() > 2) {
                     if(modeteams.get(2) != null) {
+                        for(boolean truefalse : plugin.teamShown){
+                            if(!truefalse){
+                                return "§8§k0000";
+                            }
+                        }
                         return plugin.getTeamDisplayName(modeteams.get(2));
                     } else {
                         return "§8N/A";
@@ -463,6 +588,11 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "modepoints_4":
                 if(modeteampoints.size() > 3) {
                     if(modeteampoints.get(3) != null) {
+                        for(boolean truefalse : plugin.teamShown){
+                            if(!truefalse){
+                                return "§8§l\uD83D\uDCB0§8§k0000";
+                            }
+                        }
                         return "§e§l\uD83D\uDCB0" + modeteampoints.get(3);
                     } else {
                         return "§8N/A";
@@ -473,6 +603,11 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "modetop_4":
                 if(modeteams.size() > 3) {
                     if(modeteams.get(3) != null) {
+                        for(boolean truefalse : plugin.teamShown){
+                            if(!truefalse){
+                                return "§8§k0000";
+                            }
+                        }
                         return plugin.getTeamDisplayName(modeteams.get(3));
                     } else {
                         return "§8N/A";
@@ -501,14 +636,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                             teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
                         }
                     } else {
-                        if(player.length() > 10) {
-                            teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
-                        } else {
-                            teamplayers.append("§8").append(player).append("§r§0     ");
-                        }
+                        teamplayers.append("§8").append(player).append("§r§0     ");
                     }
                 }
-                teamplayers.repeat("§8NoPlayer§0     ", 4-index);
+                teamplayers.repeat("§8NoPlayer§0     ", TeamsConfig.get().getStringList("teams.RubyRaiders.players").size() - index);
                 return teamplayers.toString();
 
             case "teamlist_2":
@@ -522,14 +653,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                             teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
                         }
                     } else {
-                        if (player.length() > 10) {
-                            teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
-                        } else {
-                            teamplayers.append("§8").append(player).append("§r§0     ");
-                        }
+                        teamplayers.append("§8").append(player).append("§r§0     ");
                     }
                 }
-                teamplayers.repeat("§8NoPlayer§0     ", 4 - index);
+                teamplayers.repeat("§8NoPlayer§0     ", TeamsConfig.get().getStringList("teams.AmberAmbushers.players").size() - index);
                 return teamplayers.toString();
 
             case "teamlist_3":
@@ -543,14 +670,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                             teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
                         }
                     } else {
-                        if (player.length() > 10) {
-                            teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
-                        } else {
-                            teamplayers.append("§8").append(player).append("§r§0     ");
-                        }
+                        teamplayers.append("§8").append(player).append("§r§0     ");
                     }
                 }
-                teamplayers.repeat("§8NoPlayer§0     ", 4 - index);
+                teamplayers.repeat("§8NoPlayer§0     ", TeamsConfig.get().getStringList("teams.TopazTroopers.players").size() - index);
                 return teamplayers.toString();
 
             case "teamlist_4":
@@ -564,14 +687,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                             teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
                         }
                     } else {
-                        if (player.length() > 10) {
-                            teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
-                        } else {
-                            teamplayers.append("§8").append(player).append("§r§0     ");
-                        }
+                        teamplayers.append("§8").append(player).append("§r§0     ");
                     }
                 }
-                teamplayers.repeat("§8NoPlayer§0     ", 4 - index);
+                teamplayers.repeat("§8NoPlayer§0     ", TeamsConfig.get().getStringList("teams.KyaniteKillers.players").size() - index);
                 return teamplayers.toString();
 
             case "teamlist_5":
@@ -585,14 +704,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                                 teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
                             }
                     } else {
-                        if (player.length() > 10) {
-                            teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
-                        } else {
-                            teamplayers.append("§8").append(player).append("§r§0     ");
-                        }
+                        teamplayers.append("§8").append(player).append("§r§0     ");
                     }
                 }
-                teamplayers.repeat("§8NoPlayer§0     ", 4 - index);
+                teamplayers.repeat("§8NoPlayer§0     ", TeamsConfig.get().getStringList("teams.DiamondDestroyers.players").size() - index);
                 return teamplayers.toString();
 
             case "teamlist_6":
@@ -606,14 +721,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                             teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
                         }
                     } else {
-                        if (player.length() > 10) {
-                            teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
-                        } else {
-                            teamplayers.append("§8").append(player).append("§r§0     ");
-                        }
+                        teamplayers.append("§8").append(player).append("§r§0     ");
                     }
                 }
-                teamplayers.repeat("§8NoPlayer§0     ", 4 - index);
+                teamplayers.repeat("§8NoPlayer§0     ", TeamsConfig.get().getStringList("teams.SapphireSoldiers.players").size() - index);
                 return teamplayers.toString();
 
             case "teamlist_7":
@@ -627,14 +738,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                             teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
                         }
                     } else {
-                        if (player.length() > 10) {
-                            teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
-                        } else {
-                            teamplayers.append("§8").append(player).append("§r§0     ");
-                        }
+                        teamplayers.append("§8").append(player).append("§r§0     ");
                     }
                 }
-                teamplayers.repeat("§8NoPlayer§0     ", 4 - index);
+                teamplayers.repeat("§8NoPlayer§0     ", TeamsConfig.get().getStringList("teams.SmithsoniteSlayers.players").size() - index);
                 return teamplayers.toString();
 
             case "teamlist_8":
@@ -648,14 +755,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                             teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
                         }
                     } else {
-                        if (player.length() > 10) {
-                            teamplayers.append("§8").append(player, 0, 10).append("§r§0     ");
-                        } else {
-                            teamplayers.append("§8").append(player).append("§r§0     ");
-                        }
+                        teamplayers.append("§8").append(player).append("§r§0     ");
                     }
                 }
-                teamplayers.repeat("§8NoPlayer§0     ", 4 - index);
+                teamplayers.repeat("§8NoPlayer§0     ", TeamsConfig.get().getStringList("teams.CrystalCrashers.players").size() - index);
                 return teamplayers.toString();
 
 

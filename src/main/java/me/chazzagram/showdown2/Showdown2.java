@@ -1,4 +1,5 @@
 package me.chazzagram.showdown2;
+import fr.skytasul.glowingentities.GlowingBlocks;
 import fr.skytasul.glowingentities.GlowingEntities;
 import me.chazzagram.showdown2.commands.MainCommand;
 import me.chazzagram.showdown2.commands.TabCompleterCMD;
@@ -11,6 +12,8 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.*;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
@@ -32,6 +35,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 import org.joml.Quaternionf;
@@ -49,11 +53,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     private static Showdown2 plugin;
 
-    private double multiplier = 1.0;
+    public double multiplier = 1.0;
 
     public boolean votingEnabled = false;
 
     public boolean pvpEnabled = false;
+
+    public boolean emotesEnabled = false;
 
     public String currentMode = "Lobby";
 
@@ -65,7 +71,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<Integer, Integer> slimeCheckpoints = new HashMap<>();
 
-    public HashMap<String, String> slimeFinishers = new HashMap<>();
+    public HashMap<String, Integer> slimeFinishers = new HashMap<>();
 
     public HashMap<Integer, Integer> bridgeCheckpoints = new HashMap<>();
 
@@ -89,6 +95,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public ArrayList<String> deadTeams = new ArrayList<>();
 
+    public int finaleRound = 1;
+
     public HashMap<String, String> lastHitPlayer = new HashMap<>();
 
     public HashMap<String, Integer> modeCompletions = new HashMap<>();
@@ -97,6 +105,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<String, Integer> modePoints = new HashMap<>();
 
+    public HashMap<String, Integer> modeFullPoints = new HashMap<>();
+
     public HashMap<String, String> itemToCraft = new HashMap<>();
 
     public HashMap<String, Integer> readyPlayers = new HashMap<>();
@@ -104,10 +114,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public int readyPlayerCount = 0;
 
     public HashMap<String, Color> teamColors = new HashMap<>();
+    public HashMap<String, Material> teamWool = new HashMap<>();
+    public HashMap<String, Material> teamConcrete = new HashMap<>();
 
     public HashMap<String, Integer> gubGameKills = new HashMap<>();
 
     public HashMap<Material, String> woolLogos = new HashMap<>();
+    public HashMap<String, String> modeLogos = new HashMap<>();
 
     public HashMap<String, ChatColor> modeColors = new HashMap<>();
 
@@ -121,7 +134,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public GlowingEntities glowingEntities;
 
-    public LivingEntity chickenBall;
+    public GlowingBlocks glowingBlocks;
 
     public Inventory gui = Bukkit.createInventory(null, 36, "§eTeams");
 
@@ -135,11 +148,16 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<String, BossBar> bossBars = new HashMap<>();
 
+    public HashMap<String, List<String>> craftLists = new HashMap<>();
+
     public Location sgCenter = new Location(Bukkit.getWorld("build"), -180, 0, -709);
 
     public int newBorderRadius = 236;
 
     public int currentBorderRadius = 236;
+
+    public HashMap<String, Integer> currentPlacements = new HashMap<>();
+    public HashMap<String, Integer> previousPlacements = new HashMap<>();
 
     int[][] slimeCmdCoords = {
             {880, 41, 1362},
@@ -149,6 +167,15 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             {1221, 27, 1339},
             {1302, 23, 1348}
 
+    };
+
+    int[][] slimeCmdCoords2 = {
+            {920, 47, 3175},
+            {1019, 29, 3153},
+            {1095, 56, 3173},
+            {1217, 38, 3173},
+            {1303, 38, 3148},
+            {1357, 35, 3171}
     };
 
     public int[][] cdWallCoords = {
@@ -162,6 +189,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     List<Slime> slimeGolfSlime = new ArrayList<>();
 
     public Map<String, Map<Integer, Integer>> bridgeCourseTimes = new HashMap<>();
+    public Map<String, Map<Integer, Integer>> dashersCourseTimes = new HashMap<>();
 
     public HashMap<String, Integer> buildTimeStamps = new HashMap<>();
 
@@ -189,6 +217,70 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public boolean shopAllowed = true;
 
+    public boolean[] teamShown = {
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+    };
+
+    public HashMap<String, String> emotes = new HashMap<>();
+
+    public List<Player> bellRingers = new ArrayList<>();
+
+    public boolean bellRung = false;
+
+    public List<String> craftList = new ArrayList<>();
+
+    public int cdIndex = 2;
+
+    public HashMap<String, Integer> playerKillCount = new HashMap<>();
+
+    public boolean voteParty = false;
+
+    public boolean zoomoSpeed = false;
+
+    public LivingEntity chickenBall;
+
+    public HashMap<String, Integer> finaleScores = new HashMap<>();
+
+    public HashMap<BlockDisplay, Boolean> lobbyPresents = new HashMap<>();
+
+    public Sound[] phStartSound = new Sound[]{Sound.ENTITY_ELDER_GUARDIAN_DEATH, Sound.ENTITY_ELDER_GUARDIAN_DEATH_LAND};
+
+    public Sound[] phRoundStartSound = new Sound[]{Sound.ENTITY_GUARDIAN_DEATH, Sound.ENTITY_ELDER_GUARDIAN_CURSE};
+
+    public Sound[] phRoundEnd = new Sound[]{Sound.BLOCK_NOTE_BLOCK_GUITAR, Sound.BLOCK_NOTE_BLOCK_BANJO, Sound.BLOCK_NOTE_BLOCK_COW_BELL};
+
+    public Sound phHoHoHo = Sound.ENTITY_ELDER_GUARDIAN_AMBIENT;
+
+    public Boolean blockBreak = false;
+
+    public Boolean tntRun = false;
+
+    public Boolean tntBow = false;
+
+    public List<String> superAdmins = new ArrayList<>();
+
+    public Sound[] phDialogue = new Sound[]{
+            Sound.ITEM_GOAT_HORN_SOUND_2,
+            Sound.ITEM_GOAT_HORN_SOUND_3,
+            Sound.ITEM_GOAT_HORN_SOUND_4,
+            Sound.ITEM_GOAT_HORN_SOUND_5,
+            Sound.EVENT_MOB_EFFECT_BAD_OMEN,
+            Sound.EVENT_MOB_EFFECT_TRIAL_OMEN,
+            Sound.EVENT_MOB_EFFECT_RAID_OMEN,
+            Sound.BLOCK_PORTAL_TRAVEL,
+            Sound.BLOCK_PORTAL_AMBIENT,
+            Sound.BLOCK_PORTAL_TRIGGER,
+            Sound.ENTITY_BLAZE_DEATH,
+            Sound.ENTITY_CREEPER_DEATH,
+            Sound.ENTITY_ENDERMAN_DEATH
+    };
 
     // Spawn the particle
 
@@ -198,7 +290,15 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
         plugin = this;
 
+        emotes.put("§e§l§oHYPE!", "\uE024");
+        emotes.put("§e§l§oFIRE!", "\uE025");
+        emotes.put("§e§l§o...", "\uE026");
+        emotes.put("§e§l§o:O", "\uE027");
+
+        superAdmins.add("Chazzagram");
+
         glowingEntities = new GlowingEntities(plugin);
+        glowingBlocks = new GlowingBlocks(plugin);
 
         this.getCommand("mcevent").setExecutor(new MainCommand(this));
         this.getCommand("mcevent").setTabCompleter(new TabCompleterCMD());
@@ -220,6 +320,24 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         teamGlowColors.put("SapphireSoldiers", ChatColor.BLUE);
         teamGlowColors.put("SmithsoniteSlayers", ChatColor.LIGHT_PURPLE);
         teamGlowColors.put("CrystalCrashers", ChatColor.WHITE);
+
+        teamWool.put("RubyRaiders", Material.RED_WOOL);
+        teamWool.put("AmberAmbushers", Material.ORANGE_WOOL);
+        teamWool.put("TopazTroopers", Material.YELLOW_WOOL);
+        teamWool.put("KyaniteKillers", Material.LIME_WOOL);
+        teamWool.put("DiamondDestroyers", Material.LIGHT_BLUE_WOOL);
+        teamWool.put("SapphireSoldiers", Material.BLUE_WOOL);
+        teamWool.put("SmithsoniteSlayers", Material.MAGENTA_WOOL);
+        teamWool.put("CrystalCrashers", Material.WHITE_WOOL);
+
+        teamConcrete.put("RubyRaiders", Material.RED_CONCRETE);
+        teamConcrete.put("AmberAmbushers", Material.ORANGE_CONCRETE);
+        teamConcrete.put("TopazTroopers", Material.YELLOW_CONCRETE);
+        teamConcrete.put("KyaniteKillers", Material.LIME_CONCRETE);
+        teamConcrete.put("DiamondDestroyers", Material.LIGHT_BLUE_CONCRETE);
+        teamConcrete.put("SapphireSoldiers", Material.BLUE_CONCRETE);
+        teamConcrete.put("SmithsoniteSlayers", Material.MAGENTA_CONCRETE);
+        teamConcrete.put("CrystalCrashers", Material.WHITE_CONCRETE);
 
         woolModes.put(Material.WHITE_WOOL, "Survival Games");
         woolModes.put(Material.PURPLE_WOOL, "Gub Game");
@@ -253,6 +371,14 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         woolLogos.put(Material.LIGHT_BLUE_WOOL, "\uD83E\uDD68");
         woolLogos.put(Material.YELLOW_WOOL, "\ue238");
 
+        modeLogos.put("Survival Games", "\uD83E\uDD6C");
+        modeLogos.put("Gub Game", "\uD83E\uDED0");
+        modeLogos.put("Slime Golf", "\uE172");
+        modeLogos.put("Zoomo Go", "\uD83E\uDD55");
+        modeLogos.put("Bridge Builders", "\uD83C\uDF45");
+        modeLogos.put("Colour Dash", "\uD83E\uDD68");
+        modeLogos.put("Craftalot", "\ue238");
+
         teamJump.put("RubyRaiders", new int[] { 247, -19, 659 } );
         teamJump.put("AmberAmbushers", new int[] { 282, -19, 659 });
         teamJump.put("TopazTroopers", new int[] { 317, -19, 659 });
@@ -262,6 +388,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         teamJump.put("SmithsoniteSlayers", new int[] { 457, -19, 659 });
         teamJump.put("CrystalCrashers", new int[] { 492, -19, 659 });
 
+        getServer().getPluginManager().registerEvents(new BookSignEvent(this), this);
+        getServer().getPluginManager().registerEvents(new BucketListener(this), this);
+        getServer().getPluginManager().registerEvents(new BellDongEvent(this), this);
         getServer().getPluginManager().registerEvents(new RiptideEvent(this), this);
         getServer().getPluginManager().registerEvents(new ArrowDespawnEvent(this), this);
         getServer().getPluginManager().registerEvents(new BreakBlockEvent(this), this);
@@ -309,6 +438,22 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         PhilipConfig.get().options().copyDefaults(true);
         PhilipConfig.save();
 
+        GameOrderConfig.setup();
+        GameOrderConfig.get().options().copyDefaults(true);
+        GameOrderConfig.save();
+
+        PlayerInfoConfig.setup();
+        PlayerInfoConfig.get().options().copyDefaults(true);
+        PlayerInfoConfig.save();
+
+        PresentsConfig.setup();
+        PresentsConfig.get().options().copyDefaults(true);
+        PresentsConfig.save();
+
+        WishesConfig.setup();
+        WishesConfig.get().options().copyDefaults(true);
+        WishesConfig.save();
+
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             Bukkit.getPluginManager().registerEvents(this, this);
             new SpigotExpansion(this).register();
@@ -318,15 +463,15 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             slimeCheckpoints.put(i, 1);
         }
 
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i <= 6; i++) {
             bridgeCheckpoints.put(i, 1);
         }
 
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i <= 6; i++) {
             bridgeJumpCheckpoints.put(i, 1);
         }
 
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i <= 6; i++) {
             List<String> list = new ArrayList<>();
             bridgeJumpRegister.put(i, list);
         }
@@ -343,6 +488,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             modePoints.put(player.getName(), 0);
         }
 
+        for (Player player : getPlayers()) {
+            modeFullPoints.put(player.getName(), 0);
+        }
+
         for (String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)) {
             modeTeamPoints.put(team, 0);
         }
@@ -356,6 +505,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         glowingEntities.disable();
+        glowingBlocks.disable();
         // Plugin shutdown logic
         messageConsole("Plugin Unloaded.");
     }
@@ -373,12 +523,31 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent e) {
         e.getPlayer().sendTitle("§7§oLoading...", "", 0, 10, 0);
-        List<String> cos3white = PhilipConfig.get().getStringList("cosmetics.3.whitelist");
-        if(!cos3white.contains(e.getPlayer().getName())){
-            cos3white.add(e.getPlayer().getName());
-            PhilipConfig.get().set("cosmetics.3.whitelist", cos3white);
+
+        switch(currentMode){
+            case "Craftalot":
+            case "Bridge Builders":
+            case "Colour Dash":
+                e.getPlayer().setGameMode(GameMode.SURVIVAL);
+            default:
+                e.getPlayer().setGameMode(GameMode.ADVENTURE);
         }
-        PhilipConfig.save();
+
+        if(PlayerInfoConfig.get().getConfigurationSection("players") == null){
+            PlayerInfoConfig.get().set("players." + e.getPlayer().getName() + ".bestgame", "N/A");
+            PlayerInfoConfig.get().set("players." + e.getPlayer().getName() + ".bestgameplacement", 32);
+            PlayerInfoConfig.get().set("players." + e.getPlayer().getName() + ".kills", 0);
+            PlayerInfoConfig.get().set("players." + e.getPlayer().getName() + ".bestreadycheck", 32);
+            PlayerInfoConfig.get().set("players." + e.getPlayer().getName() + ".highestplacement", 32);
+            PlayerInfoConfig.save();
+        } else if (!PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(e.getPlayer().getName())){
+            PlayerInfoConfig.get().set("players." + e.getPlayer().getName() + ".bestgame", "N/A");
+            PlayerInfoConfig.get().set("players." + e.getPlayer().getName() + ".bestgameplacement", 32);
+            PlayerInfoConfig.get().set("players." + e.getPlayer().getName() + ".kills", 0);
+            PlayerInfoConfig.get().set("players." + e.getPlayer().getName() + ".bestreadycheck", 32);
+            PlayerInfoConfig.get().set("players." + e.getPlayer().getName() + ".highestplacement", 32);
+            PlayerInfoConfig.save();
+        }
 
         boolean playerFound = false;
         Player p = e.getPlayer();
@@ -437,14 +606,23 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         TeamsConfig.get().set("teams." + playerTeam + ".points", currentTeamPoints+multiplyPoints(points));
         TeamsConfig.save();
 
-        modeTeamPoints.put(playerTeam, modeTeamPoints.get(playerTeam) + multiplyPoints(points));
+        if(Bukkit.getPlayer(player) != null) {
+            Player p = Bukkit.getPlayer(player);
+            p.playSound(p.getLocation(), Sound.ENTITY_DOLPHIN_HURT, 10, 1F);
+        }
+
+        if(!Objects.equals(currentMode, "Presents")) {
+            modeTeamPoints.put(playerTeam, modeTeamPoints.get(playerTeam) + multiplyPoints(points));
+        }
 
         if(individual) {
             int currentPoints = PlayerConfig.get().getInt("players." + player + ".points");
             PlayerConfig.get().set("players." + player + ".points", currentPoints+multiplyPoints(points));
             PlayerConfig.save();
-
-            modePoints.put(player, modePoints.get(player) + multiplyPoints(points));
+            if(!Objects.equals(currentMode, "Presents")) {
+                modePoints.put(player, modePoints.get(player) + multiplyPoints(points));
+                modeFullPoints.put(player, modeFullPoints.get(player) + multiplyPoints(points));
+            }
         }
     }
 
@@ -465,6 +643,16 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                 modePoints.put(player, 0);
             }
             modeTeamPoints.put(team, 0);
+        }
+    }
+
+    public void resetModeFullPoints(){
+        modeFullPoints.clear();
+
+        for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)){
+            for(String player : TeamsConfig.get().getStringList("teams." + team + ".players")){
+                modeFullPoints.put(player, 0);
+            }
         }
     }
 
@@ -490,6 +678,35 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         return spectators;
     }
 
+    //    Start a timer
+    public void startLobbyInterval(int seconds){
+        String name = "break";
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = seconds;
+            @Override
+            public void run() {
+                if(runningTimers.containsKey(name)) {
+                    if (!pausedTimers.contains(name)) {
+                        timeLeft--;
+                        runningTimers.get(name).setValue(timeLeft);
+                        bossBarBgTest();
+                        if (timeLeft == 0) {
+                            messageConsole("Timer finished.");
+                            runningTimers.remove(name);
+                            cancel();
+                        }
+                    }
+                } else {
+                    messageConsole("Timer removed by external factor.");
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, seconds));
+    }
+
 //    Start a timer
     public void startTimer(int seconds, String name){
         BukkitTask task = new BukkitRunnable() {
@@ -503,10 +720,219 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         bossBarBgTest();
                         if(currentMode.equals("Survival Games")){
                             for (Player player : getPlayers()) {
+                                if(player.getGameMode().equals(GameMode.SPECTATOR)) { continue; }
                                 List<Player> playersInCircle = getPlayersInCircle2D(sgCenter, currentBorderRadius);
-                                if(!playersInCircle.contains(player) && player.getHealth()-2 > 0){
+                                if(!playersInCircle.contains(player) && player.getHealth()-1 > 0) {
                                     player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("\uD83D\uDE21"));
-                                    player.damage(2.0);
+                                    player.damage(1.0);
+                                } else if (!playersInCircle.contains(player) && player.getHealth()-1 <= 0){
+                                    if(!Objects.equals(plugin.lastHitPlayer.get(player.getName()), "")){
+                                        Player killer = Bukkit.getPlayer(lastHitPlayer.get(player.getName()));
+                                        Player victim = player;
+                                        Bukkit.getWorld("build").spawnParticle(Particle.RAID_OMEN, victim.getLocation().clone().add(0,1,0), 20, 0.2, 0.5, 0.2, 0);
+                                        killer.playSound(killer.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 2);
+                                        plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died to " + plugin.getPlayerDisplayName(killer.getName()));
+                                        victim.sendTitle("§c§lYOU DIED.", "", 0, 40, 10);
+                                        plugin.playerKillCount.put(killer.getName(), plugin.playerKillCount.get(killer.getName()) + 1);
+
+                                        Location location = victim.getLocation();
+
+                                        for (ItemStack item : victim.getInventory().getContents()) {
+                                            if (item != null && !item.getType().isAir()) {
+                                                victim.getWorld().dropItemNaturally(location, item);
+                                            }
+                                        }
+
+                                        victim.getInventory().clear();
+                                        victim.getInventory().setArmorContents(null);
+                                        victim.getInventory().setItemInOffHand(null);
+
+                                        victim.setGameMode(GameMode.SPECTATOR);
+                                        plugin.deadPlayers.add(victim.getName());
+                                        plugin.earnPoints(killer.getName(), 40, true);
+                                        killer.sendTitle("", "§e\uD83D\uDCB040" + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
+                                        for (Player p : Bukkit.getOnlinePlayers()) {
+                                            if (!p.getGameMode().equals(GameMode.SPECTATOR) && !p.getName().equals(killer.getName()) && PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
+                                                int survivalPoints;
+                                                if(plugin.deadPlayers.size() > 20) { survivalPoints = 5; }
+                                                else if (plugin.deadPlayers.size() > 10) { survivalPoints = 7; }
+                                                else { survivalPoints = 10; }
+
+                                                plugin.messagePlayer(p, "§e\uD83D\uDCB0" + survivalPoints + " §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
+                                                plugin.earnPoints(p.getName(), survivalPoints, true);
+                                            } else {
+                                                plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
+                                            }
+                                        }
+                                        plugin.killRecord.add(plugin.getPlayerDisplayName(killer.getName()) + " §c⚔ " + plugin.getPlayerDisplayName(victim.getName()));
+                                        switch (plugin.deadPlayers.size()) {
+                                            case 24:
+                                                plugin.newBorderRadius = 26;
+                                                for (Player p : Bukkit.getOnlinePlayers()) {
+                                                    p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                                                }
+                                                break;
+                                            case 16:
+                                                plugin.newBorderRadius = 56;
+                                                for (Player p : Bukkit.getOnlinePlayers()) {
+                                                    p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                                                }
+                                                break;
+                                            case 8:
+                                                plugin.newBorderRadius = 116;
+                                                for (Player p : Bukkit.getOnlinePlayers()) {
+                                                    p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                                                }
+                                                break;
+                                            case 4:
+                                                plugin.newBorderRadius = 176;
+                                                for (Player p : Bukkit.getOnlinePlayers()) {
+                                                    p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                                                }
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                        boolean teamDead = true;
+                                        for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + victim.getName() + ".team") + ".players")) {
+                                            if (!plugin.deadPlayers.contains(player2)) {
+                                                teamDead = false;
+                                                break;
+                                            }
+                                        }
+
+                                        if (teamDead) {
+                                            for (Player player2 : Bukkit.getOnlinePlayers()) {
+                                                plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + victim.getName() + ".team")) + " §chave been eliminated.\n§f");
+                                            }
+                                            plugin.deadTeams.add(PlayerConfig.get().getString("players." + victim.getName() + ".team"));
+                                        }
+
+                                        Set<String> teamList = new HashSet<>();
+
+                                        for (Player player3 : plugin.getPlayers()) {
+                                            String team = PlayerConfig.get().getString("players." + player3.getName() + ".team");
+                                            if (team != null && !team.isEmpty()) {
+                                                teamList.add(team);
+                                            }
+                                        }
+
+                                        if (plugin.deadTeams.size() == teamList.size() - 1) {
+                                            for(Player p : plugin.getPlayers()) {
+                                                if(!p.getGameMode().equals(GameMode.SPECTATOR)) {
+                                                    plugin.winningTeam = PlayerConfig.get().getString("players." + p.getName() + ".team");
+                                                    break;
+                                                }
+                                            }
+                                            if(Objects.equals(plugin.winningTeam, "")) {
+                                                plugin.winningTeam = "NO TEAM";
+                                            }
+                                            plugin.deadTeams.clear();
+                                            plugin.runningTimers.remove("survivalgames");
+                                            plugin.gameEnd();
+                                        }
+                                    } else {
+                                        Player victim = player;
+                                        Bukkit.getWorld("build").spawnParticle(Particle.RAID_OMEN, victim.getLocation().clone().add(0,1,0), 20, 0.2, 0.5, 0.2, 0);
+                                        plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died.");
+                                        victim.sendTitle("§c§lYOU DIED.", "", 0, 40, 10);
+
+                                        Location location = victim.getLocation();
+
+                                        for (ItemStack item : victim.getInventory().getContents()) {
+                                            if (item != null && !item.getType().isAir()) {
+                                                victim.getWorld().dropItemNaturally(location, item);
+                                            }
+                                        }
+
+                                        victim.getInventory().clear();
+                                        victim.getInventory().setArmorContents(null);
+                                        victim.getInventory().setItemInOffHand(null);
+
+                                        victim.setGameMode(GameMode.SPECTATOR);
+                                        plugin.deadPlayers.add(victim.getName());
+                                        for (Player p : Bukkit.getOnlinePlayers()) {
+                                            if (!p.getGameMode().equals(GameMode.SPECTATOR) && PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
+                                                int survivalPoints;
+                                                if(plugin.deadPlayers.size() > 20) { survivalPoints = 5; }
+                                                else if (plugin.deadPlayers.size() > 10) { survivalPoints = 7; }
+                                                else { survivalPoints = 10; }
+
+                                                plugin.messagePlayer(p, "§e\uD83D\uDCB0" + survivalPoints + " §7| " + plugin.formatDeathMessage(victim.getName()));
+                                                plugin.earnPoints(p.getName(), survivalPoints, true);
+                                            } else {
+                                                plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| " + plugin.formatDeathMessage(victim.getName()));
+                                            }
+                                        }
+                                        plugin.killRecord.add(plugin.getPlayerDisplayName(victim.getName()) + " §c⚔ " + plugin.getPlayerDisplayName(victim.getName()));
+                                        switch (plugin.deadPlayers.size()) {
+                                            case 24:
+                                                plugin.newBorderRadius = 26;
+                                                for (Player p : Bukkit.getOnlinePlayers()) {
+                                                    p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                                                }
+                                                break;
+                                            case 16:
+                                                plugin.newBorderRadius = 56;
+                                                for (Player p : Bukkit.getOnlinePlayers()) {
+                                                    p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                                                }
+                                                break;
+                                            case 8:
+                                                plugin.newBorderRadius = 116;
+                                                for (Player p : Bukkit.getOnlinePlayers()) {
+                                                    p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                                                }
+                                                break;
+                                            case 4:
+                                                plugin.newBorderRadius = 176;
+                                                for (Player p : Bukkit.getOnlinePlayers()) {
+                                                    p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                                                }
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                        boolean teamDead = true;
+                                        for (String player2 : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + victim.getName() + ".team") + ".players")) {
+                                            if (!plugin.deadPlayers.contains(player2)) {
+                                                teamDead = false;
+                                                break;
+                                            }
+                                        }
+
+                                        if (teamDead) {
+                                            for (Player player2 : Bukkit.getOnlinePlayers()) {
+                                                plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + victim.getName() + ".team")) + " §chave been eliminated.\n§f");
+                                            }
+                                            plugin.deadTeams.add(PlayerConfig.get().getString("players." + victim.getName() + ".team"));
+                                        }
+
+                                        Set<String> teamList = new HashSet<>();
+
+                                        for (Player player3 : plugin.getPlayers()) {
+                                            String team = PlayerConfig.get().getString("players." + player3.getName() + ".team");
+                                            if (team != null && !team.isEmpty()) {
+                                                teamList.add(team);
+                                            }
+                                        }
+
+                                        if (plugin.deadTeams.size() == teamList.size() - 1) {
+                                            for(Player p : plugin.getPlayers()) {
+                                                if(!p.getGameMode().equals(GameMode.SPECTATOR)) {
+                                                    plugin.winningTeam = PlayerConfig.get().getString("players." + p.getName() + ".team");
+                                                    break;
+                                                }
+                                            }
+                                            if(Objects.equals(plugin.winningTeam, "")) {
+                                                plugin.winningTeam = "NO TEAM";
+                                            }
+                                            plugin.deadTeams.clear();
+                                            plugin.runningTimers.remove("survivalgames");
+                                            plugin.gameEnd();
+                                        }
+                                    }
+
                                 } else {
                                     player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(""));
                                 }
@@ -518,7 +944,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 spawnCircleParticles(sgCenter, currentBorderRadius, (int) (currentBorderRadius * 1.1));
                             }
                         }
-                        if(currentMode.equals("Slime Golf") && currentRound == 2){
+                        if(currentMode.equals("Slime Golf") && currentRound == 3){
                             switch(timeLeft) {
                                 case 270:
                                     thunderStormEvent();
@@ -643,6 +1069,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         return LocalTime.of(0, runningTimers.get(timer).getValue() / 60, runningTimers.get(timer).getValue() % 60).format(DateTimeFormatter.ofPattern("mm:ss"));
     }
 
+    public String getTimerValue(Integer time) {
+        return LocalTime.of(0, time / 60, time % 60).format(DateTimeFormatter.ofPattern("mm:ss"));
+    }
+
     public void pauseEvent(){
         for (Player player : getPlayers()) {
             player.sendTitle("", "§e§lEVENT PAUSED.", 0, 12000, 0);
@@ -690,22 +1120,32 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         if(location != null) {
             BukkitTask task = new BukkitRunnable() {
                 int timeLeft = countdown + 1;
+                int timeDeduced;
 
                 @Override
                 public void run() {
                     if (!pausedTimers.contains("teleporttimer")) {
                         timeLeft--;
                         runningTimers.get("teleporttimer").setValue(timeLeft);
-                        if (timeLeft == 0) {
-                            for (Player player : getPlayers()) {
-                                player.teleport(location);
-                            }
-                            runningTimers.remove("teleporttimer");
-                            cancel();
-                        } else {
-                            for (Player player : getPlayers()) {
-                                player.sendTitle("", "§6Teleporting in §c" + timeLeft + "...", 0, 20, 20);
-                            }
+                        switch(timeLeft){
+                            case 0:
+                                for (Player player : getPlayers()) {
+                                    player.teleport(location);
+                                }
+                                runningTimers.remove("teleporttimer");
+                                cancel();
+                                break;
+                            case 5, 4, 3:
+                                timeDeduced = timeLeft - 2;
+                                for (Player player : getPlayers()) {
+                                    player.sendTitle("", "§6Teleporting in §c" + timeDeduced + "...", 0, 20, 20);
+                                }
+                                break;
+                            case 2:
+                                for (Player player : getPlayers()) {
+                                    player.sendTitle("\uE023", "", 20, 40, 20);
+                                }
+                                break;
                         }
                     }
                 }
@@ -722,22 +1162,92 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public void teamTeleport(String location, int countdown){
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = countdown+1;
+            int timeDeduced;
             @Override
             public void run() {
                 if(!pausedTimers.contains("teleporttimerteam")) {
                     timeLeft--;
                     runningTimers.get("teleporttimerteam").setValue(timeLeft);
-                    if (timeLeft == 0) {
-                        for (Player player : getPlayers()) {
-                            Location tplocation = TeleportConfig.get().getLocation("teams." + PlayerConfig.get().getString("players." + player.getName() + ".team") + "." + location);
-                            player.teleport(tplocation);
-                        }
-                        runningTimers.remove("teleporttimerteam");
-                        cancel();
-                    } else {
-                        for (Player player : getPlayers()) {
-                            player.sendTitle("", "§6Teleporting in §c" + timeLeft + "...", 0, 20, 20);
-                        }
+                    switch(timeLeft){
+                        case 0:
+                            for (Player player : getPlayers()) {
+                                Location tplocation = TeleportConfig.get().getLocation("teams." + PlayerConfig.get().getString("players." + player.getName() + ".team") + "." + location);
+                                player.teleport(tplocation);
+                            }
+                            runningTimers.remove("teleporttimerteam");
+                            cancel();
+                            break;
+                        case 5, 4, 3:
+                            timeDeduced = timeLeft - 2;
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("", "§6Teleporting in §c" + timeDeduced + "...", 0, 20, 20);
+                            }
+                            break;
+                        case 2:
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("\uE023", "", 20, 40, 20);
+                            }
+                            break;
+                    }
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("teleporttimerteam", new AbstractMap.SimpleEntry<>(task, 6));
+    }
+
+    public void finaleTeamTeleport(String location, int countdown){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = countdown+1;
+            int timeDeduced;
+            List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
+            String firstTeam = leaderteams.getFirst();
+            String secondTeam = leaderteams.get(1);
+            List<String> firstPlayers = TeamsConfig.get().getStringList("teams." + firstTeam + ".players");
+            List<String> secondPlayers = TeamsConfig.get().getStringList("teams." + secondTeam + ".players");
+            World world = Bukkit.getWorld("build");
+            @Override
+            public void run() {
+                if(!pausedTimers.contains("teleporttimerteam")) {
+                    timeLeft--;
+                    runningTimers.get("teleporttimerteam").setValue(timeLeft);
+                    switch(timeLeft){
+                        case 0:
+                            for(Player player : getPlayers()) {
+                                if(!firstPlayers.contains(player.getName()) && !secondPlayers.contains(player.getName())) {
+                                    Location tplocation = TeleportConfig.get().getLocation("spectators." + location);
+                                    player.teleport(tplocation);
+                                }
+                            }
+                            for(String player : firstPlayers){
+                                Location tplocation = TeleportConfig.get().getLocation("teams." + PlayerConfig.get().getString("players." + player + ".team") + "." + location);
+                                if(Bukkit.getPlayer(player) != null){
+                                    Player p = Bukkit.getPlayer(player);
+                                    p.teleport(tplocation);
+                                }
+                            }
+                            for(String player : secondPlayers){
+                                Location tplocation = TeleportConfig.get().getLocation("teams." + PlayerConfig.get().getString("players." + player + ".team") + "." + location);
+                                if(Bukkit.getPlayer(player) != null){
+                                    Player p = Bukkit.getPlayer(player);
+                                    p.teleport(tplocation);
+                                }
+                            }
+                            runningTimers.remove("teleporttimerteam");
+                            cancel();
+                            break;
+                        case 5, 4, 3:
+                            timeDeduced = timeLeft - 2;
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("", "§6Teleporting in §c" + timeDeduced + "...", 0, 20, 20);
+                            }
+                            break;
+                        case 2:
+                            for (Player player : getPlayers()) {
+                                player.sendTitle("\uE023", "", 20, 40, 20);
+                            }
+                            break;
                     }
                 }
             }
@@ -808,6 +1318,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         fillVotingSpace(3);
         plugin.shopAllowed = false;
         clearInventories();
+        if(currentRound == 1){
+            setPreviousPlacements();
+            resetModeFullPoints();
+        }
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 61;
             @Override
@@ -818,8 +1332,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     bossBarBgTest();
                     switch (timeLeft) {
                         case 60:
-                            teamTeleport("slimegolf", 5);
-                            teleportSpectators(TeleportConfig.get().getLocation("spectators.slimegolf"), 5);
+                            if(currentRound == 1) {
+                                teamTeleport("slimegolf", 5);
+                                teleportSpectators(TeleportConfig.get().getLocation("spectators.slimegolf"), 5);
+                            } else {
+                                teamTeleport("slimegolf2", 5);
+                                teleportSpectators(TeleportConfig.get().getLocation("spectators.slimegolf2"), 5);
+                            }
                             resetModePoints();
                             resetSlimeGolf();
                             resetSlimeCompletions();
@@ -831,50 +1350,239 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 throw new RuntimeException(e);
                             }
                             currentMode = "Slime Golf";
+                            addToGameOrder(currentMode);
                             for (Player player : getPlayers()) {
-                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "usc setScoreboard " + player.getName() + " SlimeGolf");
                                 PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
                                 player.addPotionEffect(PotionEffect);
                                 player.setGameMode(GameMode.SURVIVAL);
                             }
-                            if(currentRound == 2){
+                            if(currentRound > 1){
                                 timeLeft = 26;
                             }
                             break;
 
                         case 50:
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                            for (Player player : getPlayers()) {
+                            playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 messagePlayer(player, """
                                         §8
                                         §8
-                                        §8[§e§l?§8] §eWelcome to §a§lSlime Golf§e! The aim of the game is to hit your slimey ball into the hole at the end of the course as quickly as possible!
+                                        §r⏳ §eWelcome to §a§lSlime Golf§e! The aim of the game is to hit your slimey ball into the hole at the end of the course as quickly as possible!
                                         §8
                                         """);
                             }
                             break;
                         case 30:
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                            for (Player player : getPlayers()) {
+                            playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 messagePlayer(player, """
                                         §8
                                         §8
-                                        §8[§e§l?§8] §eUse your §aknockback stick §eand work as a team, jump ahead and plan out your strategy, player-sized shortcuts will help you get ahead of the slime for strategic putting strategies!
+                                        §r⏳ §eUse your §aknockback stick §eand work as a team, jump ahead and plan out your strategy, player-sized shortcuts will help you get ahead of the slime for strategic putting strategies!
                                         §8
                                         """);
                             }
                             break;
                         case 25:
                             if(currentRound == 2) {
-                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                                for (Player player : getPlayers()) {
+                                playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     messagePlayer(player, """
                                             §8
                                             §8
-                                            §8[§e§l?§8] §a§lSlime Golf§e! This is the §b§lMODIFIER ROUND§e, so watch out because anything can happen! Get your slime in the hole as fast as you can...
+                                            §r⏳ §a§lSlime Golf §c§lRound 2§e! Time for a change of scenery...
                                             §8
                                             """);
                                 }
+                            }
+                            if(currentRound == 3) {
+                                playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    messagePlayer(player, """
+                                            §8
+                                            §8
+                                            §r⏳ §a§lSlime Golf§e! This is the §b§lMODIFIER ROUND§e, so watch out because anything can happen! Get your slime in the hole as fast as you can...
+                                            §8
+                                            """);
+                                }
+                            }
+                            break;
+                        case 10:
+                            if(currentRound == 1) {
+                                teamTeleport("slimegolf", 0);
+                            } else {
+                                teamTeleport("slimegolf2", 0);
+                            }
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
+                            ItemStack knockbackStick = new ItemStack(Material.STICK);
+                            knockbackStick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 3);
+
+                            ItemStack fishingRod = new ItemStack(Material.FISHING_ROD);
+                            fishingRod.addUnsafeEnchantment(Enchantment.UNBREAKING, 3);
+                            for (Player player : getPlayers()) {
+                                player.getInventory().addItem(knockbackStick);
+                                player.getInventory().addItem(fishingRod);
+                            }
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                messagePlayer(p, """
+                                        §8
+                                        §8
+                                        §8[§c§l!§8] §7Game Starting in §c§l10 seconds...
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 5, 4, 3, 2, 1:
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*(6-timeLeft));
+                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
+                            }
+                            break;
+                        case 0:
+                            if(currentRound == 1) {
+                                for (int[] slimeCmdCoord : slimeCmdCoords) {
+                                    for (int i = 0; i <= 1540; i += 220) {
+                                        Bukkit.getWorld("build").getBlockAt(slimeCmdCoord[0], slimeCmdCoord[1], slimeCmdCoord[2] + i).setType(Material.REDSTONE_BLOCK);
+                                    }
+                                }
+                            } else {
+                                for (int[] slimeCmdCoord2 : slimeCmdCoords2) {
+                                    for (int i = 0; i <= 1092; i += 156) {
+                                        Bukkit.getWorld("build").getBlockAt(slimeCmdCoord2[0], slimeCmdCoord2[1], slimeCmdCoord2[2] + i).setType(Material.REDSTONE_BLOCK);
+                                    }
+                                }
+                            }
+                            if(currentRound == 1) {
+                                Location slimeCoords = new Location(Bukkit.getWorld("build"), 809, 59, 1369);
+                                for(int z = 1369; z <= 2909; z+=220){
+                                    slimeCoords.setZ(z);
+                                    Slime newSlime = (Slime) Bukkit.getWorld("build").spawnEntity(slimeCoords, EntityType.SLIME);
+                                    newSlime.addPotionEffect(new PotionEffect(
+                                            PotionEffectType.RESISTANCE,
+                                            Integer.MAX_VALUE,
+                                            255,
+                                            false,
+                                            false,
+                                            false
+                                    ));
+                                    newSlime.setSize(6);
+                                    newSlime.setRemoveWhenFarAway(true);
+                                    newSlime.setPersistent(true);
+                                    slimeGolfSlime.add(newSlime);
+                                }
+                            } else {
+                                Location slimeCoords = new Location(Bukkit.getWorld("build"), 847, 77, 3180);
+                                for(int z = 3180; z <= 4272; z+=156){
+                                    slimeCoords.setZ(z);
+                                    Slime newSlime = (Slime) Bukkit.getWorld("build").spawnEntity(slimeCoords, EntityType.SLIME);
+                                    newSlime.addPotionEffect(new PotionEffect(
+                                            PotionEffectType.RESISTANCE,
+                                            Integer.MAX_VALUE,
+                                            255,
+                                            false,
+                                            false,
+                                            false
+                                    ));
+                                    newSlime.setSize(6);
+                                    newSlime.setRemoveWhenFarAway(true);
+                                    newSlime.setPersistent(true);
+                                    slimeGolfSlime.add(newSlime);
+                                }
+                            }
+
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 2);
+                            playMusicAll(Sound.MUSIC_DISC_CAT);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                PotionEffect PotionEffect = new PotionEffect(PotionEffectType.RESISTANCE, 12000, 1, false, false);
+                                player.addPotionEffect(PotionEffect);
+                                player.sendTitle("§a§l▶ GO! ◀", "", 0, 40, 0);
+                            }
+                            startTimer(300, "slimegolftimer");
+                            startStopwatch(300, "slimegolf");
+                            pvpEnabled = true;
+                            doubleJumpEnabled = true;
+                            runningTimers.remove("slimegolfstart");
+                            cancel();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("slimegolfstart", new AbstractMap.SimpleEntry<>(task, 61));
+    }
+
+
+    public void startSlimeGolfFinale(){
+        setPreviousPlacements();
+        List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
+        String firstTeam = leaderteams.getFirst();
+        String secondTeam = leaderteams.get(1);
+        List<String> firstPlayers = TeamsConfig.get().getStringList("teams." + firstTeam + ".players");
+        List<String> secondPlayers = TeamsConfig.get().getStringList("teams." + secondTeam + ".players");
+        plugin.shopAllowed = false;
+        clearInventories();
+        if(currentRound == 1){
+            resetModeFullPoints();
+        }
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 41;
+            @Override
+            public void run() {
+                if(!pausedTimers.contains("slimegolfstart")) {
+                    timeLeft--;
+                    runningTimers.get("slimegolfstart").setValue(timeLeft);
+                    bossBarBgTest();
+                    switch (timeLeft) {
+                        case 40:
+                            currentMode = "Slime Golf";
+                            finaleTeamTeleport("slimegolffinale", 5);
+                            teleportSpectators(TeleportConfig.get().getLocation("spectators.slimegolffinale"), 5);
+                            resetModePoints();
+                            resetSlimeGolf();
+                            resetSlimeCompletions();
+                            break;
+                        case 35:
+                            try {
+                                glowTeams();
+                            } catch (ReflectiveOperationException e) {
+                                throw new RuntimeException(e);
+                            }
+
+                            for (Player player : getPlayers()) {
+                                if(firstPlayers.contains(player.getName()) || secondPlayers.contains(player.getName())) {
+                                    PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
+                                    player.addPotionEffect(PotionEffect);
+                                    player.setGameMode(GameMode.SURVIVAL);
+                                } else {
+                                    player.setGameMode(GameMode.SPECTATOR);
+                                }
+                            }
+                            break;
+
+                        case 30:
+                            playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §r⏳ §eSlime Golf Finale! 1 round only.
+                                        §8
+                                        """);
+                            }
+                            break;
+                        case 20:
+                            playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §r⏳ §eFirst team to §breach the finish §ewins! Checkpoint times do not count, be as fast as possible!
+                                        §8
+                                        """);
                             }
                             break;
                         case 10:
@@ -887,7 +1595,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             for (Player player : getPlayers()) {
                                 player.getInventory().addItem(knockbackStick);
                                 player.getInventory().addItem(fishingRod);
-                                messagePlayer(player, """
+                            }
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                messagePlayer(p, """
                                         §8
                                         §8
                                         §8[§c§l!§8] §7Game Starting in §c§l10 seconds...
@@ -922,7 +1632,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                         false
                                 ));
                                 newSlime.setSize(6);
-                                newSlime.setRemoveWhenFarAway(false);
+                                newSlime.setRemoveWhenFarAway(true);
                                 newSlime.setPersistent(true);
                                 slimeGolfSlime.add(newSlime);
                             }
@@ -935,7 +1645,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 player.sendTitle("§a§l▶ GO! ◀", "", 0, 40, 0);
                             }
                             startTimer(300, "slimegolftimer");
-                            startStopwatch(300, "slimegolf");
+                            startStopwatch(300, "finale");
                             pvpEnabled = true;
                             doubleJumpEnabled = true;
                             runningTimers.remove("slimegolfstart");
@@ -949,7 +1659,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
         }.runTaskTimer(this, 0L, 20L);
 
-        runningTimers.put("slimegolfstart", new AbstractMap.SimpleEntry<>(task, 61));
+        runningTimers.put("slimegolfstart", new AbstractMap.SimpleEntry<>(task, 41));
     }
 
     public void resetSlimeGolf() {
@@ -968,6 +1678,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         fillVotingSpace(4);
         plugin.shopAllowed = false;
         clearInventories();
+        if(currentRound == 1){
+            setPreviousPlacements();
+            resetModeFullPoints();
+        }
         World world = Bukkit.getWorld("build");
         Block block;
         for(int x = 137; x >= -27; x--){
@@ -1014,31 +1728,34 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                     throw new RuntimeException(e);
                                 }
                                 currentMode = "Colour Dash";
+                                addToGameOrder(currentMode);
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "usc setScoreboard " + p.getName() + " ColourDash");
+                                }
                                 for (Player player : getPlayers()) {
-                                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "usc setScoreboard " + player.getName() + " ColourDash");
                                     PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
                                     player.addPotionEffect(PotionEffect);
                                     player.setGameMode(GameMode.SURVIVAL);
                                 }
                                 break;
                             case 50:
-                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
+                                playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
                                 if(plugin.currentRound == 1) {
-                                    for (Player player : getPlayers()) {
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
                                         messagePlayer(player, """
                                                 §8
                                                 §8
-                                                §8[§e§l?§8] §eWelcome to §a§lColour Dash§e! This is a race to the finish, the map is bigger, and there's multiple routes for your team to take so make the right choice!
+                                                §r⏳ §eWelcome to §a§lColour Dash§e! This is a race to the finish, the map is bigger, and there's multiple routes for your team to take so make the right choice!
                                                 §8
                                                 """);
                                     }
                                 }
                                 if(plugin.currentRound == 2){
-                                    for (Player player : getPlayers()) {
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
                                         messagePlayer(player, """
                                             §8
                                             §8
-                                            §8[§e§l?§8] §eWelcome to §a§lColour Dash §c§lʀᴏᴜɴᴅ ᴛᴡᴏ§e! Now you know the course.. or do you? This time we're going backwards on a different route! Good luck!
+                                            §r⏳ §eWelcome to §a§lColour Dash §c§lʀᴏᴜɴᴅ ᴛᴡᴏ§e! Now you know the course.. or do you? This time we're going backwards on a different route! Good luck!
                                             §8
                                             """);
                                     }
@@ -1046,19 +1763,19 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 }
                                 break;
                             case 30:
-                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                                for (Player player : getPlayers()) {
+                                playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     messagePlayer(player, """
                                             §8
                                             §8
-                                            §8[§e§l?§8] §eIn this mode speed is the most important factor! The faster you reach each checkpoint, the more points you earn, so get dashing!
+                                            §r⏳ §eIn this mode speed is the most important factor! The faster you reach each checkpoint, the more points you earn, so get dashing!
                                             §8
                                             """);
                                 }
                                 break;
                             case 10:
                                 playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                                for (Player player : getPlayers()) {
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     messagePlayer(player, """
                                             §8
                                             §8
@@ -1069,7 +1786,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 break;
                             case 5, 4, 3, 2, 1:
                                 playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F * (6 - timeLeft));
-                                for (Player player : getPlayers()) {
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                                 }
                                 break;
@@ -1120,10 +1837,14 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void startCraftalot(){
         fillVotingSpace(2);
+        setPreviousPlacements();
         plugin.shopAllowed = false;
         clearInventories();
+        resetModeFullPoints();
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 61;
+            Random r = new Random();
+            String itemToCraft;
             @Override
             public void run() {
                 if(runningTimers.containsKey("craftalotstart")) {
@@ -1131,7 +1852,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         timeLeft--;
                         runningTimers.get("craftalotstart").setValue(timeLeft);
                         bossBarBgTest();
-                        switch (timeLeft) {
+                        switch (timeLeft){
                             case 60:
                                 for(int x = 161; x <= 165; x++){
                                     for(int y = 141; y <= 146; y++){
@@ -1150,8 +1871,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                     throw new RuntimeException(e);
                                 }
                                 currentMode = "Craftalot";
+                                addToGameOrder(currentMode);
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "usc setScoreboard " + p.getName() + " Craftalot");
+                                }
                                 for (Player player : getPlayers()) {
-                                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "usc setScoreboard " + player.getName() + " Craftalot");
                                     PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
                                     player.addPotionEffect(PotionEffect);
                                     player.setGameMode(GameMode.SURVIVAL);
@@ -1159,30 +1883,33 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 break;
 
                             case 50:
-                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                                for (Player player : getPlayers()) {
+                                playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     messagePlayer(player, """
                                             §8
                                             §8
-                                            §8[§e§l?§8] §eWelcome to §a§lCraftalot§e! We hope you've memorised your crafting recipes! Because this mode is all about retrieving the right materials and crafting what Edguard asks to earn points!
+                                            §r⏳ §eWelcome to §a§lCraftalot§e! We hope you've memorised your crafting recipes! Because this mode is all about retrieving the right materials and crafting what Edguard asks to earn points!
                                             §8
                                             """);
                                 }
                                 break;
                             case 30:
-                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                                for (Player player : getPlayers()) {
+                                playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     messagePlayer(player, """
                                             §8
                                             §8
-                                            §8[§e§l?§8] §eRun to Edguard and right-click him to get your orders, then retrieve the needed materials through the pipes marked on the map, and craft as many items as possible before the time runs out!
+                                            §r⏳ §eRun to Edguard and right-click him to get your orders, then retrieve the needed materials through the pipes marked on the map, and craft as many items as possible before the time runs out!
                                             §8
                                             """);
                                 }
                                 break;
+                            case 17:
+                                setupCraftlist();
+                                break;
                             case 10:
                                 playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                                for (Player player : getPlayers()) {
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     messagePlayer(player, """
                                             §8
                                             §8
@@ -1193,8 +1920,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 break;
                             case 5, 4, 3, 2, 1:
                                 playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F * (6 - timeLeft));
-                                for (Player player : getPlayers()) {
-                                    player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.sendTitle("§c§l▶ " + timeLeft+ " ◀", "", 0, 20, 20);
                                 }
                                 break;
                             case 0:
@@ -1235,18 +1962,85 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         runningTimers.put("craftalotstart", new AbstractMap.SimpleEntry<>(task, 61));
     }
 
+
+    public void setupCraftlist(){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 311;
+            Random r = new Random();
+            String itemToCraft;
+
+            @Override
+            public void run() {
+                if (runningTimers.containsKey("craftlist")) {
+                    if (!pausedTimers.contains("craftlist")) {
+                        timeLeft--;
+                        runningTimers.get("craftlist").setValue(timeLeft);
+                        if (timeLeft >= 240 && timeLeft <= 260) {
+                            do {
+                                itemToCraft = CraftalotConfig.get().getStringList("craftlist.onetunnel").get(r.nextInt(CraftalotConfig.get().getStringList("craftlist.onetunnel").size()));
+                            } while (craftList.contains(itemToCraft));
+                            craftList.add(itemToCraft);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                player.sendTitle("§f§lʟᴏᴀᴅɪɴɢ ᴄʀᴀғᴛs", "§b§l" + itemToCraft.replaceAll("_", " "), 0, 40, 0);
+                            }
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 1F);
+                        }
+                        switch (timeLeft) {
+                            case 310:
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.sendTitle("§f§lʟᴏᴀᴅɪɴɢ ᴄʀᴀғᴛs", "§7§k0000000", 0, 40, 0);
+                                }
+                                playSoundAll(Sound.ENTITY_CREEPER_PRIMED, 1F);
+                                break;
+                            case 289, 279, 269, 266, 263:
+                                do {
+                                    itemToCraft = CraftalotConfig.get().getStringList("craftlist.twotunnel").get(r.nextInt(CraftalotConfig.get().getStringList("craftlist.twotunnel").size()));
+                                } while (craftList.contains(itemToCraft));
+                                craftList.add(itemToCraft);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.sendTitle("§f§lʟᴏᴀᴅɪɴɢ ᴄʀᴀғᴛs", "§b§l" + itemToCraft.replaceAll("_", " "), 0, 20, 0);
+                                }
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 1F);
+                                break;
+                            case 239:
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.sendTitle("§f§lᴄʀᴀғᴛʟɪsᴛ", "§a§lᴄᴏᴍᴘʟᴇᴛᴇ", 0, 60, 20);
+                                }
+                                playSoundAll(Sound.ENTITY_GENERIC_EXPLODE, 1F);
+                            case 219:
+                                playSoundAll(Sound.ENTITY_VILLAGER_YES, 1F);
+                                break;
+                        }
+                        if(timeLeft == 219){
+                            plugin.runningTimers.remove("craftlist");
+                            cancel();
+                        }
+                    }
+                } else {
+                    cancel();
+                }
+            }
+        }.runTaskTimer(this, 0L, 1L);
+
+        runningTimers.put("craftlist", new AbstractMap.SimpleEntry<>(task, 290));
+    }
+
     public void resetCraftalot(){
         itemToCraft.clear();
+        craftLists.clear();
         for(Player player : getPlayers()) {
             itemToCraft.put(player.getName(), "");
+            craftLists.put(player.getName(), new ArrayList<>());
         }
         craftTop.clear();
     }
 
     public void startBridgeBuilders(){
         fillVotingSpace(0);
+        setPreviousPlacements();
         plugin.shopAllowed = false;
         clearInventories();
+        resetModeFullPoints();
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 61;
             @Override
@@ -1270,8 +2064,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                     throw new RuntimeException(e);
                                 }
                                 currentMode = "Bridge Builders";
+                                addToGameOrder(currentMode);
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "usc setScoreboard " + p.getName() + " BridgeBuilders");
+                                }
                                 for (Player player : getPlayers()) {
-                                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "usc setScoreboard " + player.getName() + " BridgeBuilders");
                                     PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
                                     player.addPotionEffect(PotionEffect);
                                     player.setGameMode(GameMode.ADVENTURE);
@@ -1286,12 +2083,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 }
                                 break;
                             case 50:
-                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                                for (Player player : getPlayers()) {
+                                playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     messagePlayer(player, """
                                             §8
                                             §8
-                                            §8[§e§l?§8] §eWelcome to §a§lBridge Builders§e! Building and speed are your ally! In this mode you build the course which you will race across! A mix of building and parkour skills!
+                                            §r⏳ §eWelcome to §a§lBridge Builders§e! Building and speed are your ally! In this mode you build the course which you will race across! A mix of building and parkour skills!
                                             §8
                                             """);
                                 }
@@ -1311,19 +2108,19 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 }
                                 break;
                             case 30:
-                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                                for (Player player : getPlayers()) {
+                                playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     messagePlayer(player, """
                                             §8
                                             §8
-                                            §8[§e§l?§8] §eEach segment has a different set of jumps to build, replicate the build and it will construct itself on the bridge for you to complete. First to the finish wins!
+                                            §r⏳ §eEach segment has a different set of jumps to build, replicate the build and it will construct itself on the bridge for you to complete. First to the finish wins!
                                             §8
                                             """);
                                 }
                                 break;
                             case 10:
                                 playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                                for (Player player : getPlayers()) {
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     messagePlayer(player, """
                                             §8
                                             §8
@@ -1334,7 +2131,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 break;
                             case 5, 4, 3, 2, 1:
                                 playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F * (6 - timeLeft));
-                                for (Player player : getPlayers()) {
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                                 }
                                 break;
@@ -1359,7 +2156,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 for(String team : teams) {
                                     plugin.buildTimeStamps.put(team, 0);
                                 }
-                                startTimer(360, "bridgebuilders");
+                                startTimer(390, "bridgebuilders");
                                 runningTimers.remove("bridgebuildersstart");
                                 cancel();
                                 break;
@@ -1378,10 +2175,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     }
 
     public void resetBridgeBuilders(){
+        bridgeTally.clear();
         bridgeCheckpoints.clear();
         bridgeJumpCheckpoints.clear();
         bridgeJumpRegister.clear();
         bridgeCourseTimes.clear();
+        teamCheckpoints.clear();
 
         for(int i = 1; i <= 7; i++){
             bridgeCheckpoints.put(i, 1);
@@ -1396,6 +2195,386 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             bridgeJumpRegister.put(i, list);
         }
 
+        for (String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)) {
+            teamCheckpoints.put(team, 0);
+            bridgeTally.put(team, 0);
+        }
+
+    }
+
+    public void resetCrumbleClash(){
+        // Reset Stuff
+    }
+
+    public void startCrumbleClash(){
+        fillVotingSpace(1);
+        setPreviousPlacements();
+        plugin.shopAllowed = false;
+        clearInventories();
+        if(currentRound == 1){
+            resetModeFullPoints();
+        }
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 61;
+            @Override
+            public void run() {
+                if(runningTimers.containsKey("crumbleclashstart")) {
+                    if (!pausedTimers.contains("crumbleclashstart")) {
+                        timeLeft--;
+                        runningTimers.get("crumbleclashstart").setValue(timeLeft);
+                        bossBarBgTest();
+                        switch (timeLeft) {
+                            case 60:
+                                for (Player p : getPlayers()) {
+                                    lastHitPlayer.put(p.getName(), "");
+                                }
+                                teamTeleport("crumbleclash", 5);
+                                teleportSpectators(TeleportConfig.get().getLocation("spectators.crumbleclash"), 5);
+                                resetCrumbleClash();
+                                resetModePoints();
+                                break;
+                            case 55:
+                                currentMode = "Crumble Clash";
+                                addToGameOrder(currentMode);
+                                try {
+                                    glowTeams();
+                                } catch (ReflectiveOperationException e) {
+                                    throw new RuntimeException(e);
+                                }
+                                for (Player player : getPlayers()) {
+                                    PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 120, 1, false, false);
+                                    player.addPotionEffect(PotionEffect);
+                                    player.setGameMode(GameMode.SURVIVAL);
+                                }
+                                break;
+
+                            case 50:
+                                playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                                if(currentRound == 2 || currentRound == 3) {
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
+                                        messagePlayer(player, """
+                                                §8
+                                                §8
+                                                §r⏳ §eWelcome to §b§lCrumble Clash §c§lROUND """ + currentRound + """
+                                                §e! Now you understand it, now §ulock in.
+                                                §8
+                                                """);
+                                    }
+                                } else {
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
+                                        messagePlayer(player, """
+                                            §8
+                                            §8
+                                            §r⏳ §eWelcome to §b§lCrumble Clash§e! You and your team will have to watch your step, as you try not to fall from the platforms§e.
+                                            §8
+                                            """);
+                                    }
+                                }
+                                break;
+                            case 40:
+                                playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    messagePlayer(player, """
+                                            §8
+                                            §8
+                                            §r⏳ §e§lAt random intervals, the entire game will switch up! At one point you could be playing spleef, and the next thing you know blocks will disappear below you as you run, and more!
+                                            §8
+                                            """);
+                                }
+                                break;
+                            case 30:
+                                playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    messagePlayer(player, """
+                                            §8
+                                            §8
+                                            §r⏳ §eYour individual placement will determine the game, its last team standing wins! With points being awarded depending on your entire teams placement.
+                                            §8
+                                            """);
+                                }
+                                break;
+                            case 10:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    messagePlayer(p, """
+                                            §8
+                                            §8
+                                            §8[§c§l!§8] §7Game Starting in §c§l10 seconds...
+                                            §8
+                                            """);
+                                }
+                                break;
+                            case 5, 4, 3, 2, 1:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F * (6 - timeLeft));
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
+                                }
+                                break;
+                            case 0:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 2);
+                                playMusicAll(Sound.MUSIC_DISC_STAL);
+                                for (Player player : getPlayers()) {
+                                    PotionEffect PotionEffect = new PotionEffect(PotionEffectType.RESISTANCE, 12000, 1, false, false);
+                                    player.addPotionEffect(PotionEffect);
+                                    player.sendTitle("§a§l▶ CLASH! ◀", "", 0, 40, 0);
+                                }
+                                crumbleClashModeIterator();
+                                runningTimers.remove("crumbleclashstart");
+                                cancel();
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                } else {
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("crumbleclashstart", new AbstractMap.SimpleEntry<>(task, 61));
+    }
+
+    public void crumbleClashModeIterator(){
+        List<Integer> gameOrder = Arrays.asList(0,1,2);
+        Collections.shuffle(gameOrder);
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 241;
+            @Override
+            public void run() {
+                if(runningTimers.containsKey("crumbleclash")) {
+                    if (!pausedTimers.contains("crumbleclash")) {
+                        timeLeft--;
+                        runningTimers.get("crumbleclash").setValue(timeLeft);
+                        bossBarBgTest();
+                        switch (timeLeft) {
+                            case 240:
+                                switch(gameOrder.getFirst()){
+                                    case 0:
+                                        ccEnableSpleef();
+                                        break;
+                                    case 1:
+                                        ccEnableTNTRun();
+                                        break;
+                                    case 2:
+                                        ccExplosiveBows();
+                                        break;
+                                }
+                                break;
+                            case 160:
+                                switch(gameOrder.get(1)){
+                                    case 0:
+                                        ccEnableSpleef();
+                                        break;
+                                    case 1:
+                                        ccEnableTNTRun();
+                                        break;
+                                    case 2:
+                                        ccExplosiveBows();
+                                        break;
+                                }
+                                break;
+                            case 80:
+                                switch(gameOrder.get(2)){
+                                    case 0:
+                                        ccEnableSpleef();
+                                        break;
+                                    case 1:
+                                        ccEnableTNTRun();
+                                        break;
+                                    case 2:
+                                        ccExplosiveBows();
+                                        break;
+                                }
+                                break;
+                            case 0:
+                                runningTimers.remove("crumbleclash");
+                                cancel();
+                                break;
+                            default:
+                                break;
+
+                        }
+                    }
+                } else {
+                    messageConsole("Timer removed by external factor.");
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("crumbleclash", new AbstractMap.SimpleEntry<>(task, 141));
+    }
+
+    public void ccEnableSpleef(){
+        clearInventories();
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 11;
+            @Override
+            public void run() {
+                if(runningTimers.containsKey("ccnextmode")) {
+                    if (!pausedTimers.contains("ccnextmode")) {
+                        timeLeft--;
+                        runningTimers.get("ccnextmode").setValue(timeLeft);
+                        switch (timeLeft) {
+                            case 10:
+                            playSoundAll(Sound.ENTITY_TNT_PRIMED, 1F);
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle("§f§lᴍᴏᴅᴇ ᴄʜᴀɴɢᴇ", "§f§k000000", 0, 60, 20);
+                            }
+                            case 7:
+                                playSoundAll(Sound.ITEM_BUCKET_FILL_POWDER_SNOW, 1F);
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    p.sendTitle("§f§lᴍᴏᴅᴇ ᴄʜᴀɴɢᴇ", "§f§lSpleef", 0, 60, 20);
+                                }
+                            case 3,2,1:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F * (4 - timeLeft));
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
+                                }
+                            case 0:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F * 4);
+                                ItemStack shovel = new ItemStack(Material.IRON_SHOVEL);
+                                ItemMeta meta = shovel.getItemMeta();
+                                meta.setUnbreakable(true);
+                                meta.setDisplayName("§f§lShovellin' Shovel");
+                                shovel.setItemMeta(meta);
+                                for(Player p : getPlayers()){
+                                    p.getInventory().addItem(shovel);
+                                    messagePlayer(p, "[+] You have acquired: §f§lShovellin' Shovel");
+                                }
+                                blockBreak = true;
+                                runningTimers.remove("ccnextmode");
+                                cancel();
+                                break;
+                            default:
+                                break;
+
+                        }
+                    }
+                } else {
+                    messageConsole("Timer removed by external factor.");
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("ccnextmode", new AbstractMap.SimpleEntry<>(task, 11));
+        // Spleef Code
+    }
+
+    public void ccEnableTNTRun(){
+        clearInventories();
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 11;
+            @Override
+            public void run() {
+                if(runningTimers.containsKey("ccnextmode")) {
+                    if (!pausedTimers.contains("ccnextmode")) {
+                        timeLeft--;
+                        runningTimers.get("ccnextmode").setValue(timeLeft);
+                        switch (timeLeft) {
+                            case 10:
+                                playSoundAll(Sound.ENTITY_TNT_PRIMED, 1F);
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    p.sendTitle("§f§lᴍᴏᴅᴇ ᴄʜᴀɴɢᴇ", "§f§k000000", 0, 60, 20);
+                                }
+                            case 7:
+                                playSoundAll(Sound.BLOCK_SOUL_SAND_BREAK, 1F);
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    p.sendTitle("§f§lᴍᴏᴅᴇ ᴄʜᴀɴɢᴇ", "§c§lDisappearing Block Run", 0, 60, 20);
+                                }
+                            case 3,2,1:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F * (4 - timeLeft));
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
+                                }
+                            case 0:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F * 4);
+                                for(Player p : getPlayers()){
+                                    messagePlayer(p, "[+] You have acquired: §c§lFloor Breaking Run");
+                                }
+                                tntRun = true;
+                                runningTimers.remove("ccnextmode");
+                                cancel();
+                                break;
+                            default:
+                                break;
+
+                        }
+                    }
+                } else {
+                    messageConsole("Timer removed by external factor.");
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("ccnextmode", new AbstractMap.SimpleEntry<>(task, 11));
+        // TNT Run Code
+    }
+
+    public void ccExplosiveBows(){
+        clearInventories();
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 11;
+            @Override
+            public void run() {
+                if(runningTimers.containsKey("ccnextmode")) {
+                    if (!pausedTimers.contains("ccnextmode")) {
+                        timeLeft--;
+                        runningTimers.get("ccnextmode").setValue(timeLeft);
+                        switch (timeLeft) {
+                            case 10:
+                                playSoundAll(Sound.ENTITY_TNT_PRIMED, 1F);
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    p.sendTitle("§f§lᴍᴏᴅᴇ ᴄʜᴀɴɢᴇ", "§f§k000000", 0, 60, 20);
+                                }
+                            case 7:
+                                playSoundAll(Sound.ENTITY_GENERIC_EXPLODE, 1F);
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    p.sendTitle("§f§lᴍᴏᴅᴇ ᴄʜᴀɴɢᴇ", "§4§lBoom Bows", 0, 60, 20);
+                                }
+                            case 3,2,1:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F * (4 - timeLeft));
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
+                                }
+                            case 0:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F * 4);
+                                ItemStack boombow = new ItemStack(Material.BOW);
+                                boombow.addEnchantment(Enchantment.INFINITY, 1);
+                                ItemMeta meta = boombow.getItemMeta();
+                                meta.setUnbreakable(true);
+                                meta.setDisplayName("§4§lBoom Bow");
+                                boombow.setItemMeta(meta);
+                                for(Player p : getPlayers()){
+                                    p.getInventory().addItem(boombow);
+                                    messagePlayer(p, "[+] You have acquired: §4§lBoom Bow");
+                                }
+                                tntBow = true;
+                                runningTimers.remove("ccnextmode");
+                                cancel();
+                                break;
+                            default:
+                                break;
+
+                        }
+                    }
+                } else {
+                    messageConsole("Timer removed by external factor.");
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("ccnextmode", new AbstractMap.SimpleEntry<>(task, 11));
+        // Explosive Bows Code
     }
 
 
@@ -1403,6 +2582,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         fillVotingSpace(1);
         plugin.shopAllowed = false;
         clearInventories();
+        if(currentRound == 1){
+            setPreviousPlacements();
+            resetModeFullPoints();
+        }
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 61;
             @Override
@@ -1424,6 +2607,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 break;
                             case 55:
                                 currentMode = "Zoomo Go";
+                                addToGameOrder(currentMode);
                                 try {
                                     glowTeams();
                                 } catch (ReflectiveOperationException e) {
@@ -1445,22 +2629,34 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 break;
 
                             case 50:
-                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
+                                playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
                                 if(currentRound == 2){
-                                    for (Player player : getPlayers()) {
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
                                         messagePlayer(player, """
                                             §8
                                             §8
-                                            §8[§e§l?§8] §eWelcome to §a§lZoomo Go §c§lROUND 2§e! Now you understand it, now §ulock in.
+                                            §r⏳ §eWelcome to §a§lZoomo Go §c§lROUND """ + currentRound + """
+                                            §e! Now you understand it, now §ulock in.
                                             §8
                                             """);
                                     }
-                                } else {
-                                    for (Player player : getPlayers()) {
+                                } else if (currentRound == 3){
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
                                         messagePlayer(player, """
                                             §8
                                             §8
-                                            §8[§e§l?§8] §eWelcome to §a§lZoomo Go§e! Keep moving fast and stay on the platforms! This game takes sumo to the next level with disappearing platforms and fast-movement gameplay! Watch out for §cRed Platforms§e.
+                                            §r⏳ §eWelcome to §a§lZoomo Go §c§lROUND """ + currentRound + """
+                                            §e! This time try not to slip off.. as §b§lice platforms §ehave been enabled.
+                                            §8
+                                            """);
+                                        player.sendTitle("§b§lɪᴄᴇ ᴘʟᴀᴛғᴏʀᴍs", "§8§oWatch your step!", 0, 60, 20);
+                                    }
+                                } else {
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
+                                        messagePlayer(player, """
+                                            §8
+                                            §8
+                                            §r⏳ §eWelcome to §a§lZoomo Go§e! Keep moving fast and stay on the platforms! This game takes sumo to the next level with disappearing platforms and fast-movement gameplay! Watch out for §cRed Platforms§e.
                                             §8
                                             """);
                                     }
@@ -1468,24 +2664,31 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 break;
                             case 40:
                                 doubleJumpEnabled = true;
-                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                                for (Player player : getPlayers()) {
+                                playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     player.sendTitle("§c§lDouble Jump", "§7is now enabled.", 0, 20, 20);
                                     messagePlayer(player, """
                                             §8
                                             §8
-                                            §8[§e§l?§8] §c§lDouble Jump §ehas been §aenabled§e! Give it a go by double-tapping your space bar!
+                                            §r⏳ §c§lDouble Jump §ehas been §aenabled§e! Give it a go by double-tapping your space bar!
                                             §8
                                             """);
                                 }
+                                if(zoomoSpeed){
+                                    playSoundAll(Sound.BLOCK_BREWING_STAND_BREW, 2);
+                                    PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SPEED, 360, 2, false, false);
+                                    for (Player player : getPlayers()) {
+                                        player.addPotionEffect(PotionEffect);
+                                    }
+                                }
                                 break;
                             case 30:
-                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                                for (Player player : getPlayers()) {
+                                playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     messagePlayer(player, """
                                             §8
                                             §8
-                                            §8[§e§l?§8] §eThere is no finish line, simply stay alive and knock other players off the platforms with your §aKnockback Stick§e! §bDouble jump §eis your ally, double-tap space bar and you will be sent flying in the direction you are facing!
+                                            §r⏳ §eThere is no finish line, simply stay alive and knock other players off the platforms with your §aKnockback Stick§e! §bDouble jump §eis your ally, double-tap space bar and you will be sent flying in the direction you are facing!
                                             §8
                                             """);
                                 }
@@ -1496,7 +2699,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 knockbackStick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 3);
                                 for (Player player : getPlayers()) {
                                     player.getInventory().addItem(knockbackStick);
-                                    messagePlayer(player, """
+                                }
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    messagePlayer(p, """
                                             §8
                                             §8
                                             §8[§c§l!§8] §7Game Starting in §c§l10 seconds...
@@ -1506,7 +2711,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 break;
                             case 5, 4, 3, 2, 1:
                                 playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F * (6 - timeLeft));
-                                for (Player player : getPlayers()) {
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                                 }
                                 break;
@@ -1790,8 +2995,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 //    }
 
     public void summonIsland(int[] islandCoords){
-        Bukkit.getWorld("build").getBlockAt(islandCoords[0], 136, islandCoords[1]).setType(Material.REDSTONE_BLOCK);
-        Bukkit.getWorld("build").getBlockAt(islandCoords[0], 136, islandCoords[1]).setType(Material.STONE);
+        int y = 136;
+        if(currentRound == 3){
+            y = 137;
+        }
+        Bukkit.getWorld("build").getBlockAt(islandCoords[0], y, islandCoords[1]).setType(Material.REDSTONE_BLOCK);
+        Bukkit.getWorld("build").getBlockAt(islandCoords[0], y, islandCoords[1]).setType(Material.STONE);
     }
 
     public void destroyIsland(int[] islandCoords){
@@ -1827,14 +3036,20 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public void resetZoomoGo(){
         deadPlayers.clear();
         deadTeams.clear();
+        playerKillCount.clear();
+        for(Player player : getPlayers()){
+            playerKillCount.put(player.getName(), 0);
+        }
     }
 
 
 
     public void startGubGame(){
         fillVotingSpace(5);
+        setPreviousPlacements();
         plugin.shopAllowed = false;
         clearInventories();
+        resetModeFullPoints();
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 61;
             @Override
@@ -1860,8 +3075,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 throw new RuntimeException(e);
                             }
                             currentMode = "Gub Game";
+                            addToGameOrder(currentMode);
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "usc setScoreboard " + p.getName() + " GubGame");
+                            }
                             for (Player player : getPlayers()) {
-                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "usc setScoreboard " + player.getName() + " GubGame");
                                 PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
                                 player.addPotionEffect(PotionEffect);
                                 player.setGameMode(GameMode.ADVENTURE);
@@ -1869,23 +3087,23 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
 
                         case 50:
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                            for (Player player : getPlayers()) {
+                            playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 messagePlayer(player, """
                                         §8
                                         §8
-                                        §8[§e§l?§8] §eWelcome to §d§lGub Game§e! In this game it's all about kills, every player for themselves. Get 14 kills as quickly as possible before the time runs out.
+                                        §r⏳ §eWelcome to §d§lGub Game§e! In this game it's all about kills, every player for themselves. Get 14 kills as quickly as possible before the time runs out.
                                         §8
                                         """);
                             }
                             break;
                         case 30:
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                            for (Player player : getPlayers()) {
+                            playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 messagePlayer(player, """
                                         §8
                                         §8
-                                        §8[§e§l?§8] §eEach player starts out with highly powered weapons, but with each kill, you are given harder weapons to get kills with! Until you are left with your bare fists...
+                                        §r⏳ §eEach player starts out with highly powered weapons, but with each kill, you are given harder weapons to get kills with! Until you are left with your bare fists...
                                         §8
                                         """);
                             }
@@ -1898,7 +3116,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             firstKit.setItemMeta(meta);
                             for (Player player : getPlayers()) {
                                 player.getInventory().addItem(firstKit);
-                                messagePlayer(player, """
+                            }
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                messagePlayer(p, """
                                         §8
                                         §8
                                         §8[§c§l!§8] §7Game Starting in §c§l10 seconds...
@@ -1908,11 +3128,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
                         case 5, 4, 3, 2, 1:
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*(6-timeLeft));
-                            for (Player player : getPlayers()) {
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
                             break;
                         case 0:
+                            playMusicAll(Sound.MUSIC_DISC_11);
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 2);
                             pvpEnabled = true;
                             for (Player player : getPlayers()) {
@@ -1936,8 +3157,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public void resetGubGame() {
         gubGameKills.clear();
         gubKitKills.clear();
+        playerKillCount.clear();
         for(Player p : getPlayers()) {
             gubGameKills.put(p.getName(), 0);
+            playerKillCount.put(p.getName(), 0);
         }
         for(int i = 1; i <= 14; i++){
             gubKitKills.put(i, 0);
@@ -1946,8 +3169,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void startSurvivalGames(){
         fillVotingSpace(6);
+        setPreviousPlacements();
         plugin.shopAllowed = false;
         clearInventories();
+        if(currentRound == 1){
+            resetModeFullPoints();
+        }
         currentBorderRadius = 236;
         newBorderRadius = 236;
         BukkitTask task = new BukkitRunnable() {
@@ -1970,13 +3197,16 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
                         case 55:
                             currentMode = "Survival Games";
+                            addToGameOrder(currentMode);
                             try {
                                 glowTeams();
                             } catch (ReflectiveOperationException e) {
                                 throw new RuntimeException(e);
                             }
-                            for (Player player : getPlayers()) {
-                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "usc setScoreboard " + player.getName() + " SurvivalGames");
+                            for (Player p : Bukkit.getOnlinePlayers()) {
+                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "usc setScoreboard " + p.getName() + " SurvivalGames");
+                            }
+                            for(Player player : getPlayers()){
                                 PotionEffect PotionEffect = new PotionEffect(PotionEffectType.SLOW_FALLING, 90, 1, false, false);
                                 player.addPotionEffect(PotionEffect);
                                 player.setGameMode(GameMode.ADVENTURE);
@@ -1984,30 +3214,30 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
 
                         case 50:
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                            for (Player player : getPlayers()) {
+                            playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 messagePlayer(player, """
                                         §8
                                         §8
-                                        §8[§e§l?§8] §eWelcome to §a§lSurvival Games§e! Good old original game of last team standing. Stay alive, stay aware, stay together. Survive until the very end with your PVP skills.
+                                        §r⏳ §eWelcome to §a§lSurvival Games§e! Good old original game of last team standing. Stay alive, stay aware, stay together. Survive until the very end with your PVP skills.
                                         §8
                                         """);
                             }
                             break;
                         case 30:
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                            for (Player player : getPlayers()) {
+                            playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 messagePlayer(player, """
                                         §8
                                         §8
-                                        §8[§e§l?§8] §eDid you know the border shrinks? That's right! It shrinks, and shrinks, until the very last battle has been won. Chests refill around the map every 3 minutes so keep looting!
+                                        §r⏳ §eDid you know the border shrinks? That's right! It shrinks, and shrinks, until the very last battle has been won. Chests refill around the map every 3 minutes so keep looting!
                                         §8
                                         """);
                             }
                             break;
                         case 10:
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-                            for (Player player : getPlayers()) {
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 messagePlayer(player, """
                                         §8
                                         §8
@@ -2018,7 +3248,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             break;
                         case 5, 4, 3, 2, 1:
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*(6-timeLeft));
-                            for (Player player : getPlayers()) {
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 player.sendTitle("§c§l▶ " + timeLeft + " ◀", "", 0, 20, 20);
                             }
                             break;
@@ -2061,7 +3291,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 0:
-                            for (Player player : getPlayers()) {
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 messagePlayer(player, """
                                 §f
                                 §f
@@ -2088,6 +3318,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public void resetSurvivalGames(){
         deadPlayers.clear();
         deadTeams.clear();
+        playerKillCount.clear();
+        for(Player player : getPlayers()){
+            playerKillCount.put(player.getName(), 0);
+        }
     }
 
 
@@ -2133,7 +3367,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             int placement = 0;
             for (String key : sortMap(modeTeamPoints).keySet()) {
                 placement++;
-                messagePlayer(player, String.format("%-15s%15s", placement + ". " + getTeamDisplayName(key), "§e§l\uD83D\uDCB0" + sortMap(modeTeamPoints).get(key)));
+                messagePlayer(player, String.format("%-15s%15s", placement + ". " + getTeamDisplayName(key), "§e§l\uD83D\uDCB0" + sortMap(modeTeamPoints).get(key) + " §7(\uD83D\uDCB0" + Math.floor(sortMap(modeTeamPoints).get(key) / multiplier)) + " §7§ox" + String.format("%.2f", multiplier) + ")");
             }
             messagePlayer(player, "§f--------------------------");
         }
@@ -2191,7 +3425,6 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }
         int totalOutOfTwenty = round((double) leaderModeVotes.getFirst() /totalvotes*20);
         float percentageFirst = ((float) leaderModeVotes.getFirst() /totalvotes)*100;
-        currentMode = leaderMode.getFirst();
         playSoundAll(Sound.ENTITY_GENERIC_EXPLODE, 1.5F);
         BukkitTask task = new BukkitRunnable() {
             int percentElapsed = 0;
@@ -2216,6 +3449,46 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             }
 
         }.runTaskTimer(plugin, 0L, 3L);
+
+        String name = "changevotes";
+        BukkitTask task2 = new BukkitRunnable() {
+            int timeLeft = 86;
+            int indexAdd = 0;
+            int indexRemove = 0;
+            BlockData data = Bukkit.createBlockData(getKeyFromValue(woolModes, leaderMode.getFirst()));
+            @Override
+            public void run() {
+                if(plugin.runningTimers.containsKey(name)) {
+                    if (!plugin.pausedTimers.contains(name)) {
+                        timeLeft--;
+                        plugin.runningTimers.get(name).setValue(timeLeft);
+                        if(timeLeft <= 81){
+                            if(indexAdd <= 43){
+                                summonVotingPiece(indexAdd, data);
+                                indexAdd++;
+                            } else {
+                                plugin.runningTimers.remove(name);
+                                cancel();
+                            }
+                        }
+                        if(indexRemove <= 43){
+                            removeVotingPiece(indexRemove);
+                            indexRemove++;
+                        }
+
+                        if (timeLeft == 0) {
+                            plugin.runningTimers.remove(name);
+                            cancel();
+                        }
+                    }
+                } else {
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(plugin, 0L, 2L);
+
+        plugin.runningTimers.put(name, new AbstractMap.SimpleEntry<>(task2, 86));
         for(Player player : Bukkit.getOnlinePlayers()) {
             messagePlayer(player, " §f-  §e§lᴠᴏᴛɪɴɢ ʀᴇsᴜʟᴛs  §f-");
             int placement = 0;
@@ -2226,6 +3499,15 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             }
             messagePlayer(player, "§f--------------------");
         }
+    }
+
+    public <K, V> K getKeyFromValue(Map<K, V> map, V value) {
+        for (Map.Entry<K, V> entry : map.entrySet()) {
+            if (Objects.equals(entry.getValue(), value)) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 
     double roundToTwoDecimalPlaces(double number) {
@@ -2254,16 +3536,84 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }
     }
 
+    public void changeMultiplier(double multiplierValue){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 321;
+            double t;
+            String formatted;
+            double eased;
+            double progress;
+            @Override
+            public void run() {
+                if(runningTimers.containsKey("multiplierchange")) {
+                    if (!pausedTimers.contains("multiplierchange")) {
+                        timeLeft--;
+                        runningTimers.get("multiplierchange").setValue(timeLeft);
+                        if(timeLeft <= 280 && timeLeft > 140){
+                            t = (280 - timeLeft) / 140.0;
+
+                            eased = 1 - Math.pow(1 - t, 2);
+
+                            progress = multiplier + eased * (multiplierValue - multiplier);
+
+                            formatted = String.format("%.2f", progress);
+
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle("§f§lᴍᴜʟᴛɪᴘʟɪᴇʀ", "§e§l" + formatted + "x", 0, 20, 0);
+                            }
+                        }
+                        switch (timeLeft) {
+                            case 320:
+                                formatted = String.format("%.2f", multiplier);
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    p.sendTitle("§f§lᴍᴜʟᴛɪᴘʟɪᴇʀ", "§e§l" + formatted + "x", 0, 60, 0);
+                                }
+                                break;
+                            case 140:
+                                formatted = String.format("%.2f", multiplierValue);
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    p.sendTitle("§f§lᴍᴜʟᴛɪᴘʟɪᴇʀ", "§e§l" + formatted + "x", 0, 20, 0);
+                                }
+                                multiplier = multiplierValue;
+                                runningTimers.remove("multiplierchange");
+                                cancel();
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                } else {
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 1L);
+
+        runningTimers.put("multiplierchange", new AbstractMap.SimpleEntry<>(task, 320));
+    }
+
     public void startVoting(){
         BukkitTask task = new BukkitRunnable() {
-            int timeLeft = 91;
+            int timeLeft = 106;
             @Override
             public void run() {
                 if(runningTimers.containsKey("voting")) {
                     if (!pausedTimers.contains("voting")) {
                         timeLeft--;
+                        bossBarBgTest();
                         runningTimers.get("voting").setValue(timeLeft);
                         switch (timeLeft) {
+                            case 105:
+                                switch(GameOrderConfig.get().getStringList("order").size()){
+                                    case 0:
+                                        changeMultiplier(1.0);
+                                    case 2,4,6:
+                                        changeMultiplier(multiplier+0.5);
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                break;
                             case 90:
                                 currentMode = "Voting";
                                 playSoundAll(Sound.ITEM_GOAT_HORN_SOUND_0, 1);
@@ -2343,12 +3693,33 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                     throw new RuntimeException(e);
                                 }
                             case 55:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
+                                if(voteParty) {
+                                    summonPowerUp(25);
+                                    summonPowerUp(25);
+                                    summonPowerUp(25);
+                                    summonPowerUp(25);
+                                }
                                 summonPowerUp(25);
                                 break;
                             case 50:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
+                                if(voteParty) {
+                                    summonPowerUp(20);
+                                    summonPowerUp(20);
+                                    summonPowerUp(20);
+                                    summonPowerUp(20);
+                                }
                                 summonPowerUp(20);
                                 break;
                             case 40:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
+                                if(voteParty) {
+                                    summonPowerUp(10);
+                                    summonPowerUp(10);
+                                    summonPowerUp(10);
+                                    summonPowerUp(10);
+                                }
                                 summonPowerUp(10);
                                 break;
                             case 30:
@@ -2382,7 +3753,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             case 0:
                                 leastVotes = false;
                                 audienceVote = false;
+                                currentMode = "Lobby";
                                 runningTimers.remove("voting");
+                                bossBarBgTest();
                                 cancel();
                                 break;
                             default:
@@ -2399,6 +3772,338 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         runningTimers.put("voting", new AbstractMap.SimpleEntry<>(task, 91));
     }
 
+    public void startWishBook(){
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 21;
+            @Override
+            public void run() {
+                if(runningTimers.containsKey("wishes")) {
+                    if (!pausedTimers.contains("wishes")) {
+                        timeLeft--;
+                        bossBarBgTest();
+                        runningTimers.get("wishes").setValue(timeLeft);
+                        switch (timeLeft) {
+                            case 20:
+                                ItemStack book = new ItemStack(Material.WRITABLE_BOOK, 1);
+                                playSoundAll(Sound.ENTITY_ELDER_GUARDIAN_AMBIENT, 1);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.getInventory().addItem(book);
+                                    player.sendTitle("§a§lʙᴏᴏᴋ ᴏғ ᴡɪsʜᴇs", "", 0, 60, 40);
+                                }
+                                break;
+                            case 15:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    messagePlayer(player, """
+                                            §8
+                                            §8
+                                            §e§lThe book of wishes has been granted!
+                                            §fSpread some festive cheer by writing a message in the book!
+                                            §8
+                                            """);
+                                }
+                                break;
+                            case 10:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    messagePlayer(player, """
+                                            §8
+                                            §8
+                                            §e§lAll festive messages will be recorded!
+                                            §fThese messages will be used to spread cheer to the community!
+                                            §8
+                                            """);
+                                }
+                                break;
+                            case 5:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    messagePlayer(player, """
+                                            §8
+                                            §8
+                                            §e§lOnce you're done sign the book and it will be sent to Aldo!
+                                            §fYou can write your message to a specific person or just the community! All messages will be made public so keep it family friendly!
+                                            §8
+                                            """);
+                                }
+                                break;
+                            case 0:
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    messagePlayer(player, """
+                                            §8
+                                            §8
+                                            §e§lHappy Holidays!
+                                            §fThank you all for the charity support!
+                                            §8
+                                            """);
+                                }
+                                currentMode = "Lobby";
+                                runningTimers.remove("wishes");
+                                bossBarBgTest();
+                                cancel();
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                } else {
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("wishes", new AbstractMap.SimpleEntry<>(task, 31));
+    }
+
+
+    public void startPresentHunt(int round){
+
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 136;
+            int index = (4 * round) - 4;
+            @Override
+            public void run() {
+                if(runningTimers.containsKey("presenthunt")) {
+                    if (!pausedTimers.contains("presenthunt")) {
+                        timeLeft--;
+                        bossBarBgTest();
+                        runningTimers.get("presenthunt").setValue(timeLeft);
+                        switch (timeLeft) {
+                            case 135:
+                                currentMode = "Presents";
+                                playSoundAll(Sound.ENTITY_ELDER_GUARDIAN_AMBIENT, 1);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.sendTitle("§f§lᴘʀᴇsᴇɴᴛ §e§lʜᴜɴᴛ", "", 0, 60, 40);
+                                }
+                                break;
+                            case 132:
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    if(round == 1) {
+                                        player.playSound(player.getLocation(), phStartSound[0], SoundCategory.VOICE, 1F, 1F);
+                                        messagePlayer(player, """
+                                                §8
+                                                §8
+                                                §e§lHo Ho Ho!
+                                                §fI have a special task for you all!
+                                                §8
+                                                """);
+                                    } else if (round == 2){
+                                        player.playSound(player.getLocation(), phRoundStartSound[1], SoundCategory.VOICE, 1F, 1F);
+                                        messagePlayer(player, """
+                                                §8
+                                                §8
+                                                §e§lHo Ho Ho!
+                                                §fI seem to have misplaced the presents you found me!
+                                                §8
+                                                """);
+                                    } else {
+                                        player.playSound(player.getLocation(), phRoundStartSound[0], SoundCategory.VOICE, 1F, 1F);
+                                        messagePlayer(player, """
+                                                §8
+                                                §8
+                                                §e§lI'm getting to old for this!
+                                                §fWill you lend me a hand?
+                                                §8
+                                                """);
+                                    }
+                                }
+                                break;
+                            case 120:
+                                if(round == 1) {
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
+                                        player.playSound(player.getLocation(), phStartSound[1], SoundCategory.VOICE, 1F, 1F);
+                                        messagePlayer(player, """
+                                                §8
+                                                §8
+                                                §e§lI seem to have lost some of my gifts!
+                                                §fWill you help me find them?
+                                                §8
+                                                """);
+                                    }
+                                } else {
+                                    timeLeft = 106;
+                                }
+                                break;
+                            case 108:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 1F);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.sendTitle("§c§l3", "", 0, 60, 40);
+                                }
+                                break;
+                            case 107:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 1.2F);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.sendTitle("§c§l2", "", 0, 60, 40);
+                                }
+                                break;
+                            case 106:
+                                playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 1.4F);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.sendTitle("§c§l1", "", 0, 60, 40);
+                                }
+                                break;
+                            case 105:
+                                BlockDisplay tempBD;
+
+                                List<BlockDisplay> allPresents = new ArrayList<>();
+                                Random rand = new Random();
+
+                                allPresents.addAll(lobbyPresents.keySet());
+
+                                for(int i = 1; i <= PresentsConfig.get().getConfigurationSection("presents").getKeys(false).size(); i++){
+                                    Location loc = PresentsConfig.get().getLocation("presents.loc" + i).clone();
+                                    loc.setY(loc.getY()+0.5);
+                                    tempBD = Bukkit.getWorld("build").spawn(loc, BlockDisplay.class);
+
+                                    tempBD.setBlock(Material.ENDER_CHEST.createBlockData());
+                                    Vector3f translation = new Vector3f(-0.5F, -0.5F, -0.5F);
+                                    Quaternionf leftRotation = new Quaternionf();
+                                    Quaternionf rightRotation = new Quaternionf();
+                                    Vector3f scaleVector = new Vector3f(1F, 1F, 1F);
+
+                                    Transformation transformation = new Transformation(translation, leftRotation, scaleVector, rightRotation);
+                                    tempBD.setTransformation(transformation);
+                                    lobbyPresents.put(tempBD, false);
+                                }
+                                allPresents.addAll(lobbyPresents.keySet());
+                                int randNum;
+                                for(int i = 0; i < 60; i++){
+                                    randNum = rand.nextInt(allPresents.size());
+                                    allPresents.get(randNum).remove();
+                                    allPresents.remove(randNum);
+                                }
+
+                                playSoundAll(Sound.ENTITY_ELDER_GUARDIAN_AMBIENT, 1F);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.sendTitle("§a§lGO!", "", 0, 60, 40);
+                                    messagePlayer(player, """
+                                            §8
+                                            §8
+                                            §e§l§oGO GO GO!.
+                                            §fPresents will be counted in 90 seconds!
+                                            §8
+                                            """);
+                                }
+                                break;
+                            case 90:
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.playSound(player.getLocation(), phDialogue[index], SoundCategory.VOICE, 1F, 1F);
+                                }
+                                break;
+                            case 75:
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.playSound(player.getLocation(), phDialogue[1+index], SoundCategory.VOICE, 1F, 1F);
+                                }
+                                break;
+                            case 60:
+                                playSoundAll(Sound.ITEM_GOAT_HORN_SOUND_1, 1);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    messagePlayer(player, """
+                                            §8
+                                            §8
+                                            §a§l§oGlow Enabled!.
+                                            §fPresents are now glowing, just in the nick of time!
+                                            §8
+                                            """);
+                                }
+                                for(BlockDisplay bd : lobbyPresents.keySet()){
+                                    if(lobbyPresents.containsKey(bd)) {
+                                        if (lobbyPresents.get(bd)) {
+                                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                                bd.setGlowing(true);
+                                                try {
+                                                    glowingEntities.setGlowing(bd, player);
+                                                } catch (ReflectiveOperationException e) {
+                                                    throw new RuntimeException(e);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.playSound(player.getLocation(), phDialogue[2+index], SoundCategory.VOICE, 1F, 1F);
+                                }
+                                break;
+                            case 45:
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.playSound(player.getLocation(), phDialogue[3+index], SoundCategory.VOICE, 1F, 1F);
+                                }
+                                break;
+                            case 30:
+                                if(round == 3){
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
+                                        player.playSound(player.getLocation(), phDialogue[4+index], SoundCategory.VOICE, 1F, 1F);
+                                    }
+                                }
+                                break;
+                            case 15:
+                                for(BlockDisplay present : lobbyPresents.keySet()){
+                                    present.remove();
+                                }
+                                playSoundAll(Sound.BLOCK_FIRE_EXTINGUISH, 1);
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    messagePlayer(player, """
+                                            §8
+                                            §8
+                                            §c§lPresent Hunt Over.
+                                            §fWell Done!
+                                            §8
+                                            """);
+                                }
+                                break;
+                            case 10:
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    if(round == 1) {
+                                        player.playSound(player.getLocation(), phRoundEnd[0], SoundCategory.VOICE, 1F, 1F);
+                                        messagePlayer(player, """
+                                                §8
+                                                §8
+                                                §e§lHo Ho Ho, thank you!
+                                                §fI hope those points help you in your competition!
+                                                §8
+                                                """);
+                                    } else if (round == 2){
+                                        player.playSound(player.getLocation(), phRoundEnd[1], SoundCategory.VOICE, 1F, 1F);
+                                        messagePlayer(player, """
+                                                §8
+                                                §8
+                                                §e§lFantastic! All is well..
+                                                §fI'll be sure to grant all your wishes!
+                                                §8
+                                                """);
+                                    } else {
+                                        player.playSound(player.getLocation(), phRoundEnd[2], SoundCategory.VOICE, 1F, 1F);
+                                        messagePlayer(player, """
+                                                §8
+                                                §8
+                                                §e§lMarvelous! I'll.. take the coal out of your stocking..
+                                                §fHo Ho Ho! Not sure how it got there.. Ho Ho Ho!
+                                                §8
+                                                """);
+                                    }
+                                }
+                                break;
+                            case 0:
+                                currentMode = "Lobby";
+                                runningTimers.remove("presenthunt");
+                                bossBarBgTest();
+                                cancel();
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                } else {
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("presenthunt", new AbstractMap.SimpleEntry<>(task, 91));
+    }
+
     public void summonPowerUp(int time){
         Random random = new Random();
         int x = 187+random.nextInt(43);
@@ -2408,8 +4113,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         Item powerUp = Bukkit.getWorld("build").dropItemNaturally(coords, tntItemStack);
         powerUp.setGlowing(true);
         coords.setY(142);
-        playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 1);
-        for(Player player : getPlayers()) {
+        for(Player player : Bukkit.getOnlinePlayers()) {
             player.sendMessage("""
                     §a
                     §a
@@ -2464,7 +4168,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             glowingEntities.setGlowing(chickenBall, player, ChatColor.WHITE);
         }
 
-        for(Player player : getPlayers()) {
+        for(Player player : Bukkit.getOnlinePlayers()) {
             player.sendMessage("""
                     §a
                     §a
@@ -2507,7 +4211,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 playSoundAll(Sound.ENTITY_CHICKEN_DEATH, 1);
                                 chickenBall.remove();
                                 cancel();
-                                for (Player player : getPlayers()) {
+                                for (Player player : Bukkit.getOnlinePlayers()) {
                                     player.sendMessage("""
                                             §a
                                             §a
@@ -2610,45 +4314,84 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                             .sorted(Map.Entry.<String, Integer>comparingByValue().reversed()) // Sort highest first
                                             .collect(Collectors.toList());
 
-                                    sortedTimesPerCourse.put(courseId, sortedList);
+                                        sortedTimesPerCourse.put(courseId, sortedList);
                                 }
                                 for(Player player : Bukkit.getOnlinePlayers()){
-                                    player.sendTitle("§c§lGAME OVER!", "§7Build times:", 0, 60, 40);
+                                    player.sendTitle("💎", "§7Build times:", 0, 60, 40);
                                 }
                             } else {
-                                if((currentMode.equals("Slime Golf") || currentMode.equals("Colour Dash") || currentMode.equals("Zoomo Go")) && currentRound == 1){
+                                if(((currentMode.equals("Slime Golf") || currentMode.equals("Colour Dash") || currentMode.equals("Zoomo Go")) && currentRound == 1) || ((currentMode.equals("Zoomo Go") || currentMode.equals("Slime Golf")) && currentRound == 2)){
                                     if(currentMode.equals("Zoomo Go")){
                                         for(Player player : Bukkit.getOnlinePlayers()){
-                                            player.sendTitle("§c§lROUND OVER!", "§e★ " + plugin.getTeamDisplayName(winningTeam), 0, 60, 40);
+                                            player.sendTitle("🦑", "§e★ " + plugin.getTeamDisplayName(winningTeam), 0, 60, 40);
                                         }
                                     } else {
                                         for (Player player : Bukkit.getOnlinePlayers()) {
-                                            player.sendTitle("§c§lROUND OVER!", "", 0, 60, 40);
+                                            player.sendTitle("🦑", "", 0, 60, 40);
                                         }
                                     }
                                 } else if (currentMode.equals("Survival Games")) {
                                     for(Player player : Bukkit.getOnlinePlayers()){
-                                        player.sendTitle("§c§lGAME OVER!", "§e★ " + plugin.getTeamDisplayName(winningTeam), 0, 60, 40);
+                                        player.sendTitle("💎", "§e★ " + plugin.getTeamDisplayName(winningTeam), 0, 60, 40);
                                     }
                                 } else {
                                     if(currentMode.equals("Zoomo Go")){
                                         for(Player player : Bukkit.getOnlinePlayers()){
-                                            player.sendTitle("§c§lGAME OVER!", "§e★ " + plugin.getTeamDisplayName(winningTeam), 0, 60, 40);
+                                            player.sendTitle("💎", "§e★ " + plugin.getTeamDisplayName(winningTeam), 0, 60, 40);
                                         }
                                     } else {
                                         for (Player player : Bukkit.getOnlinePlayers()) {
-                                            player.sendTitle("§c§lGAME OVER!", "", 0, 60, 40);
+                                            player.sendTitle("💎", "", 0, 60, 40);
                                         }
                                     }
                                 }
-                                timeLeft = 51;
+                                timeLeft = 55;
                             }
                             break;
-                        case 65, 63, 61, 59, 57, 55:
+                        case 66, 64, 62, 60, 58, 56:
                             bridgeCourseId++;
                             bridgeBuildTimeHandling(bridgeCourseId);
                             break;
+                        case 54:
+                            if(currentMode.equals("Zoomo Go") && currentRound < 3){
+                                teleportPlayers(TeleportConfig.get().getLocation("players.zoomointermission"), 0);
+                                teleportSpectators(TeleportConfig.get().getLocation("players.zoomointermission"), 0);
+                                for(Player p : getPlayers()){
+                                    p.setGameMode(GameMode.ADVENTURE);
+                                    p.getInventory().clear();
+                                }
+                            }
+                            if(currentMode.equals("Slime Golf") && currentRound == 1){
+                                teleportPlayers(TeleportConfig.get().getLocation("players.slimeintermission"), 0);
+                                teleportSpectators(TeleportConfig.get().getLocation("players.slimeintermission"), 0);
+                                for(Player p : getPlayers()){
+                                    p.setGameMode(GameMode.ADVENTURE);
+                                    p.getInventory().clear();
+                                }
+                            }
+                            if(currentMode.equals("Slime Golf") && currentRound > 1){
+                                teleportPlayers(TeleportConfig.get().getLocation("players.slimeintermission2"), 0);
+                                teleportSpectators(TeleportConfig.get().getLocation("players.slimeintermission2"), 0);
+                                for(Player p : getPlayers()){
+                                    p.setGameMode(GameMode.ADVENTURE);
+                                    p.getInventory().clear();
+                                }
+                            }
+                            if(currentMode.equals("Colour Dash") && currentRound < 2){
+                                teleportPlayers(TeleportConfig.get().getLocation("players.cdintermission"), 0);
+                                teleportSpectators(TeleportConfig.get().getLocation("players.cdintermission"), 0);
+                                for(Player p : getPlayers()){
+                                    p.setGameMode(GameMode.ADVENTURE);
+                                    p.getInventory().clear();
+                                }
+                            }
+                            break;
                         case 50:
+                            for(Entity entities : Bukkit.getWorld("build").getEntities()){
+                                if(entities instanceof BlockDisplay){
+                                    entities.remove();
+                                }
+                            }
                             winningTeam = "";
                             if(currentMode.equals("Survival Games")){
                                 Bukkit.getWorld("build").getBlockAt(-199, 32, -730).setType(Material.AIR);
@@ -2656,27 +4399,112 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             if(currentMode.equals("Slime Golf")) {
                                 slimeGolfTimes();
                             } else {
-                                getPlayerModePoints();
+                                for(boolean truefalse : plugin.teamShown){
+                                    if(truefalse){
+                                        getPlayerModePoints();
+                                        break;
+                                    }
+                                }
                             }
-                            currentMode = "Lobby";
                             break;
                         case 45:
-                            getTeamModePoints();
+                            for(boolean truefalse : plugin.teamShown){
+                                if(truefalse){
+                                    getTeamModePoints();
+                                    break;
+                                }
+                            }
                             break;
                         case 40:
-                            for (Player player : getPlayers()) {
-                                messagePlayer(player, """
+                            if(currentMode.equals("Zoomo Go") && currentRound < 3){
+                                currentRound++;
+                                startZoomoGo();
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    messagePlayer(player, """
                                         §8
                                         §8
-                                        §8[§c§l🛫§8] §cTeleporting back to the lobby..
+                                        §8[§c§l🛫§8] §cStarting Round §c""" + currentRound + """
+                                        ..
                                         §8
                                         """);
+                                }
+                                runningTimers.remove("backtolobby");
+                                cancel();
+                            } else if(currentMode.equals("Slime Golf") && currentRound < 3){
+                                currentRound++;
+                                startSlimeGolf();
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§c§l🛫§8] §cStarting Round §c""" + currentRound + """
+                                        ..
+                                        §8
+                                        """);
+                                }
+                                runningTimers.remove("backtolobby");
+                                cancel();
+                            } else if(currentMode.equals("Colour Dash") && currentRound < 2){
+                                currentRound++;
+                                startColourDash();
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    messagePlayer(player, """
+                                        §8
+                                        §8
+                                        §8[§c§l🛫§8] §cStarting round """ + currentRound + """
+                                        ..
+                                        §8
+                                        """);
+                                }
+                                World world2 = Bukkit.getWorld("build");
+                                for(int i = 0; i <= 1; i++) {
+                                    world2.getBlockAt(plugin.cdWallCoords[i][0], plugin.cdWallCoords[i][1] - 1, plugin.cdWallCoords[i][2]).setType(Material.REDSTONE_BLOCK);
+                                    world2.getBlockAt(plugin.cdWallCoords[i][0], plugin.cdWallCoords[i][1] - 1, plugin.cdWallCoords[i][2]).setType(Material.DIRT);
+                                }
+                                for(int i = 2; i <= 4; i++) {
+                                    world2.getBlockAt(plugin.cdWallCoords[i][0], plugin.cdWallCoords[i][1], plugin.cdWallCoords[i][2]).setType(Material.REDSTONE_BLOCK);
+                                    world2.getBlockAt(plugin.cdWallCoords[i][0], plugin.cdWallCoords[i][1], plugin.cdWallCoords[i][2]).setType(Material.DIRT);
+                                }
+                                world2.getBlockAt(78, 138, 1235).setType(Material.REDSTONE_BLOCK);
+                                world2.getBlockAt(78, 138, 1235).setType(Material.AIR);
+                                runningTimers.remove("backtolobby");
+                                cancel();
+                            } else {
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    messagePlayer(player, """
+                                            §8
+                                            §8
+                                            §8[§c§l🛫§8] §cTeleporting back to the lobby..
+                                            §8
+                                            """);
+                                }
+                                teleportPlayers(TeleportConfig.get().getLocation("players.lobby"), 5);
+                                teleportSpectators(TeleportConfig.get().getLocation("spectators.lobby"), 5);
+                                plugin.shopAllowed = true;
+                                setCurrentPlacements();
+                                List<String> modeLeaderName = new ArrayList<>(plugin.sortMap(plugin.modeFullPoints).keySet());
+                                for(Player player : getPlayers()){
+                                    if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(player.getName())){
+                                        int placement = Integer.parseInt(PlaceholderAPI.setPlaceholders(player, "%mce24_eventplacement%"));
+                                        if(placement < PlayerInfoConfig.get().getInt("players." + player.getName() + ".highestplacement")){
+                                            PlayerInfoConfig.get().set("players." + player.getName() + ".highestplacement", placement);
+                                            PlayerInfoConfig.save();
+                                        }
+                                        for(int i = 0; i < modeLeaderName.size(); i++) {
+                                            if(modeLeaderName.get(i).equalsIgnoreCase(player.getName())){
+                                                if(i < PlayerInfoConfig.get().getInt("players." + player.getName() + ".bestgameplacement")){
+                                                    PlayerInfoConfig.get().set("players." + player.getName() + ".bestgameplacement", i + 1);
+                                                    PlayerInfoConfig.get().set("players." + player.getName() + ".bestgame", currentMode);
+                                                    PlayerInfoConfig.save();
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
-                            teleportPlayers(TeleportConfig.get().getLocation("players.lobby"), 5);
-                            teleportSpectators(TeleportConfig.get().getLocation("spectators.lobby"), 5);
-                            plugin.shopAllowed = true;
                             break;
                         case 35:
+                            currentMode = "Lobby";
                             for (Player player : getPlayers()) {
                                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "usc setScoreboard " + player.getName() + " Lobby");
                                 player.setGameMode(GameMode.ADVENTURE);
@@ -2687,7 +4515,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             for (Player player : getPlayers()) {
                                 player.setAllowFlight(false);
                             }
+                            runAldo();
+                            deadPlayers.clear();
                             runningTimers.remove("backtolobby");
+                            startLobbyInterval(61);
                             cancel();
                             break;
                         default:
@@ -2700,6 +4531,146 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
         runningTimers.put("backtolobby", new AbstractMap.SimpleEntry<>(task, 61));
     }
+
+    public String[] aldoLines1 = {
+            "Wow first place that's incredible!",
+            "Second place?? So close that's amazing!",
+            "Now that was a performance, good job.",
+            "Fourth! Are you kidding me?",
+            "Top 5 that game, you are up there!",
+            "I'd say that was smashing!!",
+            "7th? That's my favourite number!",
+            "8th! 8th! 8th!!! Wooo!!",
+            "And number 9 goes to... You!!",
+            "Just the top 10, that warrants a high five!",
+            "Okay, now we're talking, that was great!",
+            "So proud of you! What a performance.",
+            "I just know you feel great about that. I do!",
+            "Lucky number 14! Spread the luck!",
+            "Round of applause to you.",
+            "You cannot make that up, well done!",
+            "You're soaring! Just like me!!",
+            "18th! Nice work out there.",
+            "We love to see it, good effort.",
+            "Can't stress enough, you did well!",
+            "I wonder if you can beat that! Nice!",
+            "Oooo that was a close one!",
+            "Wow, that game was intense.",
+            "That sent shivers down my wings.",
+            "I was cheering you on the whole way.",
+            "I kept a close eye on you, nice one!",
+            "You really tried, and that's amazing!",
+            "Vibes are high, I believe in you.",
+            "29th place! A good effort!",
+            "You'll get em' next time!",
+            "Hey, stop going easy on everyone champ!",
+            "You're first! From the back. And that's okay!!"
+    };
+
+    public String[] aldoLines2 = {
+            "I can't wait to see what you do next.",
+            "We love the good vibes, keep it up!",
+            "I believe in you!",
+            "I'm so excited for what you do next.",
+            "You're looking very stylish yknow.",
+            "Sir Craftalot has nothing on you trust me.",
+            "I've got a good feeling about this.",
+            "I could never be as good as you!",
+            "No matter where you place, I will be supportive of you!",
+            "I wonder what that Chazzagram guy thinks..",
+            "I'm grabbing my popcorn for this.",
+            "Work as a team, I'm rooting for you.",
+            "You're number 1 in my eyes!",
+            "Lyla and Philip are proud of you too.",
+            "Can we follow this with an even better performance? I think so!",
+            "I'm gonna go grab some snacks from Craftalot castle. Brb!",
+            "This calls for a trampoline session I think!",
+            "They call me Aldo.",
+            "My favourite game has to be Bridge Builders.",
+            "I hope my game explanation helped!",
+            "I'll be watching you even more now.",
+            "Don't let the other teams bring your awesomeness down.",
+            "This is so cool!",
+            "I'm just buzzing with excitement!!",
+            "This has been so fun.",
+            "Do you know where Edguard went? He owes me money.",
+            "Skill, charm, vibes, you've got it all!",
+            "Do you want to share a choccy bar?",
+            "Can you tell me what an inventory jam is?"
+    };
+
+
+    public void runAldo(){
+        BukkitTask task = new BukkitRunnable() {
+            Location aldoSpawn = new Location(Bukkit.getWorld("build"), 180, 146, 696);
+            LivingEntity aldo = (LivingEntity) Bukkit.getWorld("build").spawnEntity(aldoSpawn, EntityType.ALLAY);
+            Vector velocity = new Vector(0, 0, 0.3);
+
+
+            List<String> modeplayertop = new ArrayList<>(plugin.sortMap(plugin.modePoints).keySet());
+            int timeLeft = 15;
+            Random r = new Random();
+            int index = 0;
+            @Override
+            public void run() {
+                if(!pausedTimers.contains("aldo")) {
+                    timeLeft--;
+                    runningTimers.get("aldo").setValue(timeLeft);
+                    switch (timeLeft) {
+                        case 14:
+                            Bukkit.getWorld("build").spawnParticle(Particle.CLOUD, aldo.getLocation(), 3, 0.0, 0.0, 0.0, 0);
+                            aldo.setVelocity(velocity);
+                            PotionEffect glowing = new PotionEffect(PotionEffectType.GLOWING, 280, 0, false, false);
+                            aldo.addPotionEffect(glowing);
+                            break;
+                        case 13:
+                            for(String player2 : modeplayertop){
+                                if(Bukkit.getPlayer(player2) != null){
+                                    Player player = Bukkit.getPlayer(player2);
+                                    float random = 1F + r.nextFloat() * 0.3F;
+                                    if(player.getName().equals("Pers0nified")){
+                                        player.playSound(player.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_7, 1F, random);
+                                    } else {
+                                        player.playSound(player.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_6, 1F, random);
+                                    }
+                                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("⏳ §f§l" + aldoLines1[index]));
+                                }
+                                index++;
+                            }
+
+                            break;
+                        case 7:
+                            for(String player2 : modeplayertop){
+                                if(Bukkit.getPlayer(player2) != null){
+                                    float random = 1F + r.nextFloat() * 0.3F;
+                                    Player player = Bukkit.getPlayer(player2);
+                                    if(player.getName().equals("Pers0nified")){
+                                        player.playSound(player.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_7, 1F, random);
+                                    } else {
+                                        player.playSound(player.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_6, 1F, random);
+                                    }
+                                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("⏳ §f§l" + aldoLines2[r.nextInt(aldoLines2.length)]));
+                                }
+                            }
+                            break;
+                        case 0:
+                            Bukkit.getWorld("build").spawnParticle(Particle.CLOUD, aldo.getLocation(), 3, 0.0, 0.0, 0.0, 0);
+                            aldo.remove();
+                            runningTimers.remove("aldo");
+                            cancel();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 20L);
+
+        runningTimers.put("aldo", new AbstractMap.SimpleEntry<>(task, 15));
+    }
+
+
 
     public void bridgeBuildTimeHandling(int courseId) {
         int position = 1;
@@ -2717,10 +4688,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     if (p != null) {
                         p.sendTitle(
                                 positionsFormatted[position - 1],
-                                "§a[\uD83D\uDDFB-" + courseId + "] §e§l💰" + ((80 - ((position - 1) * 4)) / 4),
+                                "§a[\uD83D\uDDFB-" + courseId + "] §e§l💰" + ((106 - ((position - 1) * 6)) / 4),
                                 0, 60, 20
                         );
-                        earnPoints(player, (80 - ((position - 1) * 4)) / 4, true);
+                        earnPoints(player, (106 - ((position - 1) * 6)) / 4, true);
                     }
                 }
                 position++;
@@ -2757,7 +4728,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         for(Player p : Bukkit.getOnlinePlayers()) {
             messagePlayer(p, " §f-  §e§lʜᴏʟᴇ ᴛɪᴍᴇs  §f-");
             for (String team : slimeFinishers.keySet()) {
-                messagePlayer(p, "§e§l⏱§e" + slimeFinishers.get(team) + " §f- " + getTeamDisplayName(team));
+                messagePlayer(p, "§e§l⏱§e" + getTimerValue(slimeFinishers.get(team)) + " §f- " + getTeamDisplayName(team));
             }
             for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)) {
                 if(!slimeFinishers.containsKey(team)) {
@@ -2859,6 +4830,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 case "punch":
                                     readyTypeString = "Spam Punch!";
                                     break;
+                                case "sneakbomb":
+                                    readyTypeString = "Hold Crouch!";
+                                    break;
                             }
                             for (Player player : getPlayers()) {
                                 player.sendTitle("§b§lReady to play?", readyTypeString, 0, 560, 40);
@@ -2935,7 +4909,304 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         return items;
     }
 
+    public void endEvent(){
+        int z = 828;
+        Bukkit.getWorld("build").getBlockAt(52, 189, z).setType(Material.REDSTONE_BLOCK);
+        Bukkit.getWorld("build").getBlockAt(52, 189, z).setType(Material.AIR);
+        int[][] lakeFireworks = {
+                { 133, 143, 678 },
+                { 110, 143, 671 },
+                { 90, 143, 689 },
+                { 96, 143, 705 },
+                { 130, 143, 708 }
+        };
+        World world = Bukkit.getWorld("build");
+
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 3600;
+            int z2 = 828;
+            double pitch = 1.0;
+            LivingEntity aldo;
+            Random r = new Random();
+            List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
+            List<Integer> leaderteampoints = new ArrayList<>(plugin.sortByValue().values());
+            @Override
+            public void run() {
+                if(!pausedTimers.contains("endevent")) {
+                    timeLeft--;
+                    runningTimers.get("endevent").setValue(timeLeft);
+                    switch (timeLeft) {
+                        case 3599:
+                            playMusicAll(Sound.MUSIC_DISC_STRAD);
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle("§a§lʀᴇsᴜʟᴛs ᴛɪᴍᴇ", "", 0, 60, 20);
+                            }
+                            break;
+                        case 3499, 3399, 3299, 3199:
+                            for(int[] firework : lakeFireworks) {
+                                world.getBlockAt(firework[0], firework[1]-6, firework[2]).setType(Material.REDSTONE_BLOCK);
+                                world.getBlockAt(firework[0], firework[1]-6, firework[2]).setType(Material.AIR);
+                            }
+                            world.getBlockAt(172, 138, 747).setType(Material.REDSTONE_BLOCK);
+                            world.getBlockAt(172, 138, 747).setType(Material.AIR);
+                            world.getBlockAt(151, 138, 753).setType(Material.REDSTONE_BLOCK);
+                            world.getBlockAt(151, 138, 753).setType(Material.AIR);
+                            world.getBlockAt(173, 138, 773).setType(Material.REDSTONE_BLOCK);
+                            world.getBlockAt(173, 138, 773).setType(Material.AIR);
+                            world.getBlockAt(156, 138, 773).setType(Material.REDSTONE_BLOCK);
+                            world.getBlockAt(156, 138, 773).setType(Material.AIR);
+                            world.getBlockAt(154, 138, 785).setType(Material.REDSTONE_BLOCK);
+                            world.getBlockAt(154, 138, 785).setType(Material.AIR);
+                            world.getBlockAt(172, 138, 785).setType(Material.REDSTONE_BLOCK);
+                            world.getBlockAt(172, 138, 785).setType(Material.AIR);
+                            world.getBlockAt(187, 138, 783).setType(Material.REDSTONE_BLOCK);
+                            world.getBlockAt(187, 138, 783).setType(Material.AIR);
+                            world.getBlockAt(139, 138, 783).setType(Material.REDSTONE_BLOCK);
+                            world.getBlockAt(139, 138, 783).setType(Material.AIR);
+                            break;
+                        case 3500:
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle(getTeamDisplayName(leaderteams.get(7)), "§f§l8ᴛʜ §7| §e\uD83D\uDCB0"  + leaderteampoints.get(7), 0, 120, 0);
+                            }
+                            teamShown[7] = true;
+                            break;
+                        case 3400:
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle(getTeamDisplayName(leaderteams.get(6)), "§f§l7ᴛʜ §7| §e\uD83D\uDCB0"  + leaderteampoints.get(6), 0, 120, 0);
+                            }
+                            teamShown[6] = true;
+                            break;
+                        case 3300:
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle(getTeamDisplayName(leaderteams.get(5)), "§f§l6ᴛʜ §7| §e\uD83D\uDCB0"  + leaderteampoints.get(5), 0, 120, 0);
+                            }
+                            teamShown[5] = true;
+                            break;
+                        case 3200:
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle(getTeamDisplayName(leaderteams.get(4)), "§f§l5ᴛʜ §7| §e\uD83D\uDCB0"  + leaderteampoints.get(4), 0, 120, 0);
+                            }
+                            teamShown[4] = true;
+                            break;
+                        case 3100:
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle(getTeamDisplayName(leaderteams.get(3)), "§f§l4ᴛʜ §7| §e\uD83D\uDCB0"  + leaderteampoints.get(3), 0, 120, 0);
+                            }
+                            teamShown[3] = true;
+                            break;
+
+                        case 3000:
+                            PotionEffect PotionEffect = new PotionEffect(PotionEffectType.LEVITATION, 100, 1, false, false);
+                            for(Player player : getPlayers()) {
+                                player.addPotionEffect(PotionEffect);
+                            }
+                            teleportPlayers(TeleportConfig.get().getLocation("players.finish"), 5);
+                            teleportSpectators(TeleportConfig.get().getLocation("spectators.finish") , 5);
+                            break;
+                        case 2900:
+                            plugin.emotesEnabled = true;
+                            for(Player p : getPlayers()){
+                                messagePlayer(p, """
+                                        §8
+                                        §8
+                                        §e§l[!] §6Emotes are now enabled. Use §a/emote §6to emote!
+                                        §8
+                                        §8
+                                        """);
+                            }
+                            PotionEffect PotionEffect2 = new PotionEffect(PotionEffectType.SLOW_FALLING, 100, 1, false, false);
+                            for(Player player : getPlayers()) {
+                                player.addPotionEffect(PotionEffect2);
+                            }
+                            Location aldoSpawn = new Location(Bukkit.getWorld("build"), 57.5, 196, 827.5);
+                            aldo = (LivingEntity) Bukkit.getWorld("build").spawnEntity(aldoSpawn, EntityType.ALLAY);
+                            Vector velocity = new Vector(-0.3, 0, 0);
+                            Bukkit.getWorld("build").spawnParticle(Particle.CLOUD, aldo.getLocation(), 3, 0.0, 0.0, 0.0, 0);
+                            aldo.setVelocity(velocity);
+                            PotionEffect glowing = new PotionEffect(PotionEffectType.GLOWING, 20000, 0, false, false);
+                            aldo.addPotionEffect(glowing);
+                            float random = 1F + r.nextFloat() * 0.3F;
+                            for(Player player : Bukkit.getOnlinePlayers()) {
+                                if (player.getName().equals("Pers0nified")) {
+                                    player.playSound(player.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_7, 1F, random);
+                                } else {
+                                    player.playSound(player.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_6, 1F, random);
+                                }
+                                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("⏳ §f§lAre we ready? I'm ready."));
+                            }
+                            break;
+                        case 2801:
+                            random = 1F + r.nextFloat() * 0.3F;
+                            for(Player player : Bukkit.getOnlinePlayers()) {
+                                if (player.getName().equals("Pers0nified")) {
+                                    player.playSound(player.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_7, 1F, random);
+                                } else {
+                                    player.playSound(player.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_6, 1F, random);
+                                }
+                                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("⏳ §f§lThis will prove who is the one and only lad..."));
+                            }
+                            break;
+                        case 2880, 2870, 2860, 2850:
+                            z2++;
+                            pitch+=0.1;
+                            Bukkit.getWorld("build").getBlockAt(52, 189, z2).setType(Material.REDSTONE_BLOCK);
+                            Bukkit.getWorld("build").getBlockAt(52, 189, z2).setType(Material.AIR);
+                            playSoundAll(Sound.BLOCK_GRASS_BREAK, (float) pitch);
+                            break;
+                        case 2700:
+                            Location thirdLoc = new Location(world, 63.5, 194, 838, 90, 0);
+                            for(String player : TeamsConfig.get().getStringList("teams." + leaderteams.get(2) + ".players")){
+                                if(Bukkit.getPlayer(player) != null){
+                                    Player p = Bukkit.getPlayer(player);
+                                    p.teleport(thirdLoc);
+                                    thirdLoc.setZ(thirdLoc.getZ()-1);
+                                }
+                            }
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle(getTeamDisplayName(leaderteams.get(2)), "§f§l3ʀᴅ §7| §e\uD83D\uDCB0"  + leaderteampoints.get(2), 0, 120, 0);
+                            }
+                            teamShown[2] = true;
+                            break;
+                        case 2600:
+                            Location secondLoc = new Location(world, 63.5, 195, 822, 90, 0);
+                            for(String player : TeamsConfig.get().getStringList("teams." + leaderteams.get(1) + ".players")){
+                                if(Bukkit.getPlayer(player) != null){
+                                    Player p = Bukkit.getPlayer(player);
+                                    p.teleport(secondLoc);
+                                    secondLoc.setZ(secondLoc.getZ()-1);
+                                }
+                            }
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle(getTeamDisplayName(leaderteams.get(1)), "§e§l2ɴᴅ §7| §e\uD83D\uDCB0"  + leaderteampoints.get(1), 0, 120, 20);
+                            }
+                            teamShown[1] = true;
+                            break;
+                        case 2370:
+                            Location firstLoc = new Location(world, 63.5, 196, 830, 90, 0);
+                            for(String player : TeamsConfig.get().getStringList("teams." + leaderteams.getFirst() + ".players")){
+                                if(Bukkit.getPlayer(player) != null){
+                                    Player p = Bukkit.getPlayer(player);
+                                    p.teleport(firstLoc);
+                                    firstLoc.setZ(firstLoc.getZ()-1);
+                                }
+                            }
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle(getTeamDisplayName(leaderteams.getFirst()), "§b§l1sᴛ §7| §e\uD83D\uDCB0"  + leaderteampoints.getFirst(), 0, 120, 20);
+                            }
+                            teamShown[0] = true;
+                            break;
+                        case 2310:
+                            getTeamModePoints();
+                            break;
+                        case 2360, 2340, 2320, 2300, 2280, 2260, 2240, 2220, 2200:
+                            world.getBlockAt(66, 188, 832).setType(Material.REDSTONE_BLOCK);
+                            world.getBlockAt(66, 188, 832).setType(Material.AIR);
+                            world.getBlockAt(66, 188, 824).setType(Material.REDSTONE_BLOCK);
+                            world.getBlockAt(66, 188, 824).setType(Material.AIR);
+                            break;
+                        case 2100:
+                            for(Player p : Bukkit.getOnlinePlayers()){
+                                p.sendTitle("§e§lᴛʜᴀɴᴋs ғᴏʀ ᴘʟᴀʏɪɴɢ", "", 0, 60, 20);
+                            }
+                            break;
+                        case 2060:
+                            random = 1F + r.nextFloat() * 0.3F;
+                            for(Player player : Bukkit.getOnlinePlayers()) {
+                                if (player.getName().equals("Pers0nified")) {
+                                    player.playSound(player.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_7, 1F, random);
+                                } else {
+                                    player.playSound(player.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_6, 1F, random);
+                                }
+                                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("⏳ §f§lThank you so much for coming! Bye for now!"));
+                            }
+                            break;
+                        case 2000:
+                            Bukkit.getWorld("build").spawnParticle(Particle.CLOUD, aldo.getLocation(), 3, 0.0, 0.0, 0.0, 0);
+                            aldo.remove();
+                            teleportPlayers(TeleportConfig.get().getLocation("players.lobby"), 0);
+                            teleportSpectators(TeleportConfig.get().getLocation("spectators.lobby") , 0);
+                        case 1140:
+                            runningTimers.remove("endevent");
+                            cancel();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 1L);
+
+        runningTimers.put("endevent", new AbstractMap.SimpleEntry<>(task, 91));
+
+    }
+
+    public void addToGameOrder(String game){
+        List<String> gameOrder = GameOrderConfig.get().getStringList("order");
+        if(!gameOrder.contains(game)) {
+            gameOrder.add(game);
+        }
+        GameOrderConfig.get().set("order", gameOrder);
+        GameOrderConfig.save();
+    }
+
+        public void startTeamsPan(){
+        String name = "teamPan";
+        World world = Bukkit.getWorld("build");
+        Location start = new Location(world, 160.5F, 152, 782.3F, -15.4F, 9.7F);
+        ArmorStand camera = (ArmorStand) world.spawnEntity(start, EntityType.ARMOR_STAND);
+        camera.setInvisible(true);
+        camera.setMarker(true);
+        camera.setGravity(false);
+        camera.setInvulnerable(true);
+        for(Player player : getPlayers()){
+            player.setGameMode(GameMode.SPECTATOR);
+            player.setSpectatorTarget(camera);
+        }
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 1601;
+            Location loc;
+            @Override
+            public void run() {
+                if (runningTimers.containsKey(name)) {
+                    if (!pausedTimers.contains(name)) {
+                        timeLeft--;
+                        runningTimers.get(name).setValue(timeLeft);
+                        loc = camera.getLocation();
+                        loc.add(0.00375, 0, 0);
+                        loc.setYaw(loc.getYaw() + 0.01925f);
+                        camera.teleport(loc);
+                        for (Player player : getPlayers()) {
+                            if (player.getGameMode() == GameMode.SPECTATOR && player.getSpectatorTarget() != camera) {
+                                player.setSpectatorTarget(camera);
+                            }
+                        }
+                        if (timeLeft == 0) {
+                            camera.remove();
+                            messageConsole("Pan finished.");
+                            runningTimers.remove(name);
+                            cancel();
+                        }
+                    }
+                } else {
+                    messageConsole("Timer removed by external factor.");
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(this, 0L, 1L);
+
+        runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, 1601));
+    }
+
+
     public void startEvent(){
+
+        List<String> gameOrder = new ArrayList<>();
+
+        GameOrderConfig.get().set("order", gameOrder);
+
+        GameOrderConfig.save();
 
         int[][] lakeFireworks = {
                 { 133, 143, 678 },
@@ -2986,6 +5257,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         Location stagemain = new Location(Bukkit.getWorld("build"), 163.5, 149, 778.5, 0, 0);
 
         BukkitTask task = new BukkitRunnable() {
+            Random r = new Random();
+            LivingEntity aldo;
+            TextDisplay playersDisplay;
+            TextDisplay teamNameDisplay;
             float currentXrotation = 0F;
             int direction = 1;
             int timeLeft = 3600;
@@ -3032,70 +5307,141 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     switch (timeLeft) {
                         case 3599:
                             for(Player p : Bukkit.getOnlinePlayers()){
-                                p.sendTitle("§9§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ʙᴜɪʟᴅᴇʀ - ᴍᴀʟᴠᴀʀᴇ", 0, 50, 0);
+                                p.sendTitle("§9§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ʙᴜɪʟᴅᴇʀ - ᴍᴀʟᴠᴀʀᴇ & ᴅᴇʀᴘᴍᴀsᴋ", 0, 50, 0);
                             }
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
                             break;
                         case 3560:
                             for(Player p : Bukkit.getOnlinePlayers()){
-                                p.sendTitle("§9§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ʙᴜɪʟᴅᴇʀ - ᴅᴇʀᴘᴍᴀsᴋ", 0, 50, 0);
+                                p.sendTitle("§9§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ʙᴜɪʟᴅᴇʀ - ʀʜᴇɴᴇʏᴇ & ɢᴏᴏsᴇ", 0, 50, 0);
                             }
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
                             break;
                         case 3520:
                             for(Player p : Bukkit.getOnlinePlayers()){
-                                p.sendTitle("§9§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ʙᴜɪʟᴅᴇʀ - ᴊᴀʏᴅʀᴀᴡs", 0, 50, 0);
+                                p.sendTitle("§d§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ᴍᴜsɪᴄ - ᴇᴀɢʟᴇᴀɢʟᴇ & ᴢᴏɪᴅʏ", 0, 50, 20);
                             }
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
                             break;
                         case 3480:
                             for(Player p : Bukkit.getOnlinePlayers()){
-                                p.sendTitle("§9§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ʙᴜɪʟᴅᴇʀ - ɢᴏᴏsᴇ", 0, 50, 0);
+                                p.sendTitle("§a§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "sᴜᴘᴘᴏʀᴛ - ᴡᴇᴄʜᴏᴋᴇᴏɴᴍɪʟᴋ & ʟᴇᴍᴏɴᴘʜʀᴏɢɢɢ", 0, 50, 0);
                             }
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
                             break;
                         case 3440:
                             for(Player p : Bukkit.getOnlinePlayers()){
-                                p.sendTitle("§9§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ʙᴜɪʟᴅᴇʀ - ᴍᴏᴏsᴇ", 0, 50, 0);
+                                p.sendTitle("§a§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "sᴜᴘᴘᴏʀᴛ - ᴀᴊx & ᴊᴜʟᴇs & ᴘɪɢɢʟᴇs", 0, 50, 0);
                             }
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
                             break;
                         case 3400:
                             for(Player p : Bukkit.getOnlinePlayers()){
-                                p.sendTitle("§9§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ʙᴜɪʟᴅᴇʀ - ᴊᴇsᴛᴇᴅ", 0, 50, 0);
+                                p.sendTitle("§b§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ᴛʜᴇ ɢʟᴏʀɪᴏᴜs ᴛᴇsᴛᴇʀs", 0, 50, 20);
                             }
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
                             break;
                         case 3360:
                             for(Player p : Bukkit.getOnlinePlayers()){
-                                p.sendTitle("§a§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "sᴜᴘᴘᴏʀᴛ - ᴀᴊx", 0, 50, 0);
+                                p.sendTitle("§6§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ᴛʜᴇ ᴘᴀᴛʀᴇᴏɴs", 0, 50, 20);
+                                messagePlayer(p, """
+                                                §8
+                                                §8
+                                                §6§lThe Patreons!
+                                                §fProfPie
+                                                §fZombreyy
+                                                §fStarOun
+                                                §fLoveFromNyx
+                                                §fMrkvaMan
+                                                §fNURSEGUY
+                                                §fPepsiTrain26
+                                                §8
+                                                """);
                             }
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
                             break;
                         case 3320:
                             for(Player p : Bukkit.getOnlinePlayers()){
-                                p.sendTitle("§a§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "sᴜᴘᴘᴏʀᴛ - ᴊᴜʟᴇs", 0, 50, 20);
+                                p.sendTitle("§e§lʙʀᴏᴜɢʜᴛ ᴛᴏ ʏᴏᴜ ʙʏ", "ᴄʜᴀᴢᴢᴀɢʀᴀᴍ", 0, 50, 20);
                             }
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 1.6F);
                             break;
                         case 3280:
                             for(Player p : Bukkit.getOnlinePlayers()){
-                                p.sendTitle("§b§lsᴘᴇᴄɪᴀʟ ᴛʜᴀɴᴋs", "ᴛʜᴇ ɢʟᴏʀɪᴏᴜs ᴛᴇsᴛᴇʀs", 0, 50, 20);
+                                p.sendTitle("§e§lʙʀᴏᴜɢʜᴛ ᴛᴏ ʏᴏᴜ ʙʏ", "ᴄʜᴀᴢᴢᴀɢʀᴀᴍ &", 0, 50, 20);
                             }
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 1.8F);
                             break;
-                        case 3120:
+                        case 3240:
                             for(Player p : Bukkit.getOnlinePlayers()){
-                                p.sendTitle("§e§lʙʀᴏᴜɢʜᴛ ᴛᴏ ʏᴏᴜ ʙʏ", "ᴄʜᴀᴢᴢᴀɢʀᴀᴍ", 0, 50, 20);
+                                p.sendTitle("§e§lʙʀᴏᴜɢʜᴛ ᴛᴏ ʏᴏᴜ ʙʏ", "ᴄʜᴀᴢᴢᴀɢʀᴀᴍ & ᴘɪɢɢʟᴇs", 0, 50, 20);
                             }
-                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2);
+                            playSoundAll(Sound.BLOCK_NOTE_BLOCK_PLING, 2.0F);
                             break;
-                        case 3200, 3100, 3000, 2900, 2800, 2700, 2600:
+                        case 3208:
+                            Location aldoSpawn = new Location(Bukkit.getWorld("build"), 163.5, 143, 783.5);
+                            aldo = (LivingEntity) Bukkit.getWorld("build").spawnEntity(aldoSpawn, EntityType.ALLAY);
+                            Vector velocity = new Vector(0, 0, -0.3);
+                            Bukkit.getWorld("build").spawnParticle(Particle.CLOUD, aldo.getLocation(), 3, 0.0, 0.0, 0.0, 0);
+                            aldo.setVelocity(velocity);
+                            PotionEffect glowing = new PotionEffect(PotionEffectType.GLOWING, 20000, 0, false, false);
+                            aldo.addPotionEffect(glowing);
+                            break;
+                        case 3108:
+                            playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1F);
+                            for(Player player : Bukkit.getOnlinePlayers()){
+                                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("⏳ §f§lHello Lads.."));
+                            }
+                            break;
+                        case 3008:
+                            float random = 1F + r.nextFloat() * 0.3F;
+                            for(Player player : Bukkit.getOnlinePlayers()){
+                                if (player.getName().equals("Pers0nified")) {
+                                    player.playSound(player.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_7, 1F, random);
+                                } else {
+                                    player.playSound(player.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_6, 1F, random);
+                                }
+                                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("⏳ §f§lThe years coming to an end, so let's celebrate!"));
+                            }
+                            break;
+                        case 2908:
+                            playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1F);
+                            for(Player player : Bukkit.getOnlinePlayers()) {
+                                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("⏳ §f§lI hope you're ready to Showdown it!"));
+                            }
+                            break;
+                        case 2808:
+                            playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1F);
+                            for(Player player : Bukkit.getOnlinePlayers()){
+                                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("⏳ §f§lSo glad to see Pers0nified is the same height as me!"));
+                            }
+                            break;
+                        case 2708:
+                            playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1F);
+                            for(Player player : Bukkit.getOnlinePlayers()){
+                                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("⏳ §f§lBut hey, let's not waste time.. it's team reveals time!"));
+                            }
+                            break;
+                        case 2608:
+                            Bukkit.getWorld("build").spawnParticle(Particle.CLOUD, aldo.getLocation(), 3, 0.0, 0.0, 0.0, 0);
+                            aldo.remove();
+                            random = 1F + r.nextFloat() * 0.3F;
+                            for(Player player : Bukkit.getOnlinePlayers()){
+                                if (player.getName().equals("Pers0nified")) {
+                                    player.playSound(player.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_7, 1F, random);
+                                } else {
+                                    player.playSound(player.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_6, 1F, random);
+                                }
+                                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("⏳ §f§lLet's shake things up, make it more cinematic!"));
+                            }
+                            break;
+                        case 3199, 3100, 3000, 2900, 2800, 2700, 2600:
                             for(int[] firework : lakeFireworks) {
                                 world.getBlockAt(firework[0], firework[1]-6, firework[2]).setType(Material.REDSTONE_BLOCK);
                                 world.getBlockAt(firework[0], firework[1]-6, firework[2]).setType(Material.AIR);
                             }
                             break;
+
 
                         case 3190, 3090, 2990, 2890, 2790, 2690, 2590:
                             world.getBlockAt(172, 138, 733).setType(Material.REDSTONE_BLOCK);
@@ -3163,12 +5509,30 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 p.sendTitle("§lɪɴᴛʀᴏᴅᴜᴄɪɴɢ..", "§lᴛʜᴇ ʀᴏsᴛᴇʀ!", 20, 60, 20);
                             }
                             break;
+                        case 2220:
+                            for(Player p : getPlayers()){
+                                p.sendTitle("\uE023", "", 20, 60, 20);
+                            }
+                            break;
                         case 2160:
+                            plugin.emotesEnabled = true;
+                            for(Player p : getPlayers()){
+                                messagePlayer(p, """
+                                        §8
+                                        §8
+                                        §e§l[!] §6Emotes are now enabled. Use §a/emote §6to emote!
+                                        §8
+                                        §8
+                                        """);
+                            }
+                            startTeamsPan();
                             teamList.setLength(0);
+                            summonTeamFirework(Color.RED);
                             for(String player : TeamsConfig.get().getStringList("teams.RubyRaiders.players")){
                                 teamList.append(player).append(" ");
                                 if(Bukkit.getPlayer(player) != null) {
                                     Player p = Bukkit.getPlayer(player);
+                                    p.setGameMode(GameMode.ADVENTURE);
                                     for (Player playerShow : getPlayers()) {
                                         playerShow.showPlayer(plugin, p);
                                     }
@@ -3176,15 +5540,55 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 }
                             }
                             teamList.setLength(teamList.length()-1);
-                            for(Player player : Bukkit.getOnlinePlayers()) {
-                                player.sendTitle(getTeamDisplayName("RubyRaiders"), teamList.toString(), 0, 200, 20);
+
+                            Location theLocation = new Location(world, 163.5, 154, 788.5);
+
+                            teamNameDisplay = world.spawn(theLocation, TextDisplay.class);
+                            teamNameDisplay.setSeeThrough(true);
+                            teamNameDisplay.setText(getTeamDisplayName("RubyRaiders"));
+                            teamNameDisplay.setRotation(-180, 0);
+                            teamNameDisplay.setBackgroundColor(Color.fromARGB(0, 0, 0, 0));
+                            Quaternionf quat = new Quaternionf();
+                            Transformation transform = new Transformation(
+                                    new Vector3f(0, 0, 0),
+                                    quat,
+                                    new Vector3f(5.0f, 5.0f, 5.0f),
+                                    quat
+                            );
+
+                            teamNameDisplay.setTransformation(transform);
+
+                            theLocation.setY(153);
+
+                            playersDisplay = world.spawn(theLocation, TextDisplay.class);
+                            playersDisplay.setSeeThrough(true);
+                            playersDisplay.setText(teamList.toString());
+                            playersDisplay.setRotation(-180, 0);
+                            playersDisplay.setBackgroundColor(Color.fromARGB(0, 0, 0, 0));
+                            Quaternionf quat2 = new Quaternionf();
+                            Transformation transform2 = new Transformation(
+                                    new Vector3f(0, 0, 0),
+                                    quat2,
+                                    new Vector3f(2.0f, 2.0f, 2.0f),
+                                    quat2
+                            );
+
+                            playersDisplay.setTransformation(transform2);
+                            for(String player : TeamsConfig.get().getStringList("teams.AmberAmbushers.players")){
+                                if(Bukkit.getPlayer(player) != null) {
+                                    Player p = Bukkit.getPlayer(player);
+                                    p.sendTitle("", "§eYou're up next!", 0, 200, 0);
+                                }
                             }
+
                             break;
                         case 1960:
                             teamList.setLength(0);
+                            summonTeamFirework(Color.ORANGE);
                             for(String player : TeamsConfig.get().getStringList("teams.RubyRaiders.players")){
                                 if(Bukkit.getPlayer(player) != null) {
                                     Player p = Bukkit.getPlayer(player);
+                                    p.setGameMode(GameMode.SPECTATOR);
                                     for (Player playerHide : getPlayers()) {
                                         playerHide.hidePlayer(plugin, p);
                                     }
@@ -3195,22 +5599,33 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 teamList.append(player).append(" ");
                                 if(Bukkit.getPlayer(player) != null) {
                                     Player p = Bukkit.getPlayer(player);
+                                    p.setGameMode(GameMode.ADVENTURE);
                                     for (Player playerShow : getPlayers()) {
                                         playerShow.showPlayer(plugin, p);
                                     }
                                     p.teleport(stage2);
                                 }
                             }
-                            teamList.setLength(teamList.length()-1);
-                            for(Player player : Bukkit.getOnlinePlayers()) {
-                                player.sendTitle(getTeamDisplayName("AmberAmbushers"), teamList.toString(), 0, 200, 20);
+                            teamNameDisplay.setText(getTeamDisplayName("AmberAmbushers"));
+                            playersDisplay.setText("");
+                            if(!teamList.isEmpty()) {
+                                teamList.setLength(teamList.length() - 1);
+                                playersDisplay.setText(teamList.toString());
+                            }
+                            for(String player : TeamsConfig.get().getStringList("teams.TopazTroopers.players")){
+                                if(Bukkit.getPlayer(player) != null) {
+                                    Player p = Bukkit.getPlayer(player);
+                                    p.sendTitle("", "§eYou're up next!", 0, 200, 0);
+                                }
                             }
                             break;
                         case 1760:
                             teamList.setLength(0);
+                            summonTeamFirework(Color.YELLOW);
                             for(String player : TeamsConfig.get().getStringList("teams.AmberAmbushers.players")){
                                 if(Bukkit.getPlayer(player) != null) {
                                     Player p = Bukkit.getPlayer(player);
+                                    p.setGameMode(GameMode.SPECTATOR);
                                     for (Player playerHide : getPlayers()) {
                                         playerHide.hidePlayer(plugin, p);
                                     }
@@ -3221,22 +5636,33 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 teamList.append(player).append(" ");
                                 if(Bukkit.getPlayer(player) != null) {
                                     Player p = Bukkit.getPlayer(player);
+                                    p.setGameMode(GameMode.ADVENTURE);
                                     for (Player playerShow : getPlayers()) {
                                         playerShow.showPlayer(plugin, p);
                                     }
                                     p.teleport(stage1);
                                 }
                             }
-                            teamList.setLength(teamList.length()-1);
-                            for(Player player : Bukkit.getOnlinePlayers()) {
-                                player.sendTitle(getTeamDisplayName("TopazTroopers"), teamList.toString(), 0, 200, 20);
+                            teamNameDisplay.setText(getTeamDisplayName("TopazTroopers"));
+                            playersDisplay.setText("");
+                            if(!teamList.isEmpty()) {
+                                teamList.setLength(teamList.length() - 1);
+                                playersDisplay.setText(teamList.toString());
+                            }
+                            for(String player : TeamsConfig.get().getStringList("teams.KyaniteKillers.players")){
+                                if(Bukkit.getPlayer(player) != null) {
+                                    Player p = Bukkit.getPlayer(player);
+                                    p.sendTitle("", "§eYou're up next!", 0, 200, 0);
+                                }
                             }
                             break;
                         case 1560:
                             teamList.setLength(0);
+                            summonTeamFirework(Color.LIME);
                             for(String player : TeamsConfig.get().getStringList("teams.TopazTroopers.players")){
                                 if(Bukkit.getPlayer(player) != null) {
                                     Player p = Bukkit.getPlayer(player);
+                                    p.setGameMode(GameMode.SPECTATOR);
                                     for (Player playerHide : getPlayers()) {
                                         playerHide.hidePlayer(plugin, p);
                                     }
@@ -3247,22 +5673,33 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 teamList.append(player).append(" ");
                                 if(Bukkit.getPlayer(player) != null) {
                                     Player p = Bukkit.getPlayer(player);
+                                    p.setGameMode(GameMode.ADVENTURE);
                                     for (Player playerShow : getPlayers()) {
                                         playerShow.showPlayer(plugin, p);
                                     }
                                     p.teleport(stage2);
                                 }
                             }
-                            teamList.setLength(teamList.length()-1);
-                            for(Player player : Bukkit.getOnlinePlayers()) {
-                                player.sendTitle(getTeamDisplayName("KyaniteKillers"), teamList.toString(), 0, 200, 20);
+                            teamNameDisplay.setText(getTeamDisplayName("KyaniteKillers"));
+                            playersDisplay.setText("");
+                            if(!teamList.isEmpty()) {
+                                teamList.setLength(teamList.length() - 1);
+                                playersDisplay.setText(teamList.toString());
+                            }
+                            for(String player : TeamsConfig.get().getStringList("teams.DiamondDestroyers.players")){
+                                if(Bukkit.getPlayer(player) != null) {
+                                    Player p = Bukkit.getPlayer(player);
+                                    p.sendTitle("", "§eYou're up next!", 0, 200, 0);
+                                }
                             }
                             break;
                         case 1360:
                             teamList.setLength(0);
+                            summonTeamFirework(Color.AQUA);
                             for(String player : TeamsConfig.get().getStringList("teams.KyaniteKillers.players")){
                                 if(Bukkit.getPlayer(player) != null) {
                                     Player p = Bukkit.getPlayer(player);
+                                    p.setGameMode(GameMode.SPECTATOR);
                                     for (Player playerHide : getPlayers()) {
                                         playerHide.hidePlayer(plugin, p);
                                     }
@@ -3273,22 +5710,33 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 teamList.append(player).append(" ");
                                 if(Bukkit.getPlayer(player) != null) {
                                     Player p = Bukkit.getPlayer(player);
+                                    p.setGameMode(GameMode.ADVENTURE);
                                     for (Player playerShow : getPlayers()) {
                                         playerShow.showPlayer(plugin, p);
                                     }
                                     p.teleport(stage1);
                                 }
                             }
-                            teamList.setLength(teamList.length()-1);
-                            for(Player player : Bukkit.getOnlinePlayers()) {
-                                player.sendTitle(getTeamDisplayName("DiamondDestroyers"), teamList.toString(), 0, 200, 20);
+                            teamNameDisplay.setText(getTeamDisplayName("DiamondDestroyers"));
+                            playersDisplay.setText("");
+                            if(!teamList.isEmpty()) {
+                                teamList.setLength(teamList.length() - 1);
+                                playersDisplay.setText(teamList.toString());
+                            }
+                            for(String player : TeamsConfig.get().getStringList("teams.SapphireSoldiers.players")){
+                                if(Bukkit.getPlayer(player) != null) {
+                                    Player p = Bukkit.getPlayer(player);
+                                    p.sendTitle("", "§eYou're up next!", 0, 200, 0);
+                                }
                             }
                             break;
                         case 1160:
                             teamList.setLength(0);
+                            summonTeamFirework(Color.BLUE);
                             for(String player : TeamsConfig.get().getStringList("teams.DiamondDestroyers.players")){
                                 if(Bukkit.getPlayer(player) != null) {
                                     Player p = Bukkit.getPlayer(player);
+                                    p.setGameMode(GameMode.SPECTATOR);
                                     for (Player playerHide : getPlayers()) {
                                         playerHide.hidePlayer(plugin, p);
                                     }
@@ -3299,22 +5747,33 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 teamList.append(player).append(" ");
                                 if(Bukkit.getPlayer(player) != null) {
                                     Player p = Bukkit.getPlayer(player);
+                                    p.setGameMode(GameMode.ADVENTURE);
                                     for (Player playerShow : getPlayers()) {
                                         playerShow.showPlayer(plugin, p);
                                     }
                                     p.teleport(stage2);
                                 }
                             }
-                            teamList.setLength(teamList.length()-1);
-                            for(Player player : Bukkit.getOnlinePlayers()) {
-                                player.sendTitle(getTeamDisplayName("SapphireSoldiers"), teamList.toString(), 0, 200, 20);
+                            teamNameDisplay.setText(getTeamDisplayName("SapphireSoldiers"));
+                            playersDisplay.setText("");
+                            if(!teamList.isEmpty()) {
+                                teamList.setLength(teamList.length() - 1);
+                                playersDisplay.setText(teamList.toString());
+                            }
+                            for(String player : TeamsConfig.get().getStringList("teams.SmithsoniteSlayers.players")){
+                                if(Bukkit.getPlayer(player) != null) {
+                                    Player p = Bukkit.getPlayer(player);
+                                    p.sendTitle("", "§eYou're up next!", 0, 200, 0);
+                                }
                             }
                             break;
                         case 960:
                             teamList.setLength(0);
+                            summonTeamFirework(Color.FUCHSIA);
                             for(String player : TeamsConfig.get().getStringList("teams.SapphireSoldiers.players")){
                                 if(Bukkit.getPlayer(player) != null) {
                                     Player p = Bukkit.getPlayer(player);
+                                    p.setGameMode(GameMode.SPECTATOR);
                                     for (Player playerHide : getPlayers()) {
                                         playerHide.hidePlayer(plugin, p);
                                     }
@@ -3325,22 +5784,33 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 teamList.append(player).append(" ");
                                 if(Bukkit.getPlayer(player) != null) {
                                     Player p = Bukkit.getPlayer(player);
+                                    p.setGameMode(GameMode.ADVENTURE);
                                     for (Player playerShow : getPlayers()) {
                                         playerShow.showPlayer(plugin, p);
                                     }
                                     p.teleport(stage1);
                                 }
                             }
-                            teamList.setLength(teamList.length()-1);
-                            for(Player player : Bukkit.getOnlinePlayers()) {
-                                player.sendTitle(getTeamDisplayName("SmithsoniteSlayers"), teamList.toString(), 0, 200, 20);
+                            teamNameDisplay.setText(getTeamDisplayName("SmithsoniteSlayers"));
+                            playersDisplay.setText("");
+                            if(!teamList.isEmpty()) {
+                                teamList.setLength(teamList.length() - 1);
+                                playersDisplay.setText(teamList.toString());
+                            }
+                            for(String player : TeamsConfig.get().getStringList("teams.CrystalCrashers.players")){
+                                if(Bukkit.getPlayer(player) != null) {
+                                    Player p = Bukkit.getPlayer(player);
+                                    p.sendTitle("", "§eYou're up next!", 0, 200, 0);
+                                }
                             }
                             break;
                         case 760:
                             teamList.setLength(0);
+                            summonTeamFirework(Color.WHITE);
                             for(String player : TeamsConfig.get().getStringList("teams.SmithsoniteSlayers.players")){
                                 if(Bukkit.getPlayer(player) != null) {
                                     Player p = Bukkit.getPlayer(player);
+                                    p.setGameMode(GameMode.SPECTATOR);
                                     for (Player playerHide : getPlayers()) {
                                         playerHide.hidePlayer(plugin, p);
                                     }
@@ -3351,26 +5821,32 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 teamList.append(player).append(" ");
                                 if(Bukkit.getPlayer(player) != null) {
                                     Player p = Bukkit.getPlayer(player);
+                                    p.setGameMode(GameMode.ADVENTURE);
                                     for (Player playerShow : getPlayers()) {
                                         playerShow.showPlayer(plugin, p);
                                     }
                                     p.teleport(stage2);
                                 }
                             }
-                            teamList.setLength(teamList.length()-1);
-                            for(Player player : Bukkit.getOnlinePlayers()) {
-                                player.sendTitle(getTeamDisplayName("CrystalCrashers"), teamList.toString(), 0, 200, 20);
+                            teamNameDisplay.setText(getTeamDisplayName("CrystalCrashers"));
+                            playersDisplay.setText("");
+                            if(!teamList.isEmpty()) {
+                                teamList.setLength(teamList.length() - 1);
+                                playersDisplay.setText(teamList.toString());
                             }
                             break;
-                        case 560:
-                            teleportPlayers(TeleportConfig.get().getLocation("players.lobby"), 0);
+                        case 559:
+                            playersDisplay.remove();
+                            teamNameDisplay.remove();
                             for(Player player : getPlayers()) {
+                                player.setGameMode(GameMode.ADVENTURE);
                                 for(Player playerShow : getPlayers()){
                                     if(player != playerShow) {
                                         player.showPlayer(plugin, playerShow);
                                     }
                                 }
                             }
+                            teleportPlayers(TeleportConfig.get().getLocation("players.lobby"), 0);
                             break;
 
                         case 360:
@@ -3409,7 +5885,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             world.getBlockAt(193, 138, 793).setType(Material.REDSTONE_BLOCK);
                             world.getBlockAt(193, 138, 793).setType(Material.AIR);
                             for(Player p : Bukkit.getOnlinePlayers()){
-                                p.sendTitle("\uD83D\uDC9B", "§l  ᴛᴇsᴛ ᴇᴠᴇɴᴛ", 0, 100, 40);
+                                p.sendTitle("\uD83D\uDC9B", "§l  ʟᴀᴅsᴍᴜs", 0, 100, 40);
                             }
                             break;
                         case 320:
@@ -3424,6 +5900,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 0:
+                            plugin.emotesEnabled = false;
                             runningTimers.remove("startevent");
                             cancel();
                             break;
@@ -3436,6 +5913,79 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 0L, 1L);
 
         runningTimers.put("startevent", new AbstractMap.SimpleEntry<>(task, 91));
+    }
+
+
+    public void summonTeamFirework(Color colour){
+        double[][] fireworks = new double[][]{
+                {171.5, 150.5, 788.5},
+                {169.5, 154.5, 788.5},
+                {166.5, 156.5, 788.5},
+                {163.5, 157.5, 788.5},
+                {160.5, 156.5, 788.5},
+                {157.5, 154.5, 788.5},
+                {155.5, 150.5, 788.5}
+        };
+
+        String name = "teamfirework";
+
+        BukkitTask task2 = new BukkitRunnable() {
+            boolean forward = true;
+            int timeLeft = 89;
+            int index = 0;
+            World world = Bukkit.getWorld("build");
+            Location location = new Location(world, 171.5, 150.5, 788.5);
+            @Override
+            public void run() {
+                if(plugin.runningTimers.containsKey(name)) {
+                    if (!plugin.pausedTimers.contains(name)) {
+                        timeLeft--;
+                        plugin.runningTimers.get(name).setValue(timeLeft);
+
+                        if(timeLeft % 2 == 0 && timeLeft < 29 && index >= 0) {
+                            location.setX(fireworks[index][0]);
+                            location.setY(fireworks[index][1]);
+                            location.setZ(fireworks[index][2]);
+
+                            Firework firework = world.spawn(location, Firework.class);
+                            FireworkMeta meta = firework.getFireworkMeta();
+
+                            FireworkEffect effect = FireworkEffect.builder()
+                                    .with(FireworkEffect.Type.BURST)
+                                    .withTrail()
+                                    .flicker(false)
+                                    .withColor(colour)
+                                    .withFade(Color.WHITE)
+                                    .build();
+
+                            meta.addEffect(effect);
+                            meta.setPower(1);
+                            firework.setFireworkMeta(meta);
+
+                            if(index == 6){
+                                forward = false;
+                            }
+                            if(forward){
+                                index++;
+                            } else {
+                                index--;
+                            }
+                            firework.detonate();
+
+                        }
+                        if (timeLeft == 0) {
+                            plugin.runningTimers.remove(name);
+                            cancel();
+                        }
+                    }
+                } else {
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(plugin, 0L, 2L);
+
+        plugin.runningTimers.put(name, new AbstractMap.SimpleEntry<>(task2, 89));
     }
 
 
@@ -3522,8 +6072,66 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                 boss.addPlayer(player);
                 bossBars.put(player.getName(), boss);
             }
-
+            String text = "";
             switch (currentMode) {
+                case "Voting":
+                    if(plugin.runningTimers.containsKey("voting")){
+                        text = getTimer("voting");
+                    } else {
+                        text = "00:00";
+                    }
+                    width = FontUtils.getStringWidth("\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_points%"));
+                    blocks = Math.round((float) width / 6);
+                    output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(blocks)).append("\uD83C\uDF59");
+                    output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
+
+                    output.append("§e§l\uD83D\uDCB0").append(PlaceholderAPI.setPlaceholders(player, "%mce24_points%"));
+                    output.append(" ".repeat(5)).append("§r");
+
+                    width = FontUtils.getStringWidth("ᴛʜᴇ ᴠᴏᴛɪɴɢ ᴘᴀʟᴇᴛᴛᴇ");
+                    blocks = Math.round((float) width / 6);
+                    output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(blocks)).append("\uD83C\uDF59");
+                    output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
+
+                    output.append("§rᴛʜᴇ ᴠᴏᴛɪɴɢ ᴘᴀʟᴇᴛᴛᴇ");
+                    output.append(" ".repeat(6)).append("§r");
+
+                    width = FontUtils.getStringWidth("⏱ " + text);
+                    blocks = Math.round((float) width / 6);
+                    output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(blocks)).append("\uD83C\uDF59");
+                    output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
+
+                    output.append("§a§l⏱ §a").append(text);
+                    break;
+                case "Lobby":
+                    if(plugin.runningTimers.containsKey("break")){
+                        text = getTimer("break");
+                    } else {
+                        text = "00:00";
+                    }
+                    width = FontUtils.getStringWidth("\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_points%"));
+                    blocks = Math.round((float) width / 6);
+                    output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(blocks)).append("\uD83C\uDF59");
+                    output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
+
+                    output.append("§e§l\uD83D\uDCB0").append(PlaceholderAPI.setPlaceholders(player, "%mce24_points%"));
+                    output.append(" ".repeat(5)).append("§r");
+
+                    width = FontUtils.getStringWidth("sʜᴏᴡᴅᴏᴡɴ ᴘᴀʀᴋ");
+                    blocks = Math.round((float) width / 6);
+                    output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(blocks)).append("\uD83C\uDF59");
+                    output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
+
+                    output.append("§rsʜᴏᴡᴅᴏᴡɴ ᴘᴀʀᴋ");
+                    output.append(" ".repeat(6)).append("§r");
+
+                    width = FontUtils.getStringWidth("⏱ Interval: " + text);
+                    blocks = Math.round((float) width / 6);
+                    output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(blocks)).append("\uD83C\uDF59");
+                    output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
+
+                    output.append("§a§l⏱ §aInterval: ").append(text);
+                    break;
                 case "Slime Golf":
                     width = FontUtils.getStringWidth("\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"));
                     blocks = Math.round((float) width / 6);
@@ -3736,8 +6344,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
         List<Material> bridgeBlocks = new ArrayList<>();
 
-        for (int i = 1125 + xMultiplier; i <= 1131 + xMultiplier; i++) {
-            for (int j = 367 - (level * 38); j >= 353 - (level * 38); j--) {
+        for (int i = 254 + xMultiplier; i <= 260 + xMultiplier; i++) {
+            for (int j = 677 - (level * 38); j >= 663 - (level * 38); j--) {
                 for(int k = -21; k <= -12; k++) {
                     if (!bridgeBlocks.contains(Bukkit.getServer().getWorld("build").getBlockAt(i, k, j).getType())) {
                         bridgeBlocks.add(Bukkit.getServer().getWorld("build").getBlockAt(i, k, j).getType());
@@ -3877,13 +6485,17 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                     }
                                 }
                                 for (int x = (teamJump.get(team)[0]) - 3; x <= (teamJump.get(team)[0]) + 3; x++) {
-                                    for (int y = teamJump.get(team)[1] - 2; y <= teamJump.get(team)[1] + 7; y++) {
+                                    for (int y = teamJump.get(team)[1] - 2; y <= teamJump.get(team)[1] + 9; y++) {
                                         Bukkit.getWorld("build").getBlockAt(x, y, (plugin.teamJump.get(team)[2] - (38 * (jump - 1))) - 16).setType(Material.BARRIER);
                                     }
                                 }
                             } else {
+                                theLocation.setZ(theLocation.getZ() - 2);
+                                theLocation.setYaw(180);
+                                theLocation.setYaw(0);
                                 for (String player : TeamsConfig.get().getStringList("teams." + team + ".players")) {
                                     if (Bukkit.getPlayer(player) != null) {
+                                        plugin.bridgeJumpRegister.get(plugin.bridgeJumpRegister.size()).add(player);
                                         Player p = Bukkit.getPlayer(player);
                                         if (!bridgeJumpRegister.get(jump).contains(player)) {
                                             theLocation.setYaw(180);
@@ -3894,11 +6506,34 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                         p.playSound(p.getLocation(), Sound.ENTITY_BAT_DEATH, 10, 1);
                                         messagePlayer(p, "§4✖ §7| §cYour entire team was not able to complete the jump in time.");
                                         p.setGameMode(GameMode.SPECTATOR);
-                                        plugin.bridgeJumpRegister.get(plugin.bridgeJumpRegister.size()).add(player);
                                         p.sendTitle("§aFINISH", "", 0, 100, 5);
                                         plugin.messagePlayer(p, "§e\uD83D\uDCB030 §8| §a§lCourse Completed!");
                                     }
                                 }
+                                Integer placement = plugin.bridgeJumpCheckpoints.get(plugin.bridgeJumpCheckpoints.size());
+                                switch (placement) {
+                                    case 1:
+                                        for (Player p : Bukkit.getOnlinePlayers()) {
+                                            plugin.messagePlayer(p, "§8| §e\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(team) + "§e was §e§l1st §eto finish!");
+                                        }
+                                        break;
+                                    case 2:
+                                        for (Player p : Bukkit.getOnlinePlayers()) {
+                                            plugin.messagePlayer(p, "§8| §7\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(team) + "§e was §7§l2nd §eto finish!");
+                                        }
+                                        break;
+                                    case 3:
+                                        for (Player p : Bukkit.getOnlinePlayers()) {
+                                            plugin.messagePlayer(p, "§8| §6\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(team) + "§e was §6§l3rd §eto finish!");
+                                        }
+                                        break;
+                                    default:
+                                        for (Player p : Bukkit.getOnlinePlayers()) {
+                                            plugin.messagePlayer(p, "§8| §f\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(team) + "§e was §f§l" + placement + "th §eto finish!");
+                                        }
+                                        break;
+                                }
+                                plugin.bridgeJumpCheckpoints.replace(plugin.bridgeJumpCheckpoints.size(), placement + 1);
                             }
                             plugin.buildTimeStamps.put(team, plugin.runningTimers.get("bridgebuilders").getValue());
                             newDisplay.remove();
@@ -4024,7 +6659,552 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         runningTimers.put("HISTR", new AbstractMap.SimpleEntry<>(task, 26));
     }
 
+    public void setPreviousPlacements(){
+        previousPlacements.clear();
+        List<String> indivNames = new ArrayList<>(plugin.getSortedIndivs().keySet());
+        int index = 0;
+        for(String player : indivNames){
+            index++;
+            previousPlacements.put(player, index);
+        }
+    }
 
+    public void setCurrentPlacements() {
+        currentPlacements.clear();
+        List<String> indivNames = new ArrayList<>(plugin.getSortedIndivs().keySet());
+        int index = 0;
+        for(String player : indivNames){
+            index++;
+            currentPlacements.put(player, index);
+        }
+    }
+
+
+    public void summonVotingPiece(int index, BlockData colour) {
+
+        World world = Bukkit.getWorld("build");
+
+        int x = 187 + index;
+        int y = 139;
+        int z = 713;
+
+        List<BlockDisplay> blockList = new ArrayList<>();
+        BlockDisplay tempBD;
+
+        for(int i = z; i <= z + 43; i++){
+            tempBD = (BlockDisplay) world.spawnEntity(new Location(world, x, y, i), EntityType.BLOCK_DISPLAY);
+            BlockData sourceData = colour;
+            tempBD.setBlock(sourceData);
+            blockList.add(tempBD);
+        }
+
+        Vector3f translation = new Vector3f(0.5F, 0.5F, 0.5F);
+        Quaternionf leftRotation = new Quaternionf();
+        Quaternionf rightRotation = new Quaternionf();
+        Vector3f scaleVector = new Vector3f(0.0F, 0.0F, 0.0F);
+
+        Transformation transformation = new Transformation(translation, leftRotation, scaleVector, rightRotation);
+        for(BlockDisplay bd : blockList){
+            bd.setTransformation(transformation);
+        }
+
+        String name = "build" + index;
+
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 20;
+            @Override
+            public void run() {
+                if(plugin.runningTimers.containsKey(name)) {
+                    if (!plugin.pausedTimers.contains(name)) {
+                        timeLeft--;
+                        plugin.runningTimers.get(name).setValue(timeLeft);
+
+                        transformation.getScale().add(0.05F,0.05F,0.05F);
+                        transformation.getTranslation().sub(0.025F, 0.025F, 0.025F);
+
+                        if (timeLeft == 1) {
+                            for (int i = z; i <= z + 43; i++) {
+                                world.getBlockAt(x, y, i).setType(colour.getMaterial());
+                            }
+                        } else if(timeLeft == 0){
+                            for(BlockDisplay bd : blockList){
+                                bd.remove();
+                            }
+                            plugin.runningTimers.remove(name);
+                            cancel();
+                        } else {
+                            for(BlockDisplay bd : blockList){
+                                bd.setTransformation(transformation);
+                            }
+                        }
+                    }
+                } else {
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(plugin, 0L, 1L);
+
+        plugin.runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, 21));
+    }
+
+    public void removeVotingPiece(int index) {
+
+        World world = Bukkit.getWorld("build");
+
+        int x = 187 + index;
+        int y = 139;
+        int z = 713;
+
+        List<BlockDisplay> blockList = new ArrayList<>();
+        BlockDisplay tempBD;
+
+        for(int i = z; i <= z + 43; i++){
+            tempBD = (BlockDisplay) world.spawnEntity(new Location(world, x, y, i), EntityType.BLOCK_DISPLAY);
+            BlockData sourceData = world.getBlockAt(x, y, i).getBlockData();
+            tempBD.setBlock(sourceData);
+            blockList.add(tempBD);
+        }
+
+        Vector3f translation = new Vector3f(0.0F, 0.0F, 0.0F);
+        Quaternionf leftRotation = new Quaternionf();
+        Quaternionf rightRotation = new Quaternionf();
+        Vector3f scaleVector = new Vector3f(1.0F, 1.0F, 1.0F);
+
+        Transformation transformation = new Transformation(translation, leftRotation, scaleVector, rightRotation);
+        for(BlockDisplay bd : blockList){
+            bd.setTransformation(transformation);
+        }
+
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            for(int i = z; i <= z + 43; i++) {
+                world.getBlockAt(x, y, i).setType(Material.BARRIER);
+            }
+        }, 1L);
+
+        String name = "buildremove" + index;
+
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = 20;
+            @Override
+            public void run() {
+                if(plugin.runningTimers.containsKey(name)) {
+                    if (!plugin.pausedTimers.contains(name)) {
+                        timeLeft--;
+                        plugin.runningTimers.get(name).setValue(timeLeft);
+
+                        transformation.getScale().sub(0.05F,0.05F,0.05F);
+                        transformation.getTranslation().add(0.025F, 0.025F, 0.025F);
+
+                        for(BlockDisplay bd : blockList){
+                            bd.setTransformation(transformation);
+                        }
+
+                        if (timeLeft == 0) {
+                            for(BlockDisplay bd : blockList){
+                                bd.remove();
+                            }
+                            plugin.runningTimers.remove(name);
+                            cancel();
+                        }
+                    }
+                } else {
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(plugin, 0L, 1L);
+
+        plugin.runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, 21));
+    }
+
+
+    public void startFinale(){
+        int[][] modeTitles = {
+                {1861, 167, 889},
+                {1860, 167, 902},
+                {1852, 167, 913},
+                {1838, 167, 918},
+                {1824, 167, 913},
+                {1816, 167, 902},
+                {1815, 167, 889}
+        };
+
+        int[][] modeSlots = {
+                {1864, 154, 885},
+                {1863, 154, 898},
+                {1855, 154, 909},
+                {1841, 154, 914},
+                {1827, 154, 909},
+                {1819, 154, 898},
+                {1818, 154, 885}
+        };
+
+        HashMap<String, Integer> modeIndexes = new HashMap<>();
+
+        modeIndexes.put("Craftalot", 1);
+        modeIndexes.put("Colour Dash", 2);
+        modeIndexes.put("Bridge Builders", 3);
+        modeIndexes.put("Survival Games", 4);
+        modeIndexes.put("Gub Game", 5);
+        modeIndexes.put("Zoomo Go", 6);
+        modeIndexes.put("Slime Golf", 7);
+
+        TextDisplay[] displays = new TextDisplay[modeTitles.length];
+
+
+        finaleRound = 1;
+        String name = "finalestart";
+        List<String> gameOrder = new ArrayList<>();
+        gameOrder.addAll(GameOrderConfig.get().getStringList("order"));
+
+        BukkitTask task = new BukkitRunnable() {
+            List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
+            String firstTeam = leaderteams.getFirst();
+            String secondTeam = leaderteams.get(1);
+            List<String> firstPlayers = TeamsConfig.get().getStringList("teams." + firstTeam + ".players");
+            List<String> secondPlayers = TeamsConfig.get().getStringList("teams." + secondTeam + ".players");
+
+
+            World world = Bukkit.getWorld("build");
+            int index1 = 0;
+            int index2 = 0;
+            int gameIndex = 0;
+            int timeLeft = 101;
+            @Override
+            public void run() {
+                if(plugin.runningTimers.containsKey(name)) {
+                    if (!plugin.pausedTimers.contains(name)) {
+                        timeLeft--;
+                        plugin.runningTimers.get(name).setValue(timeLeft);
+
+                        switch(timeLeft){
+                            case 100:
+                                finaleScores.put(firstTeam, 0);
+                                finaleScores.put(secondTeam, 0);
+
+                                for(int[] modeSlot : modeSlots) {
+                                    world.getBlockAt(modeSlot[0], modeSlot[1], modeSlot[2]).setType(Material.REDSTONE_BLOCK);
+                                    world.getBlockAt(modeSlot[0], modeSlot[1], modeSlot[2]).setType(Material.AIR);
+                                }
+
+                                PotionEffect lev = new PotionEffect(PotionEffectType.LEVITATION, 200, 1);
+                                PotionEffect slowfall = new PotionEffect(PotionEffectType.SLOW_FALLING, 300, 1);
+                                for(Player p : getPlayers()){
+                                    p.addPotionEffect(lev);
+                                    p.addPotionEffect(slowfall);
+                                }
+                                teleportPlayers(TeleportConfig.get().getLocation("players.finalepodium"), 10);
+                                teleportSpectators(TeleportConfig.get().getLocation("spectators.finalepodium"), 10);
+                                break;
+                            case 90:
+                                playSoundAll(Sound.BLOCK_END_PORTAL_SPAWN, 1F);
+                                break;
+
+                            case 85, 84, 83, 82:
+                                if(Bukkit.getPlayer(secondPlayers.get(index1)) != null){
+                                    Player p = Bukkit.getPlayer(secondPlayers.get(index1));
+                                    p.teleport(new Location(world, 1832 + index1, 157, 895, 180, -15));
+                                }
+                                for(int x = 1824; x <= 1837; x++){
+                                    for(int y = 151; y <= 153 + (index1*2); y++){
+                                        for(int z = 891; z <= 899; z++){
+                                            if(world.getBlockAt(x,y,z).getType().equals(Material.WHITE_CONCRETE)){
+                                                world.getBlockAt(x,y,z).setType(teamConcrete.get(secondTeam));
+                                            }
+                                            if(world.getBlockAt(x,y,z).getType().equals(Material.WHITE_WOOL)){
+                                                world.getBlockAt(x,y,z).setType(teamWool.get(secondTeam));
+                                            }
+
+                                        }
+
+                                    }
+                                }
+                                index1++;
+                                if(index1 == 4){
+                                    for(Player p : Bukkit.getOnlinePlayers()){
+                                        messagePlayer(p, """
+                                            §8
+                                            §8
+                                            §r""" + getTeamDisplayName(secondTeam) + """
+                                            §f""" + secondPlayers.getFirst() + ", " + secondPlayers.get(1) + ", " + secondPlayers.get(2) + ", " + secondPlayers.get(3) + """
+                                            §8
+                                            """);
+                                    }
+                                }
+                                break;
+                            case 80, 79, 78, 77:
+                                if(Bukkit.getPlayer(firstPlayers.get(index2)) != null){
+                                    Player p = Bukkit.getPlayer(firstPlayers.get(index2));
+                                    p.teleport(new Location(world, 1842 + index2, 157, 895, 180, -15));
+                                }
+                                for(int x = 1839; x <= 1852; x++){
+                                    for(int y = 151; y <= 153 + (index2*2); y++){
+                                        for(int z = 891; z <= 899; z++){
+                                            if(world.getBlockAt(x,y,z).getType().equals(Material.WHITE_CONCRETE)){
+                                                world.getBlockAt(x,y,z).setType(teamConcrete.get(firstTeam));
+                                            }
+                                            if(world.getBlockAt(x,y,z).getType().equals(Material.WHITE_WOOL)){
+                                                world.getBlockAt(x,y,z).setType(teamWool.get(firstTeam));
+                                            }
+
+                                        }
+
+                                    }
+                                }
+                                index2++;
+                                if(index2 == 4){
+                                    for(Player p : Bukkit.getOnlinePlayers()){
+                                        messagePlayer(p, """
+                                            §8
+                                            §8
+                                            §r""" + getTeamDisplayName(firstTeam) + """
+                                            §f""" + firstPlayers.getFirst() + ", " + firstPlayers.get(1) + ", " + firstPlayers.get(2) + ", " + firstPlayers.get(3) + """
+                                            §8
+                                            """);
+                                    }
+                                }
+                                break;
+                            case 74:
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    p.sendTitle("", getTeamDisplayName(firstTeam) + " §evs " + getTeamDisplayName(secondTeam), 0, 60, 20);
+                                }
+                                break;
+                            case 70:
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    p.sendTitle("§f§lɢᴀᴍᴇ ᴏʀᴅᴇʀ:", "§7§oLoading..", 0, 80, 20);
+                                }
+                                playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1F);
+                                for(Player player : Bukkit.getOnlinePlayers()){
+                                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("⏳ §f§lHere's the finale game order!"));
+                                }
+                                break;
+                            case 66, 63, 60, 57, 54, 51, 48:
+                                String game = gameOrder.get(gameIndex);
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    p.sendTitle("§f§lɢᴀᴍᴇ ᴏʀᴅᴇʀ:", "§e§l" + gameOrder.get(gameIndex), 0, 80, 20);
+                                }
+                                world.getBlockAt(modeSlots[gameIndex][0], modeSlots[gameIndex][1] - modeIndexes.get(game), modeSlots[gameIndex][2]).setType(Material.REDSTONE_BLOCK);
+                                world.getBlockAt(modeSlots[gameIndex][0], modeSlots[gameIndex][1] - modeIndexes.get(game), modeSlots[gameIndex][2]).setType(Material.AIR);
+
+                                displays[gameIndex] = world.spawn(new Location(world, modeTitles[gameIndex][0], modeTitles[gameIndex][1], modeTitles[gameIndex][2]), TextDisplay.class);
+                                displays[gameIndex].setSeeThrough(true);
+                                displays[gameIndex].setText(plugin.modeLogos.get(game));
+                                displays[gameIndex].setBillboard(Display.Billboard.CENTER);
+                                displays[gameIndex].setBackgroundColor(Color.fromARGB(0, 0, 0, 0));
+                                Quaternionf quat = new Quaternionf();
+                                Transformation transform = new Transformation(
+                                        new Vector3f(0, 0, 0),
+                                        quat,
+                                        new Vector3f(5.0f, 5.0f, 5.0f),
+                                        quat
+                                );
+
+                                playSoundAll(Sound.ENTITY_ALLAY_AMBIENT_WITHOUT_ITEM, 1F);
+                                for(Player player : Bukkit.getOnlinePlayers()){
+                                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("⏳ §f§l" + game));
+                                }
+
+                                displays[gameIndex].setTransformation(transform);
+
+                                gameIndex++;
+                                break;
+
+                            case 30:
+                                String firstGame = gameOrder.getFirst();
+                                switch(firstGame){
+                                    case "Slime Golf":
+                                        startSlimeGolfFinale();
+                                        break;
+                                    case "Survival Games":
+
+                                        break;
+                                    case "Gub Game":
+
+                                        break;
+                                    case "Colour Dash":
+
+                                        break;
+                                    case "Craftalot":
+
+                                        break;
+                                    case "Bridge Builders":
+
+                                        break;
+                                    case "Zoomo Go":
+
+                                        break;
+                                }
+                        }
+
+
+                        if (timeLeft == 25) {
+                            plugin.runningTimers.remove(name);
+                            cancel();
+                        }
+                    }
+                } else {
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(plugin, 0L, 20L);
+
+        plugin.runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, 21));
+
+
+//        teamNameDisplay = world.spawn(theLocation, TextDisplay.class);
+//        teamNameDisplay.setSeeThrough(true);
+//        teamNameDisplay.setText(getTeamDisplayName("RubyRaiders"));
+//        teamNameDisplay.setBackgroundColor(Color.fromARGB(0, 0, 0, 0));
+//        Quaternionf quat = new Quaternionf();
+//        Transformation transform = new Transformation(
+//                new Vector3f(0, 0, 0),
+//                quat,
+//                new Vector3f(5.0f, 5.0f, 5.0f),
+//                quat
+//        );
+//
+//        teamNameDisplay.setTransformation(transform);
+
+    }
+
+    public void finaleRoundOver(String winningTeam){
+        List<String> gameOrder = new ArrayList<>();
+        gameOrder.addAll(GameOrderConfig.get().getStringList("order"));
+        List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
+        String firstTeam = leaderteams.getFirst();
+        String secondTeam = leaderteams.get(1);
+        String losingTeam;
+        if(Objects.equals(winningTeam, firstTeam)){
+            losingTeam = secondTeam;
+        } else {
+            losingTeam = firstTeam;
+        }
+        String winningTeamPrefix = TeamsConfig.get().getString("teams." + winningTeam + ".colour") + "§l";
+        String losingTeamPrefix = TeamsConfig.get().getString("teams." + losingTeam + ".colour") + "§l";
+
+        finaleScores.put(winningTeam, finaleScores.get(winningTeam)+1);
+        if(finaleScores.get(winningTeam) == 4){
+            for(Player p : Bukkit.getOnlinePlayers()){
+                p.sendTitle(getTeamDisplayName(winningTeam), "§f§lᴡɪɴ sʜᴏᴡᴅᴏᴡɴ", 0, 120, 40);
+            }
+        } else {
+            for(Player p : Bukkit.getOnlinePlayers()){
+                p.sendTitle("§c§lROUND OVER", winningTeamPrefix + finaleScores.get(winningTeam) + "§f - " + losingTeamPrefix + finaleScores.get(losingTeam) , 0, 60, 20);
+            }
+        }
+        pvpEnabled = false;
+        doubleJumpEnabled = false;
+        currentBorderRadius = 236;
+        newBorderRadius = 236;
+        killRecord.clear();
+        if(currentMode.equals("Slime Golf")){
+            for(Slime slime : slimeGolfSlime){
+                slime.remove();
+            }
+        }
+        try {
+            unGlowTeams();
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+        for (Player player : getPlayers()) {
+            for (PotionEffect effect : player.getActivePotionEffects()) {
+                player.removePotionEffect(effect.getType());
+            }
+            bossBars.get(player.getName()).removePlayer(player);
+            bossBars.put(player.getName(), null);
+            player.setGameMode(GameMode.SPECTATOR);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> player.setFlying(true), 1L);
+            healFeedPlayer(player);
+
+        }
+        String name = "finaleroundover";
+        BukkitTask task = new BukkitRunnable() {
+            List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
+            String firstTeam = leaderteams.getFirst();
+            String secondTeam = leaderteams.get(1);
+            List<String> firstPlayers = TeamsConfig.get().getStringList("teams." + firstTeam + ".players");
+            List<String> secondPlayers = TeamsConfig.get().getStringList("teams." + secondTeam + ".players");
+
+
+            World world = Bukkit.getWorld("build");
+            int timeLeft = 51;
+            @Override
+            public void run() {
+                if(plugin.runningTimers.containsKey(name)) {
+                    if (!plugin.pausedTimers.contains(name)) {
+                        timeLeft--;
+                        plugin.runningTimers.get(name).setValue(timeLeft);
+
+                        switch(timeLeft){
+                            case 50:
+                                PotionEffect lev = new PotionEffect(PotionEffectType.LEVITATION, 200, 1);
+                                PotionEffect slowfall = new PotionEffect(PotionEffectType.SLOW_FALLING, 300, 1);
+                                for(Player p : getPlayers()){
+                                    p.addPotionEffect(lev);
+                                    p.addPotionEffect(slowfall);
+                                }
+                                teleportPlayers(TeleportConfig.get().getLocation("players.finalepodium"), 10);
+                                teleportSpectators(TeleportConfig.get().getLocation("spectators.finalepodium"), 10);
+                                break;
+                            case 40:
+                                for(String player : secondPlayers) {
+                                    if (Bukkit.getPlayer(player) != null) {
+                                        Player p = Bukkit.getPlayer(player);
+                                        p.teleport(new Location(world, 1834, 157, 895, 180, -15));
+                                    }
+                                }
+                                for(String player : secondPlayers) {
+                                    if (Bukkit.getPlayer(player) != null) {
+                                        Player p = Bukkit.getPlayer(player);
+                                        p.teleport(new Location(world, 1844, 157, 895, 180, -15));
+                                    }
+                                }
+                                break;
+                            case 30:
+                                finaleRound++;
+                                String firstGame = gameOrder.get(finaleRound);
+                                switch(firstGame){
+                                    case "Slime Golf":
+                                        startSlimeGolfFinale();
+                                        break;
+                                    case "Survival Games":
+
+                                        break;
+                                    case "Gub Game":
+
+                                        break;
+                                    case "Colour Dash":
+
+                                        break;
+                                    case "Craftalot":
+
+                                        break;
+                                    case "Bridge Builders":
+
+                                        break;
+                                    case "Zoomo Go":
+
+                                        break;
+                                }
+                                break;
+                        }
+                        if (timeLeft == 25) {
+                            plugin.runningTimers.remove(name);
+                            cancel();
+                        }
+                    }
+                } else {
+                    cancel();
+                }
+            }
+
+        }.runTaskTimer(plugin, 0L, 20L);
+
+        plugin.runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, 21));
+    }
 }
 
 

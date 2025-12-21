@@ -2,6 +2,7 @@ package me.chazzagram.showdown2.listeners;
 
 import me.chazzagram.showdown2.Showdown2;
 import me.chazzagram.showdown2.files.PlayerConfig;
+import me.chazzagram.showdown2.files.PlayerInfoConfig;
 import org.bukkit.*;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Firework;
@@ -41,11 +42,17 @@ public class ReadyEvent implements Listener {
                     }
                     if (plugin.readyPlayers.get(e.getPlayer().getName()) == 10) {
                         plugin.readyPlayerCount++;
-                        for (Player player : plugin.getPlayers()) {
+                        for (Player player : Bukkit.getOnlinePlayers()) {
                             plugin.messagePlayer(player, plugin.getPlayerDisplayName(e.getPlayer().getName()) + " §fis ready!");
                         }
                         plugin.messagePlayer(e.getPlayer(), "§aYou are now ready!");
                         e.getPlayer().sendTitle("§a§lYOU'RE READY!", "(§a#" + plugin.readyPlayerCount + "§f) " + congratsMessages[rand.nextInt(congratsMessages.length)], 0, 60, 40);
+                        if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(e.getPlayer().getName())){
+                            if(plugin.readyPlayerCount < PlayerInfoConfig.get().getInt("players." + e.getPlayer().getName() + ".bestreadycheck")) {
+                                PlayerInfoConfig.get().set("players." + e.getPlayer().getName() + ".bestreadycheck", plugin.readyPlayerCount);
+                                PlayerInfoConfig.save();
+                            }
+                        }
                         plugin.summonFirework(e.getPlayer().getLocation(), PlayerConfig.get().getString("players." + e.getPlayer().getName() + ".team"));
                     }
                 }
@@ -66,11 +73,17 @@ public class ReadyEvent implements Listener {
                     }
                     if (plugin.readyPlayers.get(e.getPlayer().getName()) == 10) {
                         plugin.readyPlayerCount++;
-                        for (Player player : plugin.getPlayers()) {
+                        for (Player player : Bukkit.getOnlinePlayers()) {
                             plugin.messagePlayer(player, plugin.getPlayerDisplayName(e.getPlayer().getName()) + " §fis ready!");
                         }
                         plugin.messagePlayer(e.getPlayer(), "§aYou are now ready!");
                         e.getPlayer().sendTitle("§a§lYOU'RE READY!", "(§a#" + plugin.readyPlayerCount + "§f) " + congratsMessages[rand.nextInt(congratsMessages.length)], 0, 60, 40);
+                        if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(e.getPlayer().getName())){
+                            if(plugin.readyPlayerCount < PlayerInfoConfig.get().getInt("players." + e.getPlayer().getName() + ".bestreadycheck")) {
+                                PlayerInfoConfig.get().set("players." + e.getPlayer().getName() + ".bestreadycheck", plugin.readyPlayerCount);
+                                PlayerInfoConfig.save();
+                            }
+                        }
                         plugin.summonFirework(e.getPlayer().getLocation(), PlayerConfig.get().getString("players." + e.getPlayer().getName() + ".team"));
                     }
                 }
@@ -89,11 +102,17 @@ public class ReadyEvent implements Listener {
                     }
                     if (plugin.readyPlayers.get(p.getName()) == 10) {
                         plugin.readyPlayerCount++;
-                        for (Player player : plugin.getPlayers()) {
+                        for (Player player : Bukkit.getOnlinePlayers()) {
                             plugin.messagePlayer(player, plugin.getPlayerDisplayName(p.getName()) + " §fis ready!");
                         }
                         plugin.messagePlayer(p, "§aYou are now ready!");
                         p.sendTitle("§a§lYOU'RE READY!", "(§a#" + plugin.readyPlayerCount + "§f) " + congratsMessages[rand.nextInt(congratsMessages.length)], 0, 60, 40);
+                        if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())){
+                            if(plugin.readyPlayerCount < PlayerInfoConfig.get().getInt("players." + p.getName() + ".bestreadycheck")) {
+                                PlayerInfoConfig.get().set("players." + p.getName() + ".bestreadycheck", plugin.readyPlayerCount);
+                                PlayerInfoConfig.save();
+                            }
+                        }
                         plugin.summonFirework(p.getLocation(), PlayerConfig.get().getString("players." + p.getName() + ".team"));
                     }
                 }
@@ -117,11 +136,17 @@ public class ReadyEvent implements Listener {
                         }
                         if (plugin.readyPlayers.get(p.getName()) == 10) {
                             plugin.readyPlayerCount++;
-                            for (Player player : plugin.getPlayers()) {
+                            for (Player player : Bukkit.getOnlinePlayers()) {
                                 plugin.messagePlayer(player, plugin.getPlayerDisplayName(p.getName()) + " §fis ready!");
                             }
                             plugin.messagePlayer(p, "§aYou are now ready!");
                             p.sendTitle("§a§lYOU'RE READY!", "(§a#" + plugin.readyPlayerCount + "§f) " + congratsMessages[rand.nextInt(congratsMessages.length)], 0, 60, 40);
+                            if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(event.getPlayer().getName())){
+                                if(plugin.readyPlayerCount < PlayerInfoConfig.get().getInt("players." + event.getPlayer().getName() + ".bestreadycheck")) {
+                                    PlayerInfoConfig.get().set("players." + event.getPlayer().getName() + ".bestreadycheck", plugin.readyPlayerCount);
+                                    PlayerInfoConfig.save();
+                                }
+                            }
                             plugin.summonFirework(p.getLocation(), PlayerConfig.get().getString("players." + p.getName() + ".team"));
                         }
                     }

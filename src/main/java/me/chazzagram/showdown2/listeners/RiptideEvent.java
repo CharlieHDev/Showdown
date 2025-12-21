@@ -42,7 +42,12 @@ public class RiptideEvent implements Listener {
             if (blockType == Material.WATER || blockType == Material.KELP || blockType == Material.SEAGRASS) {
 
                 Vector direction = player.getLocation().getDirection().normalize();
-                Vector velocity = direction.multiply(3);
+                Vector velocity = direction.multiply(1);
+                if (plugin.currentMode.equals("Craftalot")) {
+                    velocity = direction.multiply(3);
+                } else if (plugin.currentMode.equals("Colour Dash")) {
+                    velocity = direction.multiply(2.5);
+                }
                 player.setVelocity(velocity);
 
                 player.getWorld().playSound(player.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_1, 1.0f, 1.0f);

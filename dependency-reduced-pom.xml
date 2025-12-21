@@ -4,7 +4,7 @@
   <groupId>me.chazzagram</groupId>
   <artifactId>Showdown2</artifactId>
   <name>Showdown2</name>
-  <version>0.0.0</version>
+  <version>LADS.0.0</version>
   <build>
     <defaultGoal>clean package</defaultGoal>
     <resources>

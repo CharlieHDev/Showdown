@@ -48,12 +48,24 @@ public class CraftalotEvent implements Listener {
                     if(items.contains(plugin.itemToCraft.get(p.getName()))){
                         plugin.craftTop.put(p.getName(), plugin.craftTop.get(p.getName()) + 1);
                         String currentItem = plugin.itemToCraft.get(p.getName()).replaceAll("_", " ");
-                        plugin.earnPoints(p.getName(), 35, true);
+                        plugin.earnPoints(p.getName(), 30, true);
                         Random r = new Random();
-                        List<String> craftList = CraftalotConfig.get().getStringList("craftlist");
-                        plugin.itemToCraft.put(p.getName(), craftList.get(r.nextInt(craftList.size())));
+                        String tunnelCount;
+                        if((plugin.craftTop.get(p.getName())+1) % 3 == 0){
+                            tunnelCount = "twotunnel";
+                        } else {
+                            tunnelCount = "onetunnel";
+                        }
+                        List<String> craftList = CraftalotConfig.get().getStringList("craftlist." + tunnelCount);
+                        String itemToCraft;
+                        List<String> playerCrafts = plugin.craftLists.get(p.getName());
+                        do {
+                            itemToCraft = craftList.get(r.nextInt(craftList.size()));
+                        }while(playerCrafts.contains(itemToCraft));
+                        plugin.itemToCraft.put(p.getName(), itemToCraft);
+                        plugin.craftLists.get(p.getName()).add(itemToCraft);
                         String newItem = plugin.itemToCraft.get(p.getName()).replaceAll("_", " ");
-                        for(Player players : plugin.getPlayers()){
+                        for(Player players : Bukkit.getOnlinePlayers()){
                             plugin.messagePlayer(players, "§8[§c§l!§8] " + plugin.getPlayerDisplayName(e.getPlayer().getName()) + " §7has crafted an item! (§e" + currentItem + "§7)");
                         }
                         plugin.messagePlayer(p, """
@@ -81,7 +93,7 @@ public class CraftalotEvent implements Listener {
                 } else {
                     plugin.craftTop.put(p.getName(), 0);
                     Random r = new Random();
-                    List<String> craftList = CraftalotConfig.get().getStringList("craftlist");
+                    List<String> craftList = CraftalotConfig.get().getStringList("craftlist.onetunnel");
                     plugin.itemToCraft.put(p.getName(), craftList.get(r.nextInt(craftList.size())));
                     String currentItem = plugin.itemToCraft.get(p.getName()).replaceAll("_", " ");
                     plugin.messagePlayer(p, """
@@ -127,8 +139,11 @@ public class CraftalotEvent implements Listener {
                 ItemStack item;
                 for(String cosmetic : PhilipConfig.get().getConfigurationSection("cosmetics").getKeys(false)){
                     item = new ItemStack(PhilipConfig.get().getItemStack("cosmetics." + cosmetic + ".item"));
-                    ItemMeta itemMeta = item.getItemMeta();
+                    ItemMeta itemMeta = PhilipConfig.get().getItemStack("cosmetics." + cosmetic + ".item").getItemMeta();
                     List<String> lore = new ArrayList<>(List.of());
+                    if(itemMeta.getLore() != null){
+                        lore.addAll(itemMeta.getLore());
+                    }
                     if(PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
                         if (PlayerConfig.get().getInt("players." + p.getName() + ".points") >= PhilipConfig.get().getInt("cosmetics." + cosmetic + ".cost")) {
                             lore.add("§e§l\uD83D\uDCB0§7 | §a" + PlayerConfig.get().get("players." + p.getName() + ".points") + "/" + PhilipConfig.get().getInt("cosmetics." + cosmetic + ".cost"));
@@ -156,7 +171,10 @@ public class CraftalotEvent implements Listener {
             "I've heard many strange tales in my travels, but nothing stranger than the tale of an army. Countless warriors dressed in suits of yellow? Sounds ridiculous to me! I am usually very capable of distinguishing legendary tales, but this one just sounds like a myth to me.",
             "8 guilds rule over the land, but they always seem to be fighting for power amongst themselves.. Surely they've heard of democracy right? It could be possible to bring back previous guilds! WitheriteWarriors, Green G- actually.. nevermind.",
             "While I travelled through old forgotten land, it wasn't in the best of shape. I heard it was abandoned after the guilds suffered from immense lag spikes. Relocations were sporadic, I couldn't find where they went next.. rumours of a cave system? Travelling out to the stars? Neon lights? Grayscale environments?? I'm overwhelmed with information.",
-            "I realise you don't actually know who I am, I'm §e§lLyla§a! A distant relative of that guy who works for Sir Craftalot yknow, but I treat everyone I know like family because we all are! I setup shelter here a while back, but the place seems to have gained a lot of toursists like me! I'm very pleased, a man by the name of Chazzagram was kind enough to welcome me here. He seems very excited to be welcoming people here, 'it's been a while' he said."
+            "I realise you don't actually know who I am, I'm §e§lLyla§a! A distant relative of that guy who works for Sir Craftalot yknow, but I treat everyone I know like family because we all are! I setup shelter here a while back, but the place seems to have gained a lot of toursists like me! I'm very pleased, a man by the name of Chazzagram was kind enough to welcome me here. He seems very excited to be welcoming people here, 'it's been a while' he said.",
+            "The park has been so much more lively lately! More and more additions are being made, a bar was recently built by the lake serving.. milk? I heard this Ian guy owns the place.",
+            "I can't understand where this vault has come from, it appeared near that construction site by the cave. It seems to give off this aura, and recently it's starting changing.",
+            "Congratulations to the Crystal Crashers for winning the first competition! I heard they even got their own sunglasses as a reward."
     };
 
 }

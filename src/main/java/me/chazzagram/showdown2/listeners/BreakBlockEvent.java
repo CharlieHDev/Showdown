@@ -3,6 +3,7 @@ package me.chazzagram.showdown2.listeners;
 import me.chazzagram.showdown2.Showdown2;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -31,7 +32,8 @@ public class BreakBlockEvent implements Listener {
                         } else {
                             p.getInventory().addItem(new ItemStack(block));
                         }
-                        e.setCancelled(false);
+                        p.playSound(p.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1F, 1F);
+                        e.setCancelled(true);
                         break;
                     }
                 }
@@ -43,6 +45,8 @@ public class BreakBlockEvent implements Listener {
                         break;
                     }
                 }
+            } else if (plugin.currentMode.equals("Crumble Clash") && plugin.blockBreak) {
+                e.setCancelled(false);
             } else {
                 e.setCancelled(true);
             }

@@ -2,6 +2,7 @@ package me.chazzagram.showdown2.listeners;
 
 import me.chazzagram.showdown2.Showdown2;
 import me.chazzagram.showdown2.files.PlayerConfig;
+import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -23,9 +24,11 @@ public class DropItemEvent implements Listener {
                 case "Colour Dash":
                 case "Craftalot":
                 case "Slime Golf":
-                case "Lobby":
                 case "Voting":
                     event.setCancelled(true);
+                    break;
+                case "Lobby":
+                    event.setCancelled(!event.getItemDrop().getItemStack().getType().equals(Material.POTION) && !event.getItemDrop().getItemStack().getType().equals(Material.MILK_BUCKET) && !event.getItemDrop().getItemStack().getType().equals(Material.SPLASH_POTION));
                     break;
             }
         }

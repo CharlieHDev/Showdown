@@ -1,10 +1,7 @@
 package me.chazzagram.showdown2.listeners;
 
 import me.chazzagram.showdown2.Showdown2;
-import me.chazzagram.showdown2.files.GubTPConfig;
-import me.chazzagram.showdown2.files.PlayerConfig;
-import me.chazzagram.showdown2.files.TeamsConfig;
-import me.chazzagram.showdown2.files.TeleportConfig;
+import me.chazzagram.showdown2.files.*;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -15,13 +12,20 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerAnimationEvent;
+import org.bukkit.event.player.PlayerAnimationType;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.RayTraceResult;
+import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import java.util.*;
 
@@ -85,6 +89,9 @@ public class LastHitEvent implements Listener {
             if (e.getDamager() instanceof Slime && e.getEntity() instanceof Player) {
                 e.setCancelled(true);
             }
+            if(e.getDamager() instanceof Player && e.getEntity() instanceof Player) {
+                e.setCancelled(true);
+            }
         } else if (plugin.currentMode.equals("Colour Dash")  && plugin.pvpEnabled) {
             if(e.getDamager() instanceof Player attacker && e.getEntity() instanceof EnderCrystal enderCrystal){
                 if(!plugin.runningTimers.containsKey(attacker.getName() + "mysterybox")) {
@@ -93,7 +100,7 @@ public class LastHitEvent implements Listener {
                     Location itemBoxLoc = enderCrystal.getLocation().clone();
                     enderCrystal.remove();
                     BukkitTask task1 = new BukkitRunnable() {
-                        int timeLeft = 4;
+                        int timeLeft = 2;
 
                         @Override
                         public void run() {
@@ -115,7 +122,7 @@ public class LastHitEvent implements Listener {
 
                     }.runTaskTimer(plugin, 0L, 20L);
 
-                    plugin.runningTimers.put(attacker.getName() + "mysteryboxdisappear", new AbstractMap.SimpleEntry<>(task1, 4));
+                    plugin.runningTimers.put(attacker.getName() + "mysteryboxdisappear", new AbstractMap.SimpleEntry<>(task1, 2));
 
                     enderCrystal.remove();
                     e.setCancelled(true);
@@ -150,6 +157,9 @@ public class LastHitEvent implements Listener {
                                         attacker.playSound(attacker.getLocation(), Sound.BLOCK_NOTE_BLOCK_FLUTE, 10, 1);
                                         base = 0xE000;
                                         offset = rand.nextInt(5);
+                                        if(attacker.getInventory().contains(getCDItems().get(2)[0]) && offset == 4){
+                                            offset = 3;
+                                        }
                                         unicodeChar = base + offset;
                                         String character = new String(Character.toChars(unicodeChar));
                                         attacker.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(character));
@@ -211,6 +221,97 @@ public class LastHitEvent implements Listener {
         }
     }
 
+    @EventHandler
+    public void onPlayerSwing(PlayerAnimationEvent event) {
+        if(plugin.currentMode.equals("Presents")) {
+            if (event.getAnimationType() != PlayerAnimationType.ARM_SWING) return;
+
+            Player player = event.getPlayer();
+
+            // Perform ray trace to detect BlockDisplay
+            Location eyeLoc = player.getEyeLocation();
+            Vector direction = eyeLoc.getDirection();
+
+            // raySize >0 needed to detect zero-hitbox BlockDisplays
+            RayTraceResult result = player.getWorld().rayTraceEntities(
+                    eyeLoc,
+                    direction,
+                    5.0,            // max distance
+                    0.5,            // ray "thickness" to catch zero-size entities
+                    entity -> entity instanceof BlockDisplay // only BlockDisplays
+            );
+
+            if (result == null) return;
+
+            BlockDisplay present = (BlockDisplay) result.getHitEntity();
+
+            // Only handle tracked displays
+            if (!plugin.lobbyPresents.containsKey(present)) return;
+
+            if (!plugin.lobbyPresents.get(present)) {
+                plugin.messagePlayer(player, "§eYou just found a present!");
+                plugin.earnPoints(player.getName(), 2, true);
+                plugin.lobbyPresents.replace(present, true);
+                if(present.isGlowing()) {
+                    present.setGlowing(false);
+                }
+                plugin.summonFirework(present.getLocation(), PlayerConfig.get().getString("players." + player.getName() + ".team"));
+            } else {
+                plugin.messagePlayer(player, "§cThis present has already been found!");
+            }
+
+            if (plugin.runningTimers.containsKey("present" + present.getLocation().getX() + present.getLocation().getY())) {
+                plugin.runningTimers.get("present" + present.getLocation().getX() + present.getLocation().getY()).getKey().cancel();
+                plugin.runningTimers.remove("present" + present.getLocation().getX() + present.getLocation().getY());
+            }
+
+            Vector3f translation = new Vector3f(-0.5F, -0.5F, -0.5F);
+            Quaternionf leftRotation = new Quaternionf();
+            Quaternionf rightRotation = new Quaternionf();
+            Vector3f scaleVector = new Vector3f(1F, 1F, 1F);
+
+            Transformation transformation = new Transformation(translation, leftRotation, scaleVector, rightRotation);
+            present.setTransformation(transformation);
+
+            String name = "present" + present.getLocation().getX() + present.getLocation().getY();
+            BukkitTask task = new BukkitRunnable() {
+                int timeLeft = 10;
+
+                @Override
+                public void run() {
+                    if (plugin.runningTimers.containsKey(name)) {
+                        if (!plugin.pausedTimers.contains(name)) {
+                            timeLeft--;
+                            plugin.runningTimers.get(name).setValue(timeLeft);
+
+                            if(timeLeft == 5){
+                                present.setBlock(Material.COAL_BLOCK.createBlockData());
+                            }
+                            if (timeLeft > 4) {
+                                transformation.getScale().add(0.02F, 0.02F, 0.02F);
+                                transformation.getTranslation().sub(0.01F, 0.01F, 0.01F);
+                            } else {
+                                transformation.getScale().sub(0.02F, 0.02F, 0.02F);
+                                transformation.getTranslation().add(0.01F, 0.01F, 0.01F);
+                            }
+                            present.setTransformation(transformation);
+
+                            if (timeLeft == 0) {
+                                plugin.runningTimers.remove(name);
+                                cancel();
+                            }
+                        }
+                    } else {
+                        cancel();
+                    }
+                }
+
+            }.runTaskTimer(plugin, 0L, 1L);
+
+            plugin.runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, 11));
+        }
+    }
+
     public void handlePlayerDamage(Player killer, Player victim, EntityDamageByEntityEvent e) {
         if (PlayerConfig.get().getString("players." + killer.getName() + ".team").equals(PlayerConfig.get().getString("players." + victim.getName() + ".team"))) {
             e.setCancelled(true);
@@ -220,11 +321,16 @@ public class LastHitEvent implements Listener {
                     Bukkit.getWorld("build").spawnParticle(Particle.RAID_OMEN, victim.getLocation().clone().add(0,1,0), 20, 0.2, 0.5, 0.2, 0);
                     killer.playSound(killer.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 2);
                     Bukkit.getScheduler().runTaskLater(plugin, () -> killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(plugin.getPlayerDisplayName(victim.getName()) + " §7| §c♥§c§l0.0")), 1L);
-                    for (Player p : plugin.getPlayers()) {
+                    for (Player p : Bukkit.getOnlinePlayers()) {
                         plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
                     }
                     plugin.killRecord.add(plugin.getPlayerDisplayName(killer.getName()) + " §c⚔ " + plugin.getPlayerDisplayName(victim.getName()));
                     plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died to " + plugin.getPlayerDisplayName(killer.getName()));
+                    plugin.playerKillCount.put(killer.getName(), plugin.playerKillCount.get(killer.getName()) + 1);
+                    if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(killer.getName())) {
+                        PlayerInfoConfig.get().set("players." + killer.getName() + ".kills", PlayerInfoConfig.get().getInt("players." + killer.getName() + ".kills") + 1);
+                        PlayerInfoConfig.save();
+                    }
                     e.setCancelled(true);
                     victim.setGameMode(GameMode.SPECTATOR);
                     victim.getInventory().clear();
@@ -232,23 +338,28 @@ public class LastHitEvent implements Listener {
                         victim.getInventory().addItem(item);
                     }
                     plugin.gubGameKills.put(killer.getName(), plugin.gubGameKills.get(killer.getName()) + 1);
-                    plugin.earnPoints(killer.getName(), 40 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName())), true);
-                    plugin.gubKitKills.put(plugin.gubGameKills.get(killer.getName()), plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName())) + 1);
                     victim.setHealth(20);
                     if (plugin.gubGameKills.get(killer.getName()).equals(14)) {
+                        plugin.earnPoints(killer.getName(), 80 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName())) * 2, true);
                         killer.setGameMode(GameMode.SPECTATOR);
-                        killer.sendTitle("§eFINISH", "§e\uD83D\uDCB0" + (41 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName()))) + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
+                        killer.sendTitle("§eFINISH", "§c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
                         for(Player p : Bukkit.getOnlinePlayers()){
                             plugin.messagePlayer(p, "§e♛ §7| " + plugin.getPlayerDisplayName(killer.getName()) + " §fhas finished the final kit!");
                         }
                     } else {
-                        killer.sendTitle("", "§e\uD83D\uDCB0" + (41 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName()))) + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
+                        if(plugin.gubGameKills.get(killer.getName()) > 7) {
+                            plugin.earnPoints(killer.getName(), 50 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName())), true);
+                        } else {
+                            plugin.earnPoints(killer.getName(), 40 - plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName())), true);
+                        }
+                        killer.sendTitle("", "§c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
                         killer.getInventory().clear();
                         plugin.messagePlayer(killer, "§c\uD83D\uDC80 §7| NEXT KIT! (§e§l" + plugin.gubGameKills.get(killer.getName()) + "/14§7)");
                         for (ItemStack item : getGubKits().get(plugin.gubGameKills.get(killer.getName()))) {
                             killer.getInventory().addItem(item);
                         }
                     }
+                    plugin.gubKitKills.put(plugin.gubGameKills.get(killer.getName()), plugin.gubKitKills.get(plugin.gubGameKills.get(killer.getName())) + 1);
                     BukkitTask task = new BukkitRunnable() {
                         int timeLeft = 6;
 
@@ -285,11 +396,17 @@ public class LastHitEvent implements Listener {
                     Bukkit.getScheduler().runTaskLater(plugin, () -> killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(plugin.getPlayerDisplayName(victim.getName()) + " §7| §c♥§c§l" + PlaceholderAPI.setPlaceholders(victim, "%player_health_rounded%"))), 1L);
                 }
             } else if (plugin.currentMode.equals("Survival Games")) {
+                plugin.lastHitPlayer.put(victim.getName(), killer.getName());
                 if (victim.getHealth() - e.getFinalDamage() <= 0) {
                     Bukkit.getWorld("build").spawnParticle(Particle.RAID_OMEN, victim.getLocation().clone().add(0,1,0), 20, 0.2, 0.5, 0.2, 0);
                     killer.playSound(killer.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 2);
                     plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died to " + plugin.getPlayerDisplayName(killer.getName()));
                     victim.sendTitle("§c§lYOU DIED.", "", 0, 40, 10);
+                    plugin.playerKillCount.put(killer.getName(), plugin.playerKillCount.get(killer.getName()) + 1);
+                    if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(killer.getName())){
+                        PlayerInfoConfig.get().set("players." + killer.getName() + ".kills", PlayerInfoConfig.get().getInt("players." + killer.getName() + ".kills") + 1);
+                        PlayerInfoConfig.save();
+                    }
 
                     Location location = victim.getLocation();
 
@@ -306,39 +423,45 @@ public class LastHitEvent implements Listener {
                     e.setCancelled(true);
                     victim.setGameMode(GameMode.SPECTATOR);
                     plugin.deadPlayers.add(victim.getName());
-                    plugin.earnPoints(killer.getName(), 35, true);
-                    killer.sendTitle("", "§e\uD83D\uDCB035" + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
-                    for (Player p : plugin.getPlayers()) {
-                        if (!p.getGameMode().equals(GameMode.SPECTATOR) && !p.getName().equals(killer.getName())) {
-                            plugin.messagePlayer(p, "§e\uD83D\uDCB010 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
-                            plugin.earnPoints(p.getName(), 10, true);
+                    plugin.earnPoints(killer.getName(), 40, true);
+                    killer.sendTitle("", "§e\uD83D\uDCB040" + " §7| §c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
+                    for (Player p : Bukkit.getOnlinePlayers()) {
+                        if (!p.getGameMode().equals(GameMode.SPECTATOR) && !p.getName().equals(killer.getName()) && PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
+                            int survivalPoints;
+                            if(plugin.deadPlayers.size() > 20) { survivalPoints = 5; }
+                            else if (plugin.deadPlayers.size() > 10) { survivalPoints = 7; }
+                            else { survivalPoints = 10; }
+
+                            plugin.messagePlayer(p, "§e\uD83D\uDCB0" + survivalPoints + " §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
+                            plugin.earnPoints(p.getName(), survivalPoints, true);
                         } else {
                             plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
                         }
                     }
                     plugin.killRecord.add(plugin.getPlayerDisplayName(killer.getName()) + " §c⚔ " + plugin.getPlayerDisplayName(victim.getName()));
+
                     switch (plugin.deadPlayers.size()) {
-                        case 8:
-                            plugin.newBorderRadius = 26;
-                            for (Player p : plugin.getPlayers()) {
-                                p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
-                            }
-                            break;
                         case 16:
+                            plugin.newBorderRadius = 26;
+                            for (Player p : Bukkit.getOnlinePlayers()) {
+                                p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
+                            }
+                            break;
+                        case 12:
                             plugin.newBorderRadius = 56;
-                            for (Player p : plugin.getPlayers()) {
+                            for (Player p : Bukkit.getOnlinePlayers()) {
                                 p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
                             }
                             break;
-                        case 24:
+                        case 8:
                             plugin.newBorderRadius = 116;
-                            for (Player p : plugin.getPlayers()) {
+                            for (Player p : Bukkit.getOnlinePlayers()) {
                                 p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
                             }
                             break;
-                        case 32:
+                        case 4:
                             plugin.newBorderRadius = 176;
-                            for (Player p : plugin.getPlayers()) {
+                            for (Player p : Bukkit.getOnlinePlayers()) {
                                 p.sendTitle("", "§e⚠ Border Shrinking ⚠", 0, 40, 10);
                             }
                             break;
@@ -354,7 +477,7 @@ public class LastHitEvent implements Listener {
                     }
 
                     if (teamDead) {
-                        for (Player player2 : Bukkit.getServer().getOnlinePlayers()) {
+                        for (Player player2 : Bukkit.getOnlinePlayers()) {
                             plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + victim.getName() + ".team")) + " §chave been eliminated.\n§f");
                         }
                         plugin.deadTeams.add(PlayerConfig.get().getString("players." + victim.getName() + ".team"));
@@ -405,7 +528,7 @@ public class LastHitEvent implements Listener {
 
         ItemStack[] item3 = new ItemStack[1];
         item3[0] = new ItemStack(Material.WIND_CHARGE);
-        item3[0].setAmount(3);
+        item3[0].setAmount(2);
         items.add(item3);
 
         return items;
