@@ -282,6 +282,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             Sound.ENTITY_ENDERMAN_DEATH
     };
 
+
+
+
     // Spawn the particle
 
     @Override
@@ -1832,6 +1835,35 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 0L, 20L);
 
         runningTimers.put("colourdashstart", new AbstractMap.SimpleEntry<>(task, 61));
+    }
+
+    public void startPushPoint(){
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    checkPlayer(player);
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 10L);
+    }
+
+    public void checkPlayer(Player player) {
+        Location pLoc = player.getLocation();
+
+        for (Location dLoc : displayLocations) {
+            if (dLoc.getWorld() != pLoc.getWorld()) continue;
+
+            if (dLoc.distanceSquared(pLoc) <= RADIUS_SQUARED) {
+                // get player team
+                // get map of said wall
+                // get concrete on each side of the map
+                // if team colour = concrete colour on side 1 push wall forward
+                // if team colour = concrete colour on side 2 push wall backward
+                // update text display
+                // update colour of surrounding blocks on one axis
+            }
+        }
     }
 
 
