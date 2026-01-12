@@ -77,6 +77,12 @@ public class VoteWalkEvent implements Listener {
                         event.getPlayer().setAllowFlight(true);
                         event.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§eDOUBLE JUMP READY!"));
                     }
+                    if (block.getType() != Material.AIR && plugin.lifeCap && plugin.zoomoLives.get(event.getPlayer().getName()) == 2) {
+                        plugin.zoomoLives.replace(event.getPlayer().getName(), 1);
+                        event.getPlayer().sendTitle("", "§e⚠ §6§lLIVES CAPPED: §f1§c❤ §e⚠", 0, 30, 0);
+                        plugin.earnPoints(event.getPlayer().getName(), 20, true);
+                        plugin.messagePlayer(event.getPlayer(), "§e\uD83D\uDCB020 §7| §a§lBonus points awarded for keeping both lives.");
+                    }
                 }
             }
         }

@@ -18,6 +18,8 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Transformation;
@@ -417,80 +419,138 @@ public class MainCommand implements CommandExecutor {
                         if (Bukkit.getPlayer(args[1]) != null) {
                             if (plugin.getPlayers().contains(Bukkit.getPlayer(args[1]))) {
                                 if (!plugin.deadPlayers.contains(args[1])) {
-                                    plugin.deadPlayers.add(args[1]);
                                     Player p = Bukkit.getServer().getPlayer(args[1]);
-                                    plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| You died.");
-                                    p.setGameMode(GameMode.SPECTATOR);
-                                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                                        p.setAllowFlight(true);
-                                        p.setFlying(true);
-                                    }, 1L);
-                                    if (plugin.lastHitPlayer.containsKey(args[1])) {
-                                        if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
-                                            plugin.killRecord.add(plugin.getPlayerDisplayName(plugin.lastHitPlayer.get(args[1])) + " §c⚔ " + plugin.getPlayerDisplayName(args[1]));
-                                            plugin.earnPoints(plugin.lastHitPlayer.get(args[1]), 16, true);
-                                            if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(plugin.lastHitPlayer.get(args[1]))){
-                                                PlayerInfoConfig.get().set("players." + plugin.lastHitPlayer.get(args[1]) + ".kills", PlayerInfoConfig.get().getInt("players." + plugin.lastHitPlayer.get(args[1]) + ".kills") + 1);
-                                                PlayerInfoConfig.save();
-                                            }
-                                        }
-                                    }
+                                    if(plugin.zoomoLives.get(args[1]) == 2){
 
-                                    for (Player player : Bukkit.getOnlinePlayers()) {
-                                        if (!plugin.deadPlayers.contains(player.getName()) && !plugin.getSpectators().contains(player)) {
-                                            if (plugin.lastHitPlayer.containsKey(args[1])) {
-                                                if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
-                                                    plugin.messagePlayer(player, "§e\uD83D\uDCB03 §7| " + plugin.formatKillMessage(plugin.lastHitPlayer.get(args[1]), p.getName()));
-                                                } else {
-                                                    plugin.messagePlayer(player, "§e\uD83D\uDCB03 §7| " + plugin.formatDeathMessage(p.getName()));
-                                                }
+                                        if (plugin.lastHitPlayer.containsKey(args[1])) {
+                                            if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
+                                                plugin.killRecord.add(plugin.getPlayerDisplayName(plugin.lastHitPlayer.get(args[1])) + " §f⚔ " + plugin.getPlayerDisplayName(args[1]));
                                             }
-                                            plugin.earnPoints(player.getName(), 3, true);
                                         }
-                                        if(plugin.deadPlayers.contains(player.getName()) || plugin.getSpectators().contains(player)) {
+
+                                        for (Player player : Bukkit.getOnlinePlayers()) {
                                             if (plugin.lastHitPlayer.containsKey(args[1])) {
                                                 if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
-                                                    plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(plugin.lastHitPlayer.get(args[1]), p.getName()));
+                                                    plugin.messagePlayer(player, "§c❤ §7| " + plugin.getPlayerDisplayName(p.getName()) + " §7lost a life to " + plugin.getPlayerDisplayName(plugin.lastHitPlayer.get(args[1])));
                                                 } else {
-                                                    plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatDeathMessage(p.getName()));
+                                                    plugin.messagePlayer(player, "§c❤ §7| " + plugin.getPlayerDisplayName(p.getName()) + " §7lost a life.");
                                                 }
                                             }
                                         }
-                                    }
 
-                                    boolean teamDead = true;
-                                    for (String player : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players")) {
-                                        if (!plugin.deadPlayers.contains(player)) {
-                                            teamDead = false;
-                                            break;
-                                        }
-                                    }
-                                    if (teamDead) {
-                                        for (Player player2 : Bukkit.getOnlinePlayers()) {
-                                            plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + " §chave been eliminated.\n§f");
-                                        }
-                                        plugin.deadTeams.add(PlayerConfig.get().getString("players." + args[1] + ".team"));
-                                    }
+                                        plugin.zoomoLives.replace(args[1], 1);
+                                        BukkitTask task = new BukkitRunnable() {
+                                            int timeLeft = 6;
 
-                                    List<String> teamList = new ArrayList<>(List.of());
-                                    for (Player player : plugin.getPlayers()) {
-                                        if (!teamList.contains(PlayerConfig.get().getString("players." + player.getName() + ".team"))) {
-                                            teamList.add(PlayerConfig.get().getString("players." + player.getName() + ".team"));
+                                            @Override
+                                            public void run() {
+                                                if (plugin.runningTimers.containsKey(args[1] + "respawn")) {
+                                                    if (!plugin.pausedTimers.contains(args[1] + "respawn")) {
+                                                        plugin.runningTimers.get(args[1] + "respawn").setValue(timeLeft);
+                                                        timeLeft--;
+                                                        switch(timeLeft){
+                                                            case 5:
+                                                                p.sendTitle("§c§lYou Died.", "1§c❤ §fRemaining.");
+                                                                p.teleport(p.getLocation().clone().add(0,20,0));
+                                                                PotionEffect levitation = new PotionEffect(PotionEffectType.LEVITATION, 100, 1);
+                                                                p.addPotionEffect(levitation);
+                                                                break;
+                                                            case 1:
+                                                                PotionEffect slowfall = new PotionEffect(PotionEffectType.SLOW_FALLING, 80, 1);
+                                                                p.addPotionEffect(slowfall);
+                                                                break;
+                                                        }
+                                                        if (timeLeft == 0) {
+                                                            plugin.messageConsole("Respawn timer finished.");
+                                                            plugin.runningTimers.remove(args[1] + "respawn");
+                                                            cancel();
+                                                        }
+                                                    }
+                                                } else {
+                                                    plugin.messageConsole("Timer removed by external factor.");
+                                                    cancel();
+                                                }
+                                            }
+
+                                        }.runTaskTimer(plugin, 0L, 20L);
+
+                                        plugin.runningTimers.put(args[1] + "respawn", new AbstractMap.SimpleEntry<>(task, 6));
+                                    } else {
+                                        plugin.zoomoLives.replace(args[1], 0);
+                                        plugin.deadPlayers.add(args[1]);
+                                        plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| You died.");
+                                        p.setGameMode(GameMode.SPECTATOR);
+                                        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                                            p.setAllowFlight(true);
+                                            p.setFlying(true);
+                                        }, 1L);
+                                        if (plugin.lastHitPlayer.containsKey(args[1])) {
+                                            if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
+                                                plugin.killRecord.add(plugin.getPlayerDisplayName(plugin.lastHitPlayer.get(args[1])) + " §c⚔ " + plugin.getPlayerDisplayName(args[1]));
+                                                plugin.earnPoints(plugin.lastHitPlayer.get(args[1]), 16, true);
+                                                if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(plugin.lastHitPlayer.get(args[1]))) {
+                                                    PlayerInfoConfig.get().set("players." + plugin.lastHitPlayer.get(args[1]) + ".kills", PlayerInfoConfig.get().getInt("players." + plugin.lastHitPlayer.get(args[1]) + ".kills") + 1);
+                                                    PlayerInfoConfig.save();
+                                                }
+                                            }
                                         }
-                                    }
-                                    if (plugin.deadTeams.size() == teamList.size() - 1) {
-                                        for (Player p2 : plugin.getPlayers()) {
-                                            if (!p2.getGameMode().equals(GameMode.SPECTATOR)) {
-                                                plugin.winningTeam = PlayerConfig.get().getString("players." + p2.getName() + ".team");
+
+                                        for (Player player : Bukkit.getOnlinePlayers()) {
+                                            if (!plugin.deadPlayers.contains(player.getName()) && !plugin.getSpectators().contains(player)) {
+                                                if (plugin.lastHitPlayer.containsKey(args[1])) {
+                                                    if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
+                                                        plugin.messagePlayer(player, "§e\uD83D\uDCB03 §7| " + plugin.formatKillMessage(plugin.lastHitPlayer.get(args[1]), p.getName()));
+                                                    } else {
+                                                        plugin.messagePlayer(player, "§e\uD83D\uDCB03 §7| " + plugin.formatDeathMessage(p.getName()));
+                                                    }
+                                                }
+                                                plugin.earnPoints(player.getName(), 3, true);
+                                            }
+                                            if (plugin.deadPlayers.contains(player.getName()) || plugin.getSpectators().contains(player)) {
+                                                if (plugin.lastHitPlayer.containsKey(args[1])) {
+                                                    if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
+                                                        plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(plugin.lastHitPlayer.get(args[1]), p.getName()));
+                                                    } else {
+                                                        plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatDeathMessage(p.getName()));
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        boolean teamDead = true;
+                                        for (String player : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[1] + ".team") + ".players")) {
+                                            if (!plugin.deadPlayers.contains(player)) {
+                                                teamDead = false;
                                                 break;
                                             }
                                         }
-                                        if (Objects.equals(plugin.winningTeam, "")) {
-                                            plugin.winningTeam = "NO TEAM";
+                                        if (teamDead) {
+                                            for (Player player2 : Bukkit.getOnlinePlayers()) {
+                                                plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + " §chave been eliminated.\n§f");
+                                            }
+                                            plugin.deadTeams.add(PlayerConfig.get().getString("players." + args[1] + ".team"));
                                         }
-                                        plugin.deadTeams.clear();
-                                        plugin.runningTimers.remove("zoomogo");
-                                        plugin.gameEnd();
+
+                                        List<String> teamList = new ArrayList<>(List.of());
+                                        for (Player player : plugin.getPlayers()) {
+                                            if (!teamList.contains(PlayerConfig.get().getString("players." + player.getName() + ".team"))) {
+                                                teamList.add(PlayerConfig.get().getString("players." + player.getName() + ".team"));
+                                            }
+                                        }
+                                        if (plugin.deadTeams.size() == teamList.size() - 1) {
+                                            for (Player p2 : plugin.getPlayers()) {
+                                                if (!p2.getGameMode().equals(GameMode.SPECTATOR)) {
+                                                    plugin.winningTeam = PlayerConfig.get().getString("players." + p2.getName() + ".team");
+                                                    break;
+                                                }
+                                            }
+                                            if (Objects.equals(plugin.winningTeam, "")) {
+                                                plugin.winningTeam = "NO TEAM";
+                                            }
+                                            plugin.deadTeams.clear();
+                                            plugin.runningTimers.remove("zoomogo");
+                                            plugin.gameEnd();
+                                        }
                                     }
                                 }
                             }
@@ -644,6 +704,14 @@ public class MainCommand implements CommandExecutor {
                 case "showpoints":
                     for(int i = 0; i <= 7; i++){
                         plugin.teamShown[i] = true;
+                    }
+                    break;
+                case "announce":
+                    if(args.length > 1){
+                        String message = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+                        plugin.sendAnnouncement(message);
+                    } else {
+                        p.sendMessage("Invalid Syntax: /mce announce <text>");
                     }
                     break;
                 case "startevent":
@@ -1047,6 +1115,9 @@ public class MainCommand implements CommandExecutor {
                 case "startcrumbleclash":
                     plugin.startCrumbleClash();
                     break;
+                case "startpushpoint":
+                    plugin.startPushPoint();
+                    break;
                 case "startcraftalot":
                     plugin.startCraftalot();
                     break;
@@ -1054,19 +1125,19 @@ public class MainCommand implements CommandExecutor {
                     plugin.currentRound = 1;
                     plugin.startZoomoGo();
                     break;
-                case "shrinkplayers":
-                    for(Player player : Bukkit.getOnlinePlayers()) {
-                        player.getAttribute(Attribute.SCALE).setBaseValue(0.5F);
-                        player.sendMessage("§d§l[!] £10 has been donated to shrink you down!");
-                    }
-                    plugin.playSoundAll(Sound.BLOCK_BREWING_STAND_BREW, 2F);
-                    break;
-                case "growplayers":
-                    for(Player player : Bukkit.getOnlinePlayers()) {
-                        player.getAttribute(Attribute.SCALE).setBaseValue(1);
-                    }
-                    plugin.playSoundAll(Sound.BLOCK_BREWING_STAND_BREW, 1F);
-                    break;
+//                case "shrinkplayers":
+//                    for(Player player : Bukkit.getOnlinePlayers()) {
+//                        player.getAttribute(Attribute.SCALE).setBaseValue(0.5F);
+//                        player.sendMessage("§d§l[!] £10 has been donated to shrink you down!");
+//                    }
+//                    plugin.playSoundAll(Sound.BLOCK_BREWING_STAND_BREW, 2F);
+//                    break;
+//                case "growplayers":
+//                    for(Player player : Bukkit.getOnlinePlayers()) {
+//                        player.getAttribute(Attribute.SCALE).setBaseValue(1);
+//                    }
+//                    plugin.playSoundAll(Sound.BLOCK_BREWING_STAND_BREW, 1F);
+//                    break;
                 case "voteparty":
                     p.sendMessage("Vote party enabled.");
                     plugin.voteParty = true;

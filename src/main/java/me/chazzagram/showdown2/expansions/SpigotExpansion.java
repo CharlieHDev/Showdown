@@ -188,6 +188,14 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 }
             case "playerdisplay":
                 return plugin.getPlayerDisplayName(p.getName());
+            case "zoomolives":
+                StringBuilder livesCount = new StringBuilder();
+                int lives = plugin.zoomoLives.get(p.getName());
+                if(lives > 0){
+                    return livesCount.append("§c❤".repeat(lives)).toString();
+                } else {
+                    return "§f☠";
+                }
             case "playerprefix":
                 if(PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
                     return TeamsConfig.get().get("teams." + PlayerConfig.get().getString("players." + p.getName() + ".team") + ".colour") + TeamsConfig.get().getString("teams." + PlayerConfig.get().get("players." + p.getName() + ".team") + ".icon");
