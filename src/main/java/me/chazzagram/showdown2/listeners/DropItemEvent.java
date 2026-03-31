@@ -17,14 +17,19 @@ public class DropItemEvent implements Listener {
 
     @EventHandler
     public void onDropItem(final PlayerDropItemEvent event) {
+
+        if(plugin.ghostManager.getGhostPlayers().contains(event.getPlayer().getName())) { event.setCancelled(true); return; }
+
         if(plugin.getPlayers().contains(event.getPlayer())) {
             switch (plugin.currentMode) {
                 case "Zoomo Go":
                 case "Gub Game":
-                case "Colour Dash":
+                case "Dimension Dash":
                 case "Craftalot":
                 case "Slime Golf":
                 case "Voting":
+                case "Crumble Clash":
+                case "Push Point":
                     event.setCancelled(true);
                     break;
                 case "Lobby":

@@ -4,11 +4,15 @@ import me.chazzagram.showdown2.Showdown2;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
+
+import java.util.Objects;
 
 public class BreakBlockEvent implements Listener {
 
@@ -22,6 +26,8 @@ public class BreakBlockEvent implements Listener {
     public void onBlockBreak(BlockBreakEvent e) {
         Player p = e.getPlayer();
 
+        if(plugin.ghostManager.getGhostPlayers().contains(p.getName())) return;
+
         if(plugin.getPlayers().contains(p)) {
             if (plugin.currentMode.equals("Craftalot")) {
                 e.setCancelled(true);
@@ -29,6 +35,16 @@ public class BreakBlockEvent implements Listener {
                     if (block == e.getBlock().getType()) {
                         if(block == Material.STONE) {
                             p.getInventory().addItem(new ItemStack(Material.COBBLESTONE));
+                        } else if (block == Material.DIAMOND_ORE){
+                            p.getInventory().addItem(new ItemStack(Material.DIAMOND));
+                        } else if (block == Material.GOLD_ORE){
+                            p.getInventory().addItem(new ItemStack(Material.GOLD_INGOT));
+                        } else if (block == Material.IRON_ORE){
+                            p.getInventory().addItem(new ItemStack(Material.IRON_INGOT));
+                        } else if (block == Material.REDSTONE_ORE){
+                            p.getInventory().addItem(new ItemStack(Material.REDSTONE));
+                        } else if (block == Material.NETHER_QUARTZ_ORE){
+                            p.getInventory().addItem(new ItemStack(Material.QUARTZ));
                         } else {
                             p.getInventory().addItem(new ItemStack(block));
                         }
@@ -46,6 +62,27 @@ public class BreakBlockEvent implements Listener {
                     }
                 }
             } else if (plugin.currentMode.equals("Crumble Clash") && plugin.blockBreak) {
+                if(plugin.currentSpleef.equals("§f§lClassic Spleef")){
+                    ItemStack snowball = new ItemStack(Material.SNOWBALL);
+                    p.getInventory().addItem(snowball);
+                    p.playSound(p.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1F, 1F);
+                }
+                if(!Objects.equals(plugin.currentSpleef, "§6§lCopper Spleef")){
+                    Player breaker = e.getPlayer();
+                    Block block = e.getBlock();
+
+                    for (Player target : block.getWorld().getPlayers()) {
+                        if (target.equals(breaker)) continue;
+
+                        Location feet = target.getLocation();
+                        if (feet.getBlock().getRelative(BlockFace.DOWN).equals(block)) {
+                            plugin.crumbleKillTracker.put(
+                                    target.getName(),
+                                    new CrumbleKillData(breaker.getName(), System.currentTimeMillis())
+                            );
+                        }
+                    }
+                }
                 e.setCancelled(false);
             } else {
                 e.setCancelled(true);
@@ -63,8 +100,8 @@ public class BreakBlockEvent implements Listener {
 
     private Material[] getCraftalotBlocks() {
         return new Material[]{
-                Material.OAK_LOG, Material.BIRCH_LOG, Material.GOLD_BLOCK, Material.DIAMOND_BLOCK, Material.IRON_BLOCK, Material.SPRUCE_LOG,
-                Material.ACACIA_LOG, Material.SAND, Material.GRAVEL, Material.ANDESITE, Material.GRANITE, Material.STONE, Material.DIORITE
+                Material.OAK_PLANKS, Material.BIRCH_PLANKS, Material.GOLD_ORE, Material.DIAMOND_ORE, Material.IRON_ORE, Material.SPRUCE_PLANKS,
+                Material.ACACIA_PLANKS, Material.SAND, Material.GRAVEL, Material.ANDESITE, Material.REDSTONE_ORE, Material.STONE, Material.NETHER_QUARTZ_ORE
         };
     }
 }

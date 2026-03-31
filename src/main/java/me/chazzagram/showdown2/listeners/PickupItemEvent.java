@@ -19,6 +19,11 @@ public class PickupItemEvent implements Listener {
 
     @EventHandler
     public void onItemPickup(EntityPickupItemEvent event) {
+
+        if(event.getEntity() instanceof Player p) {
+            if (plugin.ghostManager.getGhostPlayers().contains(p.getName())) return;
+        }
+
         if (event.getEntity() instanceof Player player && plugin.currentMode.equals("Voting") && plugin.votingEnabled) {
             event.setCancelled(true);
             Item item = event.getItem();

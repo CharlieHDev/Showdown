@@ -15,6 +15,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 
 import java.util.EventListener;
 import java.util.HashMap;
+import java.util.Objects;
 
 public class VoteWalkEvent implements Listener {
 
@@ -28,6 +29,7 @@ public class VoteWalkEvent implements Listener {
     public void onPlayerMove(PlayerMoveEvent event) throws ReflectiveOperationException {
         if(event.getTo() != null) {
             if (plugin.getPlayers().contains(Bukkit.getPlayer(event.getPlayer().getName()))) {
+                if(plugin.ghostManager.getGhostPlayers().contains(event.getPlayer().getName())) return;
                 if (plugin.currentMode.equals("Gub Game") && plugin.runningTimers.containsKey("gubgamestart") && plugin.runningTimers.get("gubgamestart").getValue() <= 55) {
                     if (plugin.getPlayers().contains(Bukkit.getPlayer(event.getPlayer().getName()))) {
                         boolean onBlock = false;
@@ -41,9 +43,29 @@ public class VoteWalkEvent implements Listener {
                         }
                     }
                 }
-                if(plugin.currentMode.equals("Crumble Clash") && plugin.runningTimers.containsKey("crumbleclashs") && plugin.tntRun && !plugin.deadPlayers.contains(event.getPlayer().getName())){
+                if(plugin.currentMode.equals("Crumble Clash") && plugin.runningTimers.containsKey("crumbleclash") && plugin.copperDecay && !plugin.deadPlayers.contains(event.getPlayer().getName())){
+                    if(plugin.ghostManager.getGhostPlayers().contains(event.getPlayer().getName())) return;
+                    if (event.getFrom().getBlock().equals(event.getTo().getBlock())) return;
+                    plugin.handleDecay(event.getPlayer());
+                }
+                if(plugin.currentMode.equals("Dimension Dash")){
+                    if(plugin.ghostManager.getGhostPlayers().contains(event.getPlayer().getName())) return;
                     Block block = event.getTo().getBlock().getRelative(BlockFace.DOWN);
-                    Bukkit.getScheduler().runTaskLater(plugin, () -> block.setType(Material.AIR), 20L);
+                    if(!Objects.equals(plugin.ddMapVotes.get(event.getPlayer().getName()), plugin.ddMapWalkableBlock.get(block.getType()))) {
+                        int x = block.getX();
+                        int y = block.getY();
+                        int z = block.getZ();
+
+                        if ((x >= 36 && x <= 83 &&
+                                y >= 138 && y <= 152 &&
+                                z >= 1071 && z <= 1109 && plugin.currentRound == 1) ||
+                                (x >= 36 && x <= 83 &&
+                                        y >= 138 && y <= 155 &&
+                                        z >= 1143 && z <= 1179 && plugin.currentRound == 2)) {
+                            plugin.ddMapVotes.put(event.getPlayer().getName(), plugin.ddMapWalkableBlock.get(block.getType()));
+                            event.getPlayer().sendTitle(plugin.ddMapWalkableBlock.get(block.getType()), "", 0, 20, 0);
+                        }
+                    }
                 }
                 if (plugin.currentMode.equals("Voting") && plugin.runningTimers.get("voting").getValue() <= 75) {
                     for (Material concrete : getConcreteColours()) {
@@ -62,7 +84,7 @@ public class VoteWalkEvent implements Listener {
                             }
                         }
                     }
-                    if (plugin.votingEnabled) {
+                    if (plugin.votingEnabled && plugin.votingMode.equals("walk")) {
                         for (Material wool : getWoolColors()) {
                             if (event.getTo().getBlock().getRelative(BlockFace.DOWN).getType().equals(wool)) {
                                 if (plugin.playerVote.containsKey(event.getPlayer())) {

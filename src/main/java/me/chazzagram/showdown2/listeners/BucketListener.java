@@ -16,6 +16,7 @@ public class BucketListener implements Listener {
 
     @EventHandler
     public void onBucketEmpty(PlayerBucketEmptyEvent event) {
+        if(plugin.ghostManager.getGhostPlayers().contains(event.getPlayer().getName())) return;
         if(plugin.currentMode.equals("Craftalot")) {
             event.setCancelled(true);
         }

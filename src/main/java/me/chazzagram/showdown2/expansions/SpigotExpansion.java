@@ -1,21 +1,23 @@
 package me.chazzagram.showdown2.expansions;
 
 import me.chazzagram.showdown2.Showdown2;
-import me.chazzagram.showdown2.files.PlayerConfig;
-import me.chazzagram.showdown2.files.PlayerInfoConfig;
-import me.chazzagram.showdown2.files.SpectatorConfig;
-import me.chazzagram.showdown2.files.TeamsConfig;
+import me.chazzagram.showdown2.files.*;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
 
 public class SpigotExpansion extends PlaceholderExpansion {
 
@@ -64,6 +66,12 @@ public class SpigotExpansion extends PlaceholderExpansion {
         List<Integer> indivPoints = new ArrayList<>(plugin.getSortedIndivs().values());
         StringBuilder teamplayers = new StringBuilder();
         StringBuilder teamsplayersalive = new StringBuilder();
+        int position = 1;
+
+        if(plugin.getPlayers().contains(p)) {
+            int idx = leaderteams.indexOf(PlayerConfig.get().getString("players." + p.getName() + ".team"));
+            if(idx >= 0) position = idx + 1;
+        }
         int count = 0;
         teamplayers.setLength(0);
         int index = 0;
@@ -73,18 +81,24 @@ public class SpigotExpansion extends PlaceholderExpansion {
         if (params.startsWith("indivplayer_")) {
             try {
                 int number = Integer.parseInt(params.substring("indivplayer_".length()))-1;
+                int width = 126;
+                if(number > 8){
+                    width-=6;
+                }
                 if (number >= 0 && number < indivNames.size()) {
                     for(boolean truefalse : plugin.teamShown){
                         if(!truefalse){
-                            return "§8§k00000000";
+                            return formatLine("§8§k00000000", "§e§l\uD83D\uDCB0" + "§8§k0000", width);
+
                         }
                     }
-                    return plugin.getPlayerDisplayName(indivNames.get(number));
+                    return formatLine(plugin.getPlayerDisplayName(indivNames.get(number)), "§e§l\uD83D\uDCB0" + indivPoints.get(number).toString(), width);
                 } else {
-                    return "§7N/A";
+                    return formatLine("§7N/A", "§7N/A", width);
+
                 }
             } catch (NumberFormatException e) {
-                return "§7I/N";
+                return formatLine("§7I/N", "§7I/N", 126);
             }
         }
         if (params.startsWith("indivpoints_")) {
@@ -157,6 +171,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "N/A";
                 }
+            case "playersonline":
+                return plugin.getPlayers().size() + "/" + PlayerConfig.get().getConfigurationSection("players").getKeys(false).size();
             case "kills":
                 if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())){
                     return PlayerInfoConfig.get().getString("players."+p.getName()+".kills");
@@ -283,11 +299,35 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "Waiting..";
                 }
+            case "timer_pushpoint":
+                if (plugin.runningTimers.containsKey("pushpointstart")) {
+                    return plugin.getTimer("pushpointstart");
+                } else if (plugin.runningTimers.containsKey("pushpoint")){
+                    return plugin.getTimer("pushpoint");
+                } else {
+                    return "Waiting..";
+                }
+            case "timer_crumbleclash":
+                if (plugin.runningTimers.containsKey("crumbleclashstart")) {
+                    return plugin.getTimer("crumbleclashstart");
+                } else if (plugin.runningTimers.containsKey("crumbleclash")){
+                    return plugin.getTimer("crumbleclash");
+                } else {
+                    return "Waiting..";
+                }
             case "timer_colourdash":
                 if (plugin.runningTimers.containsKey("colourdashstart")) {
                     return plugin.getTimer("colourdashstart");
                 } else if (plugin.runningTimers.containsKey("colourdash")){
                     return plugin.getTimer("colourdash");
+                } else {
+                    return "Waiting..";
+                }
+            case "timer_dimensiondash":
+                if (plugin.runningTimers.containsKey("dimensiondashstart")) {
+                    return plugin.getTimer("dimensiondashstart");
+                } else if (plugin.runningTimers.containsKey("dimensiondash")){
+                    return plugin.getTimer("dimensiondash");
                 } else {
                     return "Waiting..";
                 }
@@ -343,166 +383,126 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "Waiting..";
                 }
+            case "spleefround":
+                return plugin.currentSpleef;
+            case "pp_opponent":
+                if(plugin.ppTeamMatchups.containsKey(PlayerConfig.get().getString("players." + p.getName() + ".team"))){
+                    return plugin.getTeamDisplayName(plugin.ppTeamMatchups.get(PlayerConfig.get().getString("players." + p.getName() + ".team")));
+                } else {
+                    for (Map.Entry<String, String> entry : plugin.ppTeamMatchups.entrySet()) {
+                        if (entry.getValue().equals(PlayerConfig.get().getString("players." + p.getName() + ".team"))) {
+                            return plugin.getTeamDisplayName(entry.getKey());
+                        }
+                    }
+                    return "Waiting..";
+                }
+            case "pp_team":
+                return plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + p.getName() + ".team"));
+            case "pp_opponent_standings":
+                if(plugin.ppTeamMatchups.isEmpty()){
+                    return "§6§lᴡɪɴ§a§l 0§f§l |§c§l 0§6§l ʟᴏss";
+                } else {
+                    if (plugin.ppTeamMatchups.containsKey(PlayerConfig.get().getString("players." + p.getName() + ".team"))) {
+                        String opponent = plugin.ppTeamMatchups.get(PlayerConfig.get().getString("players." + p.getName() + ".team"));
+                        return "§6§lᴡɪɴ§a§l " + plugin.ppTeamStandings.get(opponent).getFirst() + "§f§l |§c§l " + plugin.ppTeamStandings.get(opponent).get(1) + "§6§l ʟᴏss";
+                    } else {
+                        for (Map.Entry<String, String> entry : plugin.ppTeamMatchups.entrySet()) {
+                            if (entry.getValue().equals(PlayerConfig.get().getString("players." + p.getName() + ".team"))) {
+                                return "§6§lᴡɪɴ§a§l " + plugin.ppTeamStandings.get(PlayerConfig.get().getString("players." + p.getName() + ".team")).getFirst() + "§f§l |§c§l " + plugin.ppTeamStandings.get(PlayerConfig.get().getString("players." + p.getName() + ".team")).get(1) + "§6§l ʟᴏss";
+                            }
+                        }
+                        return "Waiting..";
+                    }
+                }
+            case "pp_team_standings":
+                if(plugin.ppTeamMatchups.isEmpty()){
+                    return "§6§lᴡɪɴ§a§l 0§f§l |§c§l 0§6§l ʟᴏss";
+                } else {
+                    return "§6§lᴡɪɴ§a§l " + plugin.ppTeamStandings.get(PlayerConfig.get().getString("players." + p.getName() + ".team")).getFirst() + "§f§l |§c§l " + plugin.ppTeamStandings.get(PlayerConfig.get().getString("players." + p.getName() + ".team")).get(1) + "§6§l ʟᴏss";
+                }
             case "topteam_1":
-                if(!leaderteams.isEmpty()) {
-                    if(leaderteams.getFirst() != null && plugin.teamShown[0]) {
-                        return plugin.getTeamDisplayName(leaderteams.getFirst());
-                    } else {
-                        return "§8§k00000000000000000000";
-                    }
-                } else {
-                    return "§8N/A";
-                }
-            case "toppoints_1":
-                if(!leaderteampoints.isEmpty()) {
-                    if (leaderteampoints.getFirst() != null && plugin.teamShown[0]) {
-                        return "§e§l\uD83D\uDCB0" + leaderteampoints.getFirst();
-                    } else {
-                        return "§8§l\uD83D\uDCB0§8§k0000";
-                    }
-                } else {
-                    return "§8N/A";
-                }
+                return getTopTeamLine(1, position, p);
+
             case "topteam_2":
-                if(leaderteams.size() > 1) {
-                    if (leaderteams.get(1) != null && plugin.teamShown[1]) {
-                        return plugin.getTeamDisplayName(leaderteams.get(1));
-                    } else {
-                        return "§8§k00000000000000000000";
-                    }
-                } else {
-                    return "§8N/A";
-                }
-            case "toppoints_2":
-                if(leaderteampoints.size() > 1) {
-                    if(leaderteampoints.get(1) != null && plugin.teamShown[1]) {
-                        return "§e§l\uD83D\uDCB0" + leaderteampoints.get(1);
-                    } else {
-                        return "§8§l\uD83D\uDCB0§8§k0000";
-                    }
-                } else {
-                    return "§8N/A";
-                }
+                return getTopTeamLine(2, position, p);
+
             case "topteam_3":
-                if(leaderteams.size() > 2) {
-                    if (leaderteams.get(2) != null && plugin.teamShown[2]) {
-                        return plugin.getTeamDisplayName(leaderteams.get(2));
-                    } else {
-                        return "§8§k00000000000000000000";
-                    }
-                } else {
-                    return "§8N/A";
-                }
-            case "toppoints_3":
-                if(leaderteampoints.size() > 2) {
-                    if(leaderteampoints.get(2) != null && plugin.teamShown[2]) {
-                        return "§e§l\uD83D\uDCB0" + leaderteampoints.get(2);
-                    } else {
-                        return "§8§l\uD83D\uDCB0§8§k0000";
-                    }
-                } else {
-                    return "§8N/A";
-                }
+                return getTopTeamLine(3, position, p);
+
             case "topteam_4":
-                if(leaderteams.size() > 3) {
-                    if (leaderteams.get(3) != null && plugin.teamShown[3]) {
-                        return plugin.getTeamDisplayName(leaderteams.get(3));
-                    } else {
-                        return "§8§k00000000000000000000";
-                    }
+                return getTopTeamLine(4, position, p);
+            case "topboardteam_1":
+                if(!leaderteams.isEmpty() && leaderteams.getFirst() != null && plugin.teamShown[0]) {
+                    return formatLine(plugin.getTeamDisplayName(leaderteams.getFirst()), "§e§l\uD83D\uDCB0" + leaderteampoints.getFirst(), 150);
+                } else if(!leaderteams.isEmpty()) {
+                    return formatLine("§8§k00000000000000000000", "§8§l\uD83D\uDCB0§8§k00000", 150);
                 } else {
                     return "§8N/A";
                 }
-            case "toppoints_4":
-                if(leaderteampoints.size() > 3) {
-                    if(leaderteampoints.get(3) != null && plugin.teamShown[3]) {
-                        return "§e§l\uD83D\uDCB0" + leaderteampoints.get(3);
-                    } else {
-                        return "§8§l\uD83D\uDCB0§8§k0000";
-                    }
+
+            case "topboardteam_2":
+                if(leaderteams.size() > 1 && leaderteams.get(1) != null && plugin.teamShown[1]) {
+                    return formatLine(plugin.getTeamDisplayName(leaderteams.get(1)), "§e§l\uD83D\uDCB0" + leaderteampoints.get(1), 150);
+                } else if(leaderteams.size() > 1) {
+                    return formatLine("§8§k00000000000000000000", "§8§l\uD83D\uDCB0§8§k00000", 150);
                 } else {
                     return "§8N/A";
                 }
-            case "topteam_5":
-                if(leaderteams.size() > 4) {
-                    if (leaderteams.get(4) != null && plugin.teamShown[4]) {
-                        return plugin.getTeamDisplayName(leaderteams.get(4));
-                    } else {
-                        return "§8§k00000000000000000000";
-                    }
+
+            case "topboardteam_3":
+                if(leaderteams.size() > 2 && leaderteams.get(2) != null && plugin.teamShown[2]) {
+                    return formatLine(plugin.getTeamDisplayName(leaderteams.get(2)), "§e§l\uD83D\uDCB0" + leaderteampoints.get(2), 150);
+                } else if(leaderteams.size() > 2) {
+                    return formatLine("§8§k00000000000000000000", "§8§l\uD83D\uDCB0§8§k00000", 150);
                 } else {
                     return "§8N/A";
                 }
-            case "toppoints_5":
-                if(leaderteampoints.size() > 4) {
-                    if(leaderteampoints.get(4) != null && plugin.teamShown[4]) {
-                        return "§e§l\uD83D\uDCB0" + leaderteampoints.get(4);
-                    } else {
-                        return "§8§l\uD83D\uDCB0§8§k0000";
-                    }
+
+            case "topboardteam_4":
+                if(leaderteams.size() > 3 && leaderteams.get(3) != null && plugin.teamShown[3]) {
+                    return formatLine(plugin.getTeamDisplayName(leaderteams.get(3)), "§e§l\uD83D\uDCB0" + leaderteampoints.get(3), 150);
+                } else if(leaderteams.size() > 3) {
+                    return formatLine("§8§k00000000000000000000", "§8§l\uD83D\uDCB0§8§k00000", 150);
                 } else {
                     return "§8N/A";
                 }
-            case "topteam_6":
-                if(leaderteams.size() > 5) {
-                    if (leaderteams.get(5) != null && plugin.teamShown[5]) {
-                        return plugin.getTeamDisplayName(leaderteams.get(5));
-                    } else {
-                        return "§8§k00000000000000000000";
-                    }
+
+            case "topboardteam_5":
+                if(leaderteams.size() > 4 && leaderteams.get(4) != null && plugin.teamShown[4]) {
+                    return formatLine(plugin.getTeamDisplayName(leaderteams.get(4)), "§e§l\uD83D\uDCB0" + leaderteampoints.get(4), 150);
+                } else if(leaderteams.size() > 4) {
+                    return formatLine("§8§k00000000000000000000", "§8§l\uD83D\uDCB0§8§k00000", 150);
                 } else {
                     return "§8N/A";
                 }
-            case "toppoints_6":
-                if(leaderteampoints.size() > 5) {
-                    if(leaderteampoints.get(5) != null && plugin.teamShown[5]) {
-                        return "§e§l\uD83D\uDCB0" + leaderteampoints.get(5);
-                    } else {
-                        return "§8§l\uD83D\uDCB0§8§k0000";
-                    }
+
+            case "topboardteam_6":
+                if(leaderteams.size() > 5 && leaderteams.get(5) != null && plugin.teamShown[5]) {
+                    return formatLine(plugin.getTeamDisplayName(leaderteams.get(5)), "§e§l\uD83D\uDCB0" + leaderteampoints.get(5), 150);
+                } else if(leaderteams.size() > 5) {
+                    return formatLine("§8§k00000000000000000000", "§8§l\uD83D\uDCB0§8§k00000", 150);
                 } else {
                     return "§8N/A";
                 }
-            case "topteam_7":
-                if(leaderteams.size() > 6) {
-                    if (leaderteams.get(6) != null && plugin.teamShown[6]) {
-                        return plugin.getTeamDisplayName(leaderteams.get(6));
-                    } else {
-                        return "§8§k00000000000000000000";
-                    }
+
+            case "topboardteam_7":
+                if(leaderteams.size() > 6 && leaderteams.get(6) != null && plugin.teamShown[6]) {
+                    return formatLine(plugin.getTeamDisplayName(leaderteams.get(6)), "§e§l\uD83D\uDCB0" + leaderteampoints.get(6), 150);
+                } else if(leaderteams.size() > 6) {
+                    return formatLine("§8§k00000000000000000000", "§8§l\uD83D\uDCB0§8§k00000", 150);
                 } else {
                     return "§8N/A";
                 }
-            case "toppoints_7":
-                if(leaderteampoints.size() > 6) {
-                    if(leaderteampoints.get(6) != null && plugin.teamShown[6]) {
-                        return "§e§l\uD83D\uDCB0" + leaderteampoints.get(6);
-                    } else {
-                        return "§8§l\uD83D\uDCB0§8§k0000";
-                    }
+
+            case "topboardteam_8":
+                if(leaderteams.size() > 7 && leaderteams.get(7) != null && plugin.teamShown[7]) {
+                    return formatLine(plugin.getTeamDisplayName(leaderteams.get(7)), "§e§l\uD83D\uDCB0" + leaderteampoints.get(7), 150);
+                } else if(leaderteams.size() > 7) {
+                    return formatLine("§8§k00000000000000000000", "§8§l\uD83D\uDCB0§8§k00000", 150);
                 } else {
                     return "§8N/A";
                 }
-            case "topteam_8":
-                if(leaderteams.size() > 7) {
-                    if (leaderteams.get(7) != null && plugin.teamShown[7]) {
-                        return plugin.getTeamDisplayName(leaderteams.get(7));
-                    } else {
-                        return "§8§k00000000000000000000";
-                    }
-                } else {
-                    return "§8N/A";
-                }
-            case "toppoints_8":
-                if(leaderteampoints.size() > 7) {
-                    if(leaderteampoints.get(7) != null && plugin.teamShown[7]) {
-                        return "§e§l\uD83D\uDCB0" + leaderteampoints.get(7);
-                    } else {
-                        return "§8§l\uD83D\uDCB0§8§k0000";
-                    }
-                } else {
-                    return "§8N/A";
-                }
+
             case "modepoints_1":
                 if(!modeteampoints.isEmpty()) {
                     if(modeteampoints.getFirst() != null) {
@@ -770,6 +770,9 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 return teamplayers.toString();
 
 
+            case "timermessage":
+                return plugin.timerMessage;
+
             case "votedmode":
                 return plugin.woolModes.getOrDefault(plugin.playerVote.get(p), "Selecting...");
             case "completions_Team1":
@@ -780,7 +783,36 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "§8Waiting..";
                 }
-
+            case "itemtocraft_easy":
+                StringBuilder easyCraft = new StringBuilder();
+                easyCraft.append("§a◆ ");
+                if(plugin.itemsToCraft.containsKey(p.getName()) && !plugin.itemsToCraft.get(p.getName()).isEmpty()){
+                    easyCraft.append(plugin.toPrettyCase(plugin.itemsToCraft.get(p.getName()).getFirst()));
+                }
+                return easyCraft.toString();
+            case "itemtocraft_medium":
+                StringBuilder mediumCraft = new StringBuilder();
+                mediumCraft.append("§6◆ ");
+                if(plugin.itemsToCraft.containsKey(p.getName()) && !plugin.itemsToCraft.get(p.getName()).isEmpty()){
+                    mediumCraft.append(plugin.toPrettyCase(plugin.itemsToCraft.get(p.getName()).get(1)));
+                }
+                return mediumCraft.toString();
+            case "itemtocraft_hard":
+                StringBuilder hardCraft = new StringBuilder();
+                hardCraft.append("§c◆ ");
+                if(plugin.itemsToCraft.containsKey(p.getName()) && !plugin.itemsToCraft.get(p.getName()).isEmpty()){
+                    hardCraft.append(plugin.toPrettyCase(plugin.itemsToCraft.get(p.getName()).get(2)));
+                }
+                return hardCraft.toString();
+            case "totalcrafts":
+                String crafts;
+                if(plugin.playerCrafts.containsKey(p.getName())){
+                    List<Integer> playerCraftScores = plugin.playerCrafts.get(p.getName());
+                    crafts = "§a◆" + playerCraftScores.getFirst() + "§8 | §6◆" + playerCraftScores.get(1) + "§8 | §c◆" + playerCraftScores.get(2);
+                } else {
+                    crafts = "§a◆0§8 | §6◆0§8 | §c◆0";
+                }
+                return crafts;
             case "topcrafteritem_1":
                 if(!craftPoints.isEmpty()) {
                     if(craftPoints.getFirst() != null) {
@@ -1068,9 +1100,155 @@ public class SpigotExpansion extends PlaceholderExpansion {
 
 
             case "currentmode":
-                return plugin.currentMode;
+                if(plugin.finaleActive){
+                    return "Finale";
+                } else {
+                    return plugin.currentMode;
+                }
             default:
                 return null;
         }
     }
+
+    private String getTopTeamLine(int line, int position, Player player) {
+        List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
+        int teamCount = leaderteams.size();
+
+        if (line == 1) {
+            return getTeamLine(0, player);
+        }
+
+        int start = Math.max(1, Math.min(position - 2, teamCount - 3));
+        int index = start + (line - 2);
+
+        return getTeamLine(index, player);
+    }
+
+    private String getTeamLine(int index, Player player) {
+        List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
+        List<Integer> leaderteampoints = new ArrayList<>(plugin.sortByValue().values());
+
+        int position = index + 1;
+
+        if (leaderteams.size() > index && leaderteams.get(index) != null && plugin.teamShown[index]) {
+            String teamName = plugin.getTeamDisplayName(leaderteams.get(index));
+
+            String playerTeam = PlayerConfig.get().getString("players." + player.getName() + ".team");
+            if (plugin.getTeamDisplayName(playerTeam).equals(teamName)) {
+                teamName = TeamsConfig.get().get("teams." + leaderteams.get(index) + ".colour") + "§l► " + teamName;
+            }
+
+            return positionToText(position) + " §8| " + formatLine(
+                    teamName,
+                    "§e§l\uD83D\uDCB0" + leaderteampoints.get(index),
+                    160
+            );
+
+        } else if (leaderteams.size() > index) {
+            return "§8§k" + positionToText(position) + " §8| " + formatLine(
+                    "§8§k00000000000000000000",
+                    "§8§l\uD83D\uDCB0§8§k00000",
+                    160
+            );
+        } else {
+            return "§8N/A";
+        }
+    }
+
+    public String positionToText(int position){
+        String positionText;
+        String hexString;
+
+        switch(position){
+            case 1:
+                positionText = "1sᴛ";
+                hexString = "#ffe045";
+                break;
+
+            case 2:
+                positionText = "2ɴᴅ";
+                hexString = "#b6b6b6";
+                break;
+
+            case 3:
+                positionText = "3ʀᴅ";
+                hexString = "#e4b338";
+                break;
+
+
+            default:
+                positionText = position + "ᴛʜ";
+                hexString = "#FFFFFF";
+                break;
+        }
+
+        TextColor color = TextColor.fromHexString(hexString);
+
+        Component message = Component.text(positionText)
+                .color(color)
+                .decorate(TextDecoration.BOLD);
+
+        return LegacyComponentSerializer.legacySection().serialize(message);
+    }
+
+
+
+    public static String formatLine(String leftText, String rightText, int targetWidth) {
+        // Regex for emojis and circled numbers
+        String regex = "\uD83D\uDCB0|[❶-❽]";
+
+        // Strip formatting and special characters for width calculation
+        String strippedLeft = leftText.replaceAll(regex, "");
+        String strippedRight = rightText.replaceAll(regex, "");
+
+        // Measure widths using your font utility
+        int leftWidth = FontUtils.getStringWidth(strippedLeft);
+        int rightWidth = FontUtils.getStringWidth(strippedRight);
+
+        // Remaining width to fill
+        int remainingWidth = targetWidth - leftWidth - rightWidth;
+
+        // If no space remains, just concatenate
+        if (remainingWidth <= 0) {
+            return leftText + rightText;
+        }
+
+        // Generate the exact-width space character(s)
+        String space = getExactSpace(remainingWidth);
+
+        return leftText + space + rightText;
+    }
+
+    /**
+     * Returns a Minecraft resource-pack character that shifts text by the exact width.
+     * Supports integer width (-8192 to 8192) and fractional width (-1.0 to 1.0) spaces.
+     */
+    public static String getExactSpace(double width) {
+        // Use floor for positive, ceil for negative to always stay smaller
+        int intWidth = width > 0 ? (int) Math.floor(width) : (int) Math.ceil(width);
+
+        // Integer width space
+        if (intWidth >= -8192 && intWidth <= 8192) {
+            int charCode = 0xD0000 + intWidth;
+            return new String(Character.toChars(charCode));
+        }
+
+        // Fractional widths (-1.0 to 1.0)
+        if (width >= -1.0 && width <= 1.0) {
+            int fracCode = 0x50000 + (int) Math.floor(width * 4800); // use floor to stay smaller
+            return new String(Character.toChars(fracCode));
+        }
+
+        // Fallback: split into multiple integer-width spaces
+        StringBuilder builder = new StringBuilder();
+        int remaining = intWidth;
+        while (remaining != 0) {
+            int part = Math.max(-8192, Math.min(8192, remaining));
+            builder.append(getExactSpace(part));
+            remaining -= part;
+        }
+        return builder.toString();
+    }
+
+
 }

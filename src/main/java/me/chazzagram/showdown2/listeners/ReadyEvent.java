@@ -34,6 +34,7 @@ public class ReadyEvent implements Listener {
     @EventHandler
     public void onPlayerCrouch(PlayerToggleSneakEvent e){
         if(plugin.runningTimers.containsKey("readytimer") && plugin.readyType.equals("sneak")) {
+            if(plugin.ghostManager.getGhostPlayers().contains(e.getPlayer().getName())) return;
             if(plugin.getPlayers().contains(e.getPlayer())) {
                 if (e.isSneaking()) {
                     plugin.readyPlayers.put(e.getPlayer().getName(), plugin.readyPlayers.get(e.getPlayer().getName()) + 1);
@@ -65,6 +66,7 @@ public class ReadyEvent implements Listener {
         Action action = e.getAction();
 
         if(plugin.runningTimers.containsKey("readytimer") && plugin.readyType.equals("punch")) {
+            if(plugin.ghostManager.getGhostPlayers().contains(e.getPlayer().getName())) return;
             if(plugin.getPlayers().contains(e.getPlayer())) {
                 if (action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK) {
                     plugin.readyPlayers.put(e.getPlayer().getName(), plugin.readyPlayers.get(e.getPlayer().getName()) + 1);
@@ -95,6 +97,7 @@ public class ReadyEvent implements Listener {
     public void onPlayerPunch(EntityDamageByEntityEvent e) {
         if (e.getDamager() instanceof Player p) {
             if(plugin.runningTimers.containsKey("readytimer") && plugin.readyType.equals("punch")) {
+                if(plugin.ghostManager.getGhostPlayers().contains(p.getName())) return;
                 if(plugin.getPlayers().contains(p)) {
                     plugin.readyPlayers.put(p.getName(), plugin.readyPlayers.get(p.getName()) + 1);
                     if (plugin.readyPlayers.get(p.getName()) < 15) {
@@ -129,6 +132,7 @@ public class ReadyEvent implements Listener {
             if (!isJumping) {
                 plugin.jumpStates.put(p, true);
                 if (plugin.runningTimers.containsKey("readytimer") && plugin.readyType.equals("jump")) {
+                    if(plugin.ghostManager.getGhostPlayers().contains(p.getName())) return;
                     if (plugin.getPlayers().contains(p)) {
                         plugin.readyPlayers.put(p.getName(), plugin.readyPlayers.get(p.getName()) + 1);
                         if (plugin.readyPlayers.get(p.getName()) < 15) {

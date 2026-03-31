@@ -8,25 +8,29 @@ public class FontUtils {
 
     static {
         // Widths based on default Minecraft font
-        String small = "!.,:;i| ";
-        String medium = "'`l";
-        String wide = "t[]{}<>/\\";
-        String wider = "fk()";
-        String widest = "mw@";
+        // Small characters (2 pixels)
 
-        for (char c : small.toCharArray()) CHAR_WIDTHS.put(c, 2);
-        for (char c : medium.toCharArray()) CHAR_WIDTHS.put(c, 3);
-        for (char c : wide.toCharArray()) CHAR_WIDTHS.put(c, 4);
-        for (char c : wider.toCharArray()) CHAR_WIDTHS.put(c, 5);
-        for (char c : widest.toCharArray()) CHAR_WIDTHS.put(c, 6);
+        String smallest = "!.,:;i| ";
+        for (char c : smallest.toCharArray()) CHAR_WIDTHS.put(c, 1);
 
-        // Default for letters and numbers
-        for (char c = 'a'; c <= 'z'; c++) CHAR_WIDTHS.putIfAbsent(c, 5);
-        for (char c = 'A'; c <= 'Z'; c++) CHAR_WIDTHS.putIfAbsent(c, 5);
+        // Medium characters (3 pixels)
+        String medium = "`l"; // includes uppercase I, l, i, quotes
+        for (char c : medium.toCharArray()) CHAR_WIDTHS.put(c, 2);
+
+        // Wide characters (4 pixels)
+        String wide = "t[]{}<>/\\?~^*-=+I\"";
+        for (char c : wide.toCharArray()) CHAR_WIDTHS.put(c, 3);
+
+        // Wider characters (5 pixels)
+        String wider = "fk()rJ$&%#";
+        for (char c : wider.toCharArray()) CHAR_WIDTHS.put(c, 4);
+
+        // Widest characters (6 pixels)
+        String widest = "_abcdeghjmnopqrsuvwxyz@ABCDEFGHJKLMNOPQRSTUVWXYZᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘʀsᴛᴜᴠᴡxʏᴢ";
+        for (char c : widest.toCharArray()) CHAR_WIDTHS.put(c, 5);
+
+        // Numbers 0-9
         for (char c = '0'; c <= '9'; c++) CHAR_WIDTHS.putIfAbsent(c, 5);
-
-        CHAR_WIDTHS.putIfAbsent(' ', 4);
-        CHAR_WIDTHS.putIfAbsent('\u00A7', 0); // section symbol (formatting code)
     }
 
     public static int getStringWidth(String text) {
@@ -38,11 +42,7 @@ public class FontUtils {
 
             if (c == '\u00A7' && i + 1 < text.length()) {
                 char code = text.charAt(i + 1);
-                if (code == 'l' || code == 'L') {
-                    bold = true;
-                } else if (code == 'r' || code == 'R') {
-                    bold = false;
-                }
+                bold = code == 'l' || code == 'L';
                 i++; // Skip formatting code
                 continue;
             }

@@ -32,6 +32,7 @@ public class VoteSneakBombEvent implements Listener {
     public void voteSneakBombEvent(PlayerToggleSneakEvent e) {
 
         if(plugin.votingEnabled && plugin.powerUpHolders.contains(e.getPlayer().getName())) {
+            if(plugin.ghostManager.getGhostPlayers().contains(e.getPlayer().getName())) return;
             if (!e.getPlayer().isSneaking()) {
                 BukkitTask task = new BukkitRunnable() {
                     int timeLeft = 0;
@@ -89,6 +90,7 @@ public class VoteSneakBombEvent implements Listener {
         }
         if(plugin.getPlayers().contains(e.getPlayer())) {
             if (plugin.runningTimers.containsKey("readytimer") && plugin.readyType.equals("sneakbomb") && plugin.readyPlayers.get(e.getPlayer().getName()) != 20) {
+                if(plugin.ghostManager.getGhostPlayers().contains(e.getPlayer().getName())) return;
                 if (!e.getPlayer().isSneaking()) {
                     BukkitTask task = new BukkitRunnable() {
                         int timeLeft = 0;

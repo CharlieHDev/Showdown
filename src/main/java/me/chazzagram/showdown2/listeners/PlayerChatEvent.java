@@ -6,6 +6,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -60,6 +61,8 @@ public class PlayerChatEvent implements Listener {
 
         event.setCancelled(true); // cancel default chat
         String legacy = LegacyComponentSerializer.legacySection().serialize(message);
-        event.getPlayer().sendMessage(legacy); // works with vanilla sendMessage(String)
+        for(Player p : Bukkit.getOnlinePlayers()){
+            p.sendMessage(legacy);
+        }
     }
 }

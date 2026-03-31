@@ -26,6 +26,9 @@ public class DoubleJumpEvent implements Listener {
 
     @EventHandler
     public void onToggleFlight(PlayerToggleFlightEvent e) {
+
+        if(plugin.ghostManager.getGhostPlayers().contains(e.getPlayer().getName())) return;
+
         Player p = e.getPlayer();
         if ((e.getPlayer().getGameMode().equals(GameMode.ADVENTURE) || e.getPlayer().getGameMode().equals(GameMode.SURVIVAL)) && (plugin.currentMode.equals("Zoomo Go") || plugin.currentMode.equals("Slime Golf")) && plugin.doubleJumpEnabled) {
             p.setAllowFlight(false);
@@ -36,6 +39,7 @@ public class DoubleJumpEvent implements Listener {
                 p.setVelocity(p.getLocation().getDirection().multiply(1.8).setY(1));
             }
             e.setCancelled(true);
+            p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_FLAP, 10, 2F);
             p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(""));
             String name = p.getName() + "dj";
             BukkitTask task = new BukkitRunnable() {

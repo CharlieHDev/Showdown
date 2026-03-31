@@ -23,35 +23,35 @@ public class RiptideEvent implements Listener {
 
     @EventHandler
     public void onTridentThrow(ProjectileLaunchEvent event) {
-        if (plugin.currentMode.equals("Craftalot") || plugin.currentMode.equals("Colour Dash")) {
-            if (!(event.getEntity() instanceof Trident)) {
-                return;
-            }
-
-            Projectile projectile = event.getEntity();
-
-            if (!(projectile.getShooter() instanceof Player)) {
-                return;
-            }
-
-            event.setCancelled(true);
-
-            Player player = (Player) projectile.getShooter();
-
-            Material blockType = player.getLocation().getBlock().getType();
-            if (blockType == Material.WATER || blockType == Material.KELP || blockType == Material.SEAGRASS) {
-
-                Vector direction = player.getLocation().getDirection().normalize();
-                Vector velocity = direction.multiply(1);
-                if (plugin.currentMode.equals("Craftalot")) {
-                    velocity = direction.multiply(3);
-                } else if (plugin.currentMode.equals("Colour Dash")) {
-                    velocity = direction.multiply(2.5);
-                }
-                player.setVelocity(velocity);
-
-                player.getWorld().playSound(player.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_1, 1.0f, 1.0f);
-            }
-        }
+//        if (plugin.currentMode.equals("Craftalot") || plugin.currentMode.equals("Colour Dash")) {
+//            if (!(event.getEntity() instanceof Trident)) {
+//                return;
+//            }
+//
+//            Projectile projectile = event.getEntity();
+//
+//            if (!(projectile.getShooter() instanceof Player)) {
+//                return;
+//            }
+//
+//            event.setCancelled(true);
+//
+//            Player player = (Player) projectile.getShooter();
+//
+//            Material blockType = player.getLocation().getBlock().getType();
+//            if (blockType == Material.WATER || blockType == Material.KELP || blockType == Material.SEAGRASS) {
+//
+//                Vector direction = player.getLocation().getDirection().normalize();
+//                Vector velocity = direction.multiply(1);
+//                if (plugin.currentMode.equals("Craftalot")) {
+//                    velocity = direction.multiply(3);
+//                } else if (plugin.currentMode.equals("Colour Dash")) {
+//                    velocity = direction.multiply(2.5);
+//                }
+//                player.setVelocity(velocity);
+//
+//                player.getWorld().playSound(player.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_1, 1.0f, 1.0f);
+//            }
+//        }
     }
 }

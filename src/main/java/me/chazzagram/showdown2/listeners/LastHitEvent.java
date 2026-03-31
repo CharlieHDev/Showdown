@@ -6,6 +6,9 @@ import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.type.Snow;
+import org.bukkit.damage.DamageType;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -15,10 +18,13 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerAnimationEvent;
 import org.bukkit.event.player.PlayerAnimationType;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.RayTraceResult;
@@ -41,6 +47,11 @@ public class LastHitEvent implements Listener {
 
     @EventHandler
     public void onPlayerHit(EntityDamageByEntityEvent e) {
+
+        if(e.getDamager() instanceof Player p) {
+            if (plugin.ghostManager.getGhostPlayers().contains(p.getName()))  { e.setCancelled(true); return; }
+        }
+
         if(plugin.currentMode.equals("Voting")){
             e.setCancelled(true);
             if (plugin.runningTimers.containsKey("slimeBall") && plugin.runningTimers.get("slimeBall").getValue() > 6) {
@@ -67,6 +78,132 @@ public class LastHitEvent implements Listener {
                                 } catch (ReflectiveOperationException ex) {
                                     throw new RuntimeException(ex);
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+            if(e.getDamager() instanceof Player player && e.getEntity() instanceof Interaction itemBox){
+                Iterator<ItemBox> iterator = plugin.itemBoxes.iterator();
+
+                while (iterator.hasNext()) {
+                    ItemBox ib = iterator.next();
+
+                    if (Objects.equals(itemBox, ib.getInteraction())) {
+
+                        if(plugin.votingEnabled){
+                            if(ib.getItem().equals(new ItemStack(Material.TNT))){
+                                if(plugin.powerUpHolders.contains(player.getName())){
+                                    player.sendTitle("", "§c§lMax capacity reached.", 0, 10, 0);
+                                    plugin.messagePlayer(player, "§c[!] You already have this power-up, §ehold crouch §cto charge it. (1)");
+                                } else {
+                                    plugin.powerUpHolders.add(player.getName());
+                                    plugin.messagePlayer(player, """
+                                        §f
+                                        §f
+                                        §c§lPOWER-UP READY!
+                                        §e§oHold shift to charge up a voting explosion!
+                                        §f
+                                        """);
+                                    player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BIT, 10, 1);
+                                    plugin.itemBoxCount.replace(0, plugin.itemBoxCount.get(0) - 1);
+                                    ib.despawn();
+
+                                    iterator.remove();
+                                }
+                            } else {
+                                if (countItem(player, ib.getItem()) < 1) {
+                                    givePowerUp(player, ib.getItem());
+                                    plugin.itemBoxCount.replace(0, plugin.itemBoxCount.get(0) - 1);
+                                    ib.despawn();
+
+                                    iterator.remove();
+                                } else {
+                                    player.sendTitle("", "§c§lMax capacity reached.", 0, 10, 0);
+                                    plugin.messagePlayer(player, "§c[!] You have reached the max capacity for this power-up. (1)");
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        } else if(plugin.currentMode.equals("Crumble Clash")){
+            e.setCancelled(true);
+            if (e.getDamager() instanceof Fireball fireball && e.getEntity() instanceof Player victim){
+                if(plugin.fireballSenders.containsKey(fireball)){
+                    plugin.crumbleKillTracker.put(
+                            victim.getName(),
+                            new CrumbleKillData(plugin.fireballSenders.get(fireball).getName(), System.currentTimeMillis())
+                    );
+                }
+            }
+
+            if(e.getDamager() instanceof Player player && e.getEntity() instanceof Interaction itemBox){
+                Iterator<ItemBox> iterator = plugin.itemBoxes.iterator();
+
+                while (iterator.hasNext()) {
+                    ItemBox ib = iterator.next();
+
+                    if (Objects.equals(itemBox, ib.getInteraction())) {
+
+                        if (plugin.currentMode.equals("Crumble Clash")) {
+                            if (countItem(player, ib.getItem()) < 3) {
+                                givePowerUp(player, ib.getItem());
+                                int y = ib.getInteraction().getLocation().getBlockY();
+                                if (y >= 197 && y <= 199) {
+                                    plugin.itemBoxCount.replace(0, plugin.itemBoxCount.get(0) - 1);
+                                }
+                                if (y >= 190 && y <= 192) {
+                                    plugin.itemBoxCount.replace(1, plugin.itemBoxCount.get(1) - 1);
+                                }
+                                if (y >= 182 && y <= 184) {
+                                    plugin.itemBoxCount.replace(2, plugin.itemBoxCount.get(2) - 1);
+                                }
+                                ib.despawn();
+
+                                iterator.remove();
+                            } else {
+                                player.sendTitle("", "§c§lMax capacity reached.", 0, 10, 0);
+                                plugin.messagePlayer(player, "§c[!] You have reached the max capacity for this power-up. (3)");
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            if (e.getDamager() instanceof Player attacker && e.getEntity() instanceof Player victim && e.getDamageSource().getDamageType() == DamageType.MACE_SMASH) {
+                e.setCancelled(false);
+                e.setDamage(0);
+
+                if(plugin.currentSpleef.equals("§6§lCopper Spleef")) {
+                    plugin.crumbleKillTracker.put(
+                            victim.getName(),
+                            new CrumbleKillData(attacker.getName(), System.currentTimeMillis())
+                    );
+                }
+
+                Location blockBelow = victim.getLocation().clone().subtract(3, 2, 3);
+                for (int x = 0; x <= 6; x++) {
+                    for (int z = 0; z <= 6; z++) {
+                        for (int y = 0; y <= 4; y++) {
+                            Block block = blockBelow.clone().add(x, y, z).getBlock();
+                            Material type = block.getType();
+                            switch (type) {
+                                case WAXED_COPPER_BLOCK:
+                                    block.setType(Material.WAXED_EXPOSED_COPPER);
+                                    break;
+                                case WAXED_EXPOSED_COPPER:
+                                    block.setType(Material.WAXED_WEATHERED_COPPER);
+                                    break;
+                                case WAXED_WEATHERED_COPPER:
+                                    block.setType(Material.WAXED_OXIDIZED_COPPER);
+                                    break;
+                                case WAXED_OXIDIZED_COPPER:
+                                    block.setType(Material.AIR);
+                                    break;
+                                default:
+                                    break;
                             }
                         }
                     }
@@ -223,6 +360,9 @@ public class LastHitEvent implements Listener {
 
     @EventHandler
     public void onPlayerSwing(PlayerAnimationEvent event) {
+
+        if(plugin.ghostManager.getGhostPlayers().contains(event.getPlayer().getName())) return;
+
         if(plugin.currentMode.equals("Presents")) {
             if (event.getAnimationType() != PlayerAnimationType.ARM_SWING) return;
 
@@ -508,6 +648,75 @@ public class LastHitEvent implements Listener {
                     }
 
                 }
+            } else if (plugin.currentMode.equals("Push Point")) {
+                if (victim.getHealth() - e.getFinalDamage() <= 0) {
+                    Inventory ppTeleportGUI = Bukkit.createInventory(null, 54, "§eSelect Teleport Location");
+                    ppTeleportGUI.setItem(10, getRespawnLocs().getFirst());
+                    ppTeleportGUI.setItem(16, getRespawnLocs().get(1));
+                    ppTeleportGUI.setItem(22, getRespawnLocs().get(2));
+                    ppTeleportGUI.setItem(40, getRespawnLocs().get(3));
+                    Bukkit.getWorld("build").spawnParticle(Particle.RAID_OMEN, victim.getLocation().clone().add(0,1,0), 20, 0.2, 0.5, 0.2, 0);
+                    killer.playSound(killer.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 2);
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(plugin.getPlayerDisplayName(victim.getName()) + " §7| §c♥§c§l0.0")), 1L);
+                    // TODO: Change to only send to team and opponent.
+                    for (Player p : Bukkit.getOnlinePlayers()) {
+                        plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
+                    }
+                    plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died to " + plugin.getPlayerDisplayName(killer.getName()));
+                    plugin.playerKillCount.put(killer.getName(), plugin.playerKillCount.get(killer.getName()) + 1);
+                    if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(killer.getName())) {
+                        PlayerInfoConfig.get().set("players." + killer.getName() + ".kills", PlayerInfoConfig.get().getInt("players." + killer.getName() + ".kills") + 1);
+                        PlayerInfoConfig.save();
+                    }
+                    e.setCancelled(true);
+                    victim.setGameMode(GameMode.SPECTATOR);
+                    victim.getInventory().clear();
+                    givePPKits(victim);
+                    victim.setHealth(20);
+                    killer.sendTitle("", "§c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
+                    BukkitTask task = new BukkitRunnable() {
+                        int timeLeft = 6;
+
+                        @Override
+                        public void run() {
+                            if (plugin.runningTimers.containsKey(victim.getName() + "respawn")) {
+                                if (!plugin.pausedTimers.contains(victim.getName() + "respawn")) {
+                                    plugin.runningTimers.get(victim.getName() + "respawn").setValue(timeLeft);
+                                    if(timeLeft == 5){
+                                        victim.openInventory(ppTeleportGUI);
+                                    }
+                                    timeLeft--;
+                                    if (timeLeft == 0) {
+                                        if(plugin.playerSelectedTeleport.containsKey(victim) && plugin.runningTimers.containsKey("pushpoint") && plugin.runningTimers.get("pushpoint").getValue() > 5) {
+                                            plugin.messageConsole("Timer finished.");
+                                            victim.setGameMode(GameMode.ADVENTURE);
+                                            victim.sendTitle("", "", 0, 30, 0);
+                                            victim.teleport(plugin.playerSelectedTeleport.get(victim));
+                                            plugin.playerSelectedTeleport.remove(victim);
+                                        }
+                                        plugin.runningTimers.remove(victim.getName() + "respawn");
+                                        cancel();
+                                    } else {
+                                        if(plugin.playerSelectedTeleport.containsKey(victim)) {
+                                            victim.sendTitle("§c§lYou Died.", "§6Respawning in §c" + timeLeft + "..", 0, 30, 0);
+                                            plugin.messageConsole(timeLeft + " seconds left..");
+                                        } else {
+                                            victim.sendTitle("§c§lYou Died.", "§6§uSelect a respawn location.", 0, 30, 0);
+                                        }
+                                    }
+                                }
+                            } else {
+                                plugin.messageConsole("Timer removed by external factor.");
+                                cancel();
+                            }
+                        }
+
+                    }.runTaskTimer(plugin, 0L, 20L);
+
+                    plugin.runningTimers.put(victim.getName() + "respawn", new AbstractMap.SimpleEntry<>(task, 6));
+                } else {
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(plugin.getPlayerDisplayName(victim.getName()) + " §7| §c♥§c§l" + PlaceholderAPI.setPlaceholders(victim, "%player_health_rounded%"))), 1L);
+                }
             }
         }
     }
@@ -530,6 +739,36 @@ public class LastHitEvent implements Listener {
         item3[0] = new ItemStack(Material.WIND_CHARGE);
         item3[0].setAmount(2);
         items.add(item3);
+
+        return items;
+    }
+
+    public List<ItemStack> getRespawnLocs() {
+        List<ItemStack> items = new ArrayList<>();
+
+        ItemStack item1 = new ItemStack(Material.NETHER_STAR);
+        ItemMeta item1meta = item1.getItemMeta();
+        item1meta.setDisplayName("§b§lLeft Lane");
+        item1.setItemMeta(item1meta);
+        items.add(item1);
+
+        ItemStack item2 = new ItemStack(Material.NETHER_STAR);
+        ItemMeta item2meta = item2.getItemMeta();
+        item2meta.setDisplayName("§b§lRight Lane");
+        item2.setItemMeta(item2meta);
+        items.add(item2);
+
+        ItemStack item3 = new ItemStack(Material.NETHER_STAR);
+        ItemMeta item3meta = item3.getItemMeta();
+        item3meta.setDisplayName("§e§lMiddle Lane");
+        item3.setItemMeta(item3meta);
+        items.add(item3);
+
+        ItemStack item4 = new ItemStack(Material.NETHER_STAR);
+        ItemMeta item4meta = item4.getItemMeta();
+        item4meta.setDisplayName("§a§lBase");
+        item4.setItemMeta(item4meta);
+        items.add(item4);
 
         return items;
     }
@@ -631,5 +870,144 @@ public class LastHitEvent implements Listener {
         }
 
         return kits;
+    }
+
+    public void givePowerUp(Player p, ItemStack type){
+
+                p.getInventory().addItem(type);
+                p.playSound(p.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1F, 1F);
+                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§7[§a+§7] §r" + type.getItemMeta().getDisplayName()));
+    }
+
+    public static int countItem(Player player, ItemStack target) {
+        int total = 0;
+
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && item.isSimilar(target)) {
+                total += item.getAmount();
+            }
+        }
+
+        return total;
+    }
+
+    public void givePPKits(Player player) {
+        player.getInventory().clear();
+        ItemStack arrows = new ItemStack(Material.ARROW, 12);
+        ItemStack food = new ItemStack(Material.COOKED_BEEF, 16);
+        ItemStack goldenapple = new ItemStack(Material.GOLDEN_APPLE);
+        String team = PlayerConfig.get().getString("players." + player.getName() + ".team");
+        switch(plugin.ppTeamSelectedKits.get(team).get(player)) {
+            case "Tank":
+                ItemStack tankChest = new ItemStack(Material.IRON_CHESTPLATE);
+                ItemStack tankBoots = new ItemStack(Material.IRON_BOOTS);
+                makeUnbreakable(tankChest);
+                makeUnbreakable(tankBoots);
+                player.getInventory().setChestplate(tankChest);
+                player.getInventory().setBoots(tankBoots);
+
+                ItemStack tanksword = new ItemStack(Material.WOODEN_SWORD);
+                ItemStack tankcrossbow = new ItemStack(Material.CROSSBOW);
+                tankcrossbow.addEnchantment(Enchantment.QUICK_CHARGE, 2);
+                ItemStack tankarrows = new ItemStack(Material.ARROW, 8);
+                makeUnbreakable(tanksword);
+                makeUnbreakable(tankcrossbow);
+
+                player.getInventory().addItem(tanksword, tankcrossbow, food, tankarrows);
+                break;
+
+            case "Archer":
+                ItemStack archerChest = new ItemStack(Material.CHAINMAIL_CHESTPLATE);
+                ItemStack archerBoots = new ItemStack(Material.IRON_BOOTS);
+                makeUnbreakable(archerChest);
+                makeUnbreakable(archerBoots);
+                player.getInventory().setChestplate(archerChest);
+                player.getInventory().setBoots(archerBoots);
+
+                ItemStack archersword = new ItemStack(Material.WOODEN_SWORD);
+                ItemStack archercrossbow = new ItemStack(Material.CROSSBOW);
+                archercrossbow.addEnchantment(Enchantment.QUICK_CHARGE, 2);
+                ItemStack archerarrows = new ItemStack(Material.ARROW, 6);
+                makeUnbreakable(archersword);
+                makeUnbreakable(archercrossbow);
+
+                player.getInventory().addItem(archersword, archercrossbow, food, arrows, archerarrows);
+                break;
+
+            case "Duelist":
+                ItemStack duelistChest = new ItemStack(Material.CHAINMAIL_CHESTPLATE);
+                ItemStack duelistBoots = new ItemStack(Material.IRON_BOOTS);
+                makeUnbreakable(duelistChest);
+                makeUnbreakable(duelistBoots);
+                player.getInventory().setChestplate(duelistChest);
+                player.getInventory().setBoots(duelistBoots);
+
+                ItemStack duelistsword = new ItemStack(Material.STONE_SWORD);
+                ItemStack duelistbow = new ItemStack(Material.BOW);
+                makeUnbreakable(duelistsword);
+                makeUnbreakable(duelistbow);
+
+                player.getInventory().addItem(duelistsword, duelistbow, food, arrows);
+                break;
+
+            case "Healer":
+                ItemStack healerChest = new ItemStack(Material.CHAINMAIL_CHESTPLATE);
+                ItemStack healerBoots = new ItemStack(Material.IRON_BOOTS);
+                makeUnbreakable(healerChest);
+                makeUnbreakable(healerBoots);
+                player.getInventory().setChestplate(healerChest);
+                player.getInventory().setBoots(healerBoots);
+
+                ItemStack healersword = new ItemStack(Material.WOODEN_SWORD);
+                ItemStack healerbow = new ItemStack(Material.BOW);
+                makeUnbreakable(healersword);
+                makeUnbreakable(healerbow);
+
+                ItemStack healingpotion = new ItemStack(Material.SPLASH_POTION);
+                PotionMeta healingpotionsmeta = (PotionMeta) healingpotion.getItemMeta();
+                healingpotionsmeta.setBasePotionType(PotionType.HEALING);
+                healingpotion.setItemMeta(healingpotionsmeta);
+
+                ItemStack regenpotion = new ItemStack(Material.SPLASH_POTION);
+                PotionMeta regenpotionmeta = (PotionMeta) regenpotion.getItemMeta();
+                regenpotionmeta.setBasePotionType(PotionType.REGENERATION);
+                regenpotion.setItemMeta(regenpotionmeta);
+
+                player.getInventory().addItem(healersword, healerbow, food, goldenapple, healingpotion, regenpotion, arrows);
+                break;
+
+            case "Flanker":
+                ItemStack flankerChest = new ItemStack(Material.LEATHER_CHESTPLATE);
+                ItemStack flankerBoots = new ItemStack(Material.IRON_BOOTS);
+                makeUnbreakable(flankerChest);
+                makeUnbreakable(flankerBoots);
+                player.getInventory().setChestplate(flankerChest);
+                player.getInventory().setBoots(flankerBoots);
+
+                ItemStack flankersword = new ItemStack(Material.STONE_SWORD);
+                ItemStack flankerbow = new ItemStack(Material.BOW);
+                makeUnbreakable(flankersword);
+                makeUnbreakable(flankerbow);
+
+                ItemStack speedpotions = new ItemStack(Material.POTION, 2);
+                PotionMeta speedpotionsmeta = (PotionMeta) speedpotions.getItemMeta();
+                speedpotionsmeta.setBasePotionType(PotionType.SWIFTNESS);
+                speedpotions.setItemMeta(speedpotionsmeta);
+
+                player.getInventory().addItem(flankersword, flankerbow, food, speedpotions, goldenapple, arrows);
+                break;
+
+            default:
+                player.sendMessage("No kit selected!");
+                break;
+        }
+    }
+
+    public void makeUnbreakable(ItemStack item) {
+        if (item == null) return;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return;
+        meta.setUnbreakable(true);
+        item.setItemMeta(meta);
     }
 }

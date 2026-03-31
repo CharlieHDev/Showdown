@@ -7,16 +7,26 @@ import me.chazzagram.showdown2.files.SpectatorConfig;
 import me.chazzagram.showdown2.files.TeamsConfig;
 import org.bukkit.*;
 import org.bukkit.block.Barrel;
+import org.bukkit.block.Block;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.Team;
@@ -42,6 +52,278 @@ public class InventoryEvent implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent e) {
+
+        if(plugin.ghostManager.getGhostPlayers().contains(e.getWhoClicked().getName()) && !e.getView().getTitle().equals("§ePlayers")) return;
+
+        if(plugin.currentMode.equals("Dimension Dash")){
+            e.setCancelled(true);
+        }
+        if(plugin.currentMode.equals("Push Point")){
+            if(e.getView().getTitle().equalsIgnoreCase("§eSelect Teleport Location")) {
+                List<Integer> pushTeleportsZ = Arrays.asList(
+                        47, 47, 42, 56
+                );
+                List<Integer> pushTeleportsX = Arrays.asList(
+                        -37, 37, 0, 0
+                );
+                int pitch = 0;
+                int yaw = 180;
+                int index = 0;
+                World world = Bukkit.getWorld("build");
+                Location baseLoc = new Location(world, 1037.5, -60, -458.5);
+                e.setCancelled(true);
+                Player pushPlayer = (Player) e.getWhoClicked();
+                if (PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(pushPlayer.getName())) {
+                    String team = PlayerConfig.get().getString("players." + pushPlayer.getName() + ".team");
+                    for (Block[] blocks : plugin.mapSides.values()) {
+                        if (blocks[0].getType().equals(plugin.teamConcrete.get(team)) || blocks[1].getType().equals(plugin.teamConcrete.get(team))) {
+                            baseLoc.setX(baseLoc.getX() + (index * 111));
+                        }
+                        if (blocks[1].getType().equals(plugin.teamConcrete.get(team))) {
+                            pushTeleportsZ.replaceAll(integer -> -integer);
+                            pushTeleportsX.replaceAll(integer -> -integer);
+                            yaw = 0;
+                            break;
+                        }
+                        index++;
+                    }
+                }
+
+                switch (e.getSlot()) {
+                    case 10:
+                        if (plugin.runningTimers.containsKey(pushPlayer.getName() + "respawn")) {
+                            plugin.playerSelectedTeleport.put(pushPlayer, new Location(Bukkit.getWorld("build"), baseLoc.getX() + pushTeleportsX.getFirst(), baseLoc.getY(), baseLoc.getZ() + pushTeleportsZ.getFirst(), yaw, pitch));
+                            pushPlayer.sendTitle("§c§lYou Died.", "§aLeft Lane selected.", 0, 30, 0);
+                            pushPlayer.closeInventory();
+                        } else {
+                            if (plugin.runningTimers.containsKey("pushpoint") && plugin.runningTimers.get("pushpoint").getValue() > 5) {
+                                pushPlayer.teleport(new Location(Bukkit.getWorld("build"), baseLoc.getX() + pushTeleportsX.getFirst(), baseLoc.getY(), baseLoc.getZ() + pushTeleportsZ.getFirst(), yaw, pitch));
+                                plugin.playerSelectedTeleport.put(pushPlayer, new Location(Bukkit.getWorld("build"), baseLoc.getX() + pushTeleportsX.getFirst(), baseLoc.getY(), baseLoc.getZ() + pushTeleportsZ.getFirst(), yaw, pitch));
+                                pushPlayer.setGameMode(GameMode.ADVENTURE);
+                                pushPlayer.closeInventory();
+                                plugin.playerSelectedTeleport.remove(pushPlayer);
+                            }
+                        }
+
+                        break;
+                    case 16:
+                        if (plugin.runningTimers.containsKey(pushPlayer.getName() + "respawn")) {
+                            plugin.playerSelectedTeleport.put(pushPlayer, new Location(Bukkit.getWorld("build"), baseLoc.getX() + pushTeleportsX.get(1), baseLoc.getY(), baseLoc.getZ() + pushTeleportsZ.get(1), yaw, pitch));
+                            pushPlayer.sendTitle("§c§lYou Died.", "§aRight Lane selected.", 0, 30, 0);
+                            pushPlayer.closeInventory();
+                        } else {
+                            if (plugin.runningTimers.containsKey("pushpoint") && plugin.runningTimers.get("pushpoint").getValue() > 5) {
+                                pushPlayer.teleport(new Location(Bukkit.getWorld("build"), baseLoc.getX() + pushTeleportsX.get(1), baseLoc.getY(), baseLoc.getZ() + pushTeleportsZ.get(1), yaw, pitch));
+                                plugin.playerSelectedTeleport.put(pushPlayer, new Location(Bukkit.getWorld("build"), baseLoc.getX() + pushTeleportsX.get(1), baseLoc.getY(), baseLoc.getZ() + pushTeleportsZ.get(1), yaw, pitch));
+                                pushPlayer.setGameMode(GameMode.ADVENTURE);
+                                pushPlayer.closeInventory();
+                                plugin.playerSelectedTeleport.remove(pushPlayer);
+                            }
+                        }
+
+                        break;
+                    case 22:
+                        if (plugin.runningTimers.containsKey(pushPlayer.getName() + "respawn")) {
+                            plugin.playerSelectedTeleport.put(pushPlayer, new Location(Bukkit.getWorld("build"), baseLoc.getX() + pushTeleportsX.get(2), baseLoc.getY(), baseLoc.getZ() + pushTeleportsZ.get(2), yaw, pitch));
+                            pushPlayer.sendTitle("§c§lYou Died.", "§aMiddle Lane selected.", 0, 30, 0);
+                            pushPlayer.closeInventory();
+                        } else {
+                            if (plugin.runningTimers.containsKey("pushpoint") && plugin.runningTimers.get("pushpoint").getValue() > 5) {
+                                pushPlayer.teleport(new Location(Bukkit.getWorld("build"), baseLoc.getX() + pushTeleportsX.get(2), baseLoc.getY(), baseLoc.getZ() + pushTeleportsZ.get(2), yaw, pitch));
+                                plugin.playerSelectedTeleport.put(pushPlayer, new Location(Bukkit.getWorld("build"), baseLoc.getX() + pushTeleportsX.get(2), baseLoc.getY(), baseLoc.getZ() + pushTeleportsZ.get(2), yaw, pitch));
+                                pushPlayer.setGameMode(GameMode.ADVENTURE);
+                                pushPlayer.closeInventory();
+                                plugin.playerSelectedTeleport.remove(pushPlayer);
+                            }
+                        }
+
+                        break;
+                    case 40:
+                        if (plugin.runningTimers.containsKey(pushPlayer.getName() + "respawn")) {
+                            plugin.playerSelectedTeleport.put(pushPlayer, new Location(Bukkit.getWorld("build"), baseLoc.getX() + pushTeleportsX.get(3), baseLoc.getY(), baseLoc.getZ() + pushTeleportsZ.get(3), yaw, pitch));
+                            pushPlayer.sendTitle("§c§lYou Died.", "§aBase selected.", 0, 30, 0);
+                            pushPlayer.closeInventory();
+                        } else {
+                            if (plugin.runningTimers.containsKey("pushpoint") && plugin.runningTimers.get("pushpoint").getValue() > 5) {
+                                pushPlayer.teleport(new Location(Bukkit.getWorld("build"), baseLoc.getX() + pushTeleportsX.get(3), baseLoc.getY(), baseLoc.getZ() + pushTeleportsZ.get(3), yaw, pitch));
+                                plugin.playerSelectedTeleport.put(pushPlayer, new Location(Bukkit.getWorld("build"), baseLoc.getX() + pushTeleportsX.get(3), baseLoc.getY(), baseLoc.getZ() + pushTeleportsZ.get(3), yaw, pitch));
+                                pushPlayer.setGameMode(GameMode.ADVENTURE);
+                                pushPlayer.closeInventory();
+                                plugin.playerSelectedTeleport.remove(pushPlayer);
+                            }
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+            if(plugin.ppTeamKitInventories.get(PlayerConfig.get().getString("players." + e.getWhoClicked().getName() + ".team")).equals(e.getClickedInventory())){
+                e.setCancelled(true);
+                String team = PlayerConfig.get().getString("players." + e.getWhoClicked().getName() + ".team");
+                Inventory teamInventory = plugin.ppTeamKitInventories.get(team);
+                Player p = (Player) e.getWhoClicked();
+                boolean kitSelected = false;
+                switch(e.getSlot()){
+                    case 11:
+                        if(plugin.ppTeamSelectedKits.get(team) != null) {
+                            for (String kit : plugin.ppTeamSelectedKits.get(team).values()) {
+                                if (kit.equals("Tank")) {
+                                    p.sendMessage("This kit has already been selected!");
+                                    kitSelected = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if(!kitSelected){
+                            p.sendMessage("§8[§e!§8] §eYou have selected the " + e.getCurrentItem().getItemMeta().getDisplayName() + "§e kit!");
+                            p.getInventory().clear();
+                            if(plugin.ppTeamSelectedKits.get(team) != null) {
+                                if (plugin.ppTeamSelectedKits.get(team).containsKey(p)) {
+                                    replacePlayerHead(e.getInventory(), p);
+                                }
+                            }
+
+                            plugin.ppTeamSelectedKits.computeIfAbsent(team, t -> new HashMap<>())
+                                    .put(p, "Tank");
+                            givePPKits(p);
+                            ItemStack playerHead = new ItemStack(Material.PLAYER_HEAD, 1);
+                            SkullMeta meta = (SkullMeta) playerHead.getItemMeta();
+                            meta.setOwningPlayer(p);
+                            meta.setDisplayName(plugin.getPlayerDisplayName(p.getName()));
+                            playerHead.setItemMeta(meta);
+                            teamInventory.setItem(20, playerHead);
+                        }
+                        break;
+                    case 12:
+                        if(plugin.ppTeamSelectedKits.get(team) != null) {
+                            for (String kit : plugin.ppTeamSelectedKits.get(team).values()) {
+                                if (kit.equals("Archer")) {
+                                    p.sendMessage("This kit has already been selected!");
+                                    kitSelected = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if(!kitSelected){
+                            p.sendMessage("Kit: " + e.getCurrentItem().getItemMeta().getDisplayName() + "§8 selected!");
+                            p.getInventory().clear();
+
+                            if(plugin.ppTeamSelectedKits.get(team) != null) {
+                                if (plugin.ppTeamSelectedKits.get(team).containsKey(p)) {
+                                    replacePlayerHead(e.getInventory(), p);
+                                }
+                            }
+
+                            plugin.ppTeamSelectedKits.computeIfAbsent(team, t -> new HashMap<>())
+                                    .put(p, "Archer");
+                            givePPKits(p);
+                            ItemStack playerHead = new ItemStack(Material.PLAYER_HEAD, 1);
+                            SkullMeta meta = (SkullMeta) playerHead.getItemMeta();
+                            meta.setOwningPlayer(p);
+                            meta.setDisplayName(plugin.getPlayerDisplayName(p.getName()));
+                            playerHead.setItemMeta(meta);
+                            teamInventory.setItem(21, playerHead);
+                        }
+                        break;
+                    case 13:
+                        if(plugin.ppTeamSelectedKits.get(team) != null) {
+                            for (String kit : plugin.ppTeamSelectedKits.get(team).values()) {
+                                if (kit.equals("Duelist")) {
+                                    p.sendMessage("This kit has already been selected!");
+                                    kitSelected = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if(!kitSelected){
+                            p.sendMessage("Kit: " + e.getCurrentItem().getItemMeta().getDisplayName() + "§8 selected!");
+                            p.getInventory().clear();
+
+                            if(plugin.ppTeamSelectedKits.get(team) != null) {
+                                if (plugin.ppTeamSelectedKits.get(team).containsKey(p)) {
+                                    replacePlayerHead(e.getInventory(), p);
+                                }
+                            }
+
+                            plugin.ppTeamSelectedKits.computeIfAbsent(team, t -> new HashMap<>())
+                                    .put(p, "Duelist");
+                            givePPKits(p);
+                            ItemStack playerHead = new ItemStack(Material.PLAYER_HEAD, 1);
+                            SkullMeta meta = (SkullMeta) playerHead.getItemMeta();
+                            meta.setOwningPlayer(p);
+                            meta.setDisplayName(plugin.getPlayerDisplayName(p.getName()));
+                            playerHead.setItemMeta(meta);
+                            teamInventory.setItem(22, playerHead);
+                        }
+                        break;
+                    case 14:
+                        if(plugin.ppTeamSelectedKits.get(team) != null) {
+                            for (String kit : plugin.ppTeamSelectedKits.get(team).values()) {
+                                if (kit.equals("Healer")) {
+                                    p.sendMessage("This kit has already been selected!");
+                                    kitSelected = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if(!kitSelected){
+                            p.sendMessage("Kit: " + e.getCurrentItem().getItemMeta().getDisplayName() + "§8 selected!");
+                            p.getInventory().clear();
+
+                            if(plugin.ppTeamSelectedKits.get(team) != null) {
+                                if (plugin.ppTeamSelectedKits.get(team).containsKey(p)) {
+                                    replacePlayerHead(e.getInventory(), p);
+                                }
+                            }
+
+                            plugin.ppTeamSelectedKits.computeIfAbsent(team, t -> new HashMap<>())
+                                    .put(p, "Healer");
+                            givePPKits(p);
+                            ItemStack playerHead = new ItemStack(Material.PLAYER_HEAD, 1);
+                            SkullMeta meta = (SkullMeta) playerHead.getItemMeta();
+                            meta.setOwningPlayer(p);
+                            meta.setDisplayName(plugin.getPlayerDisplayName(p.getName()));
+                            playerHead.setItemMeta(meta);
+                            teamInventory.setItem(23, playerHead);
+                        }
+                        break;
+                    case 15:
+                        if(plugin.ppTeamSelectedKits.get(team) != null) {
+                            for (String kit : plugin.ppTeamSelectedKits.get(team).values()) {
+                                if (kit.equals("Flanker")) {
+                                    p.sendMessage("This kit has already been selected!");
+                                    kitSelected = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if(!kitSelected){
+                            p.sendMessage("Kit: " + e.getCurrentItem().getItemMeta().getDisplayName() + "§8 selected!");
+                            p.getInventory().clear();
+
+                            if(plugin.ppTeamSelectedKits.get(team) != null) {
+                                if (plugin.ppTeamSelectedKits.get(team).containsKey(p)) {
+                                    replacePlayerHead(e.getInventory(), p);
+                                }
+                            }
+
+                            plugin.ppTeamSelectedKits.computeIfAbsent(team, t -> new HashMap<>())
+                                    .put(p, "Flanker");
+                            givePPKits(p);
+                            ItemStack playerHead = new ItemStack(Material.PLAYER_HEAD, 1);
+                            SkullMeta meta = (SkullMeta) playerHead.getItemMeta();
+                            meta.setOwningPlayer(p);
+                            meta.setDisplayName(plugin.getPlayerDisplayName(p.getName()));
+                            playerHead.setItemMeta(meta);
+                            teamInventory.setItem(24, playerHead);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
         if(plugin.emotesEnabled && e.getView().getTitle().equalsIgnoreCase("§eEmotes")){
             e.setCancelled(true);
             Random ran = new Random();
@@ -106,12 +388,8 @@ public class InventoryEvent implements Listener {
                     break;
             }
         }
-        if((plugin.currentMode.equals("Lobby") || plugin.currentMode.equals("Voting")) && PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(e.getWhoClicked().getName())) {
-            if(e.getClickedInventory().getHolder() instanceof Barrel) {
-                e.setCancelled(false);
-            } else {
+        if((plugin.currentMode.equals("Lobby") || plugin.currentMode.equals("Voting") || plugin.currentMode.equals("Start")) && PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(e.getWhoClicked().getName())) {
             e.setCancelled(true);
-            }
         }
         if(e.getView().getTitle().equalsIgnoreCase("§eCosmetics")) {
             e.setCancelled(true);
@@ -290,12 +568,82 @@ public class InventoryEvent implements Listener {
                             }
 
                             break;
+                        case 7:
+                            if(e.getWhoClicked().getInventory().getArmorContents()[3] != null){
+                                if(e.getWhoClicked().getInventory().getArmorContents()[3].equals(PhilipConfig.get().getItemStack("cosmetics.8.item"))) {
+                                    ItemStack[] armour = new ItemStack[]{
+                                            e.getWhoClicked().getInventory().getArmorContents()[0],
+                                            e.getWhoClicked().getInventory().getArmorContents()[1],
+                                            e.getWhoClicked().getInventory().getArmorContents()[2],
+                                            new ItemStack(Material.AIR)
+                                    };
+                                    e.getWhoClicked().getInventory().setArmorContents(armour);
+                                    plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic unequipped.");
+                                } else {
+                                    ItemStack[] armour = new ItemStack[]{
+                                            e.getWhoClicked().getInventory().getArmorContents()[0],
+                                            e.getWhoClicked().getInventory().getArmorContents()[1],
+                                            e.getWhoClicked().getInventory().getArmorContents()[2],
+                                            PhilipConfig.get().getItemStack("cosmetics.8.item")
+                                    };
+                                    e.getWhoClicked().getInventory().setArmorContents(armour);
+                                    plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic equipped.");
+                                }
+                            } else {
+                                ItemStack[] armour = new ItemStack[]{
+                                        e.getWhoClicked().getInventory().getArmorContents()[0],
+                                        e.getWhoClicked().getInventory().getArmorContents()[1],
+                                        e.getWhoClicked().getInventory().getArmorContents()[2],
+                                        PhilipConfig.get().getItemStack("cosmetics.8.item")
+                                };
+                                e.getWhoClicked().getInventory().setArmorContents(armour);
+                                plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic equipped.");
+                            }
+
+                            break;
+                        case 8:
+                            if(e.getWhoClicked().getInventory().contains(PhilipConfig.get().getItemStack("cosmetics.9.item"))){
+                                e.getWhoClicked().getInventory().remove(PhilipConfig.get().getItemStack("cosmetics.9.item"));
+                                plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic unequipped.");
+                            } else if (e.getWhoClicked().getInventory().getItemInOffHand().equals(PhilipConfig.get().getItemStack("cosmetics.9.item"))) {
+                                e.getWhoClicked().getInventory().setItemInOffHand(new ItemStack(Material.AIR));
+                                plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic unequipped.");
+                            } else {
+                                e.getWhoClicked().getInventory().setItemInOffHand(PhilipConfig.get().getItemStack("cosmetics.9.item"));
+                                plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic equipped.");
+                            }
+                            break;
                     }
                 } else {
                     plugin.messagePlayer((Player) e.getWhoClicked(), "You cannot afford this cosmetic.");
                 }
             }
         }
+
+        if(e.getView().getTitle().equalsIgnoreCase("§ePlayers")) {
+            e.setCancelled(true);
+            switch (e.getSlot()){
+                case 4,13,22,31:
+                    break;
+                default:
+                    if(e.getSlot() >= 0 && e.getSlot() <= 35) {
+                        if (e.getClick() == ClickType.LEFT) {
+                            if (e.getCurrentItem() != null) {
+                                String name = e.getCurrentItem().getItemMeta().getDisplayName();
+                                Player target = Bukkit.getPlayer(name);
+                                if(target != null){
+                                    e.getWhoClicked().teleport(target);
+                                }
+                                e.getWhoClicked().closeInventory();
+                            }
+                        }
+
+                    }
+                    break;
+            }
+        }
+
+
         if(e.getView().getTitle().equalsIgnoreCase("§eTeams")) {
             e.setCancelled(true);
             switch (e.getSlot()){
@@ -525,5 +873,177 @@ public class InventoryEvent implements Listener {
                 }
             }
         }
+    }
+
+    public void givePPKits(Player player) {
+        player.getInventory().clear();
+        ItemStack arrows = new ItemStack(Material.ARROW, 12);
+        ItemStack food = new ItemStack(Material.COOKED_BEEF, 16);
+        ItemStack goldenapple = new ItemStack(Material.GOLDEN_APPLE);
+        String team = PlayerConfig.get().getString("players." + player.getName() + ".team");
+        switch(plugin.ppTeamSelectedKits.get(team).get(player)) {
+            case "Tank":
+                ItemStack tankChest = new ItemStack(Material.IRON_CHESTPLATE);
+                ItemStack tankBoots = new ItemStack(Material.IRON_BOOTS);
+                makeUnbreakable(tankChest);
+                makeUnbreakable(tankBoots);
+                player.getInventory().setChestplate(tankChest);
+                player.getInventory().setBoots(tankBoots);
+
+                ItemStack tanksword = new ItemStack(Material.WOODEN_SWORD);
+                ItemStack tankcrossbow = new ItemStack(Material.CROSSBOW);
+                tankcrossbow.addEnchantment(Enchantment.QUICK_CHARGE, 2);
+                ItemStack tankarrows = new ItemStack(Material.ARROW, 8);
+                makeUnbreakable(tanksword);
+                makeUnbreakable(tankcrossbow);
+
+                player.getInventory().addItem(tanksword, tankcrossbow, food, tankarrows);
+                break;
+
+            case "Archer":
+                ItemStack archerChest = new ItemStack(Material.CHAINMAIL_CHESTPLATE);
+                ItemStack archerBoots = new ItemStack(Material.IRON_BOOTS);
+                makeUnbreakable(archerChest);
+                makeUnbreakable(archerBoots);
+                player.getInventory().setChestplate(archerChest);
+                player.getInventory().setBoots(archerBoots);
+
+                ItemStack archersword = new ItemStack(Material.WOODEN_SWORD);
+                ItemStack archercrossbow = new ItemStack(Material.CROSSBOW);
+                archercrossbow.addEnchantment(Enchantment.QUICK_CHARGE, 2);
+                ItemStack archerarrows = new ItemStack(Material.ARROW, 6);
+                makeUnbreakable(archersword);
+                makeUnbreakable(archercrossbow);
+
+                player.getInventory().addItem(archersword, archercrossbow, food, arrows, archerarrows);
+                break;
+
+            case "Duelist":
+                ItemStack duelistChest = new ItemStack(Material.CHAINMAIL_CHESTPLATE);
+                ItemStack duelistBoots = new ItemStack(Material.IRON_BOOTS);
+                makeUnbreakable(duelistChest);
+                makeUnbreakable(duelistBoots);
+                player.getInventory().setChestplate(duelistChest);
+                player.getInventory().setBoots(duelistBoots);
+
+                ItemStack duelistsword = new ItemStack(Material.STONE_SWORD);
+                ItemStack duelistbow = new ItemStack(Material.BOW);
+                makeUnbreakable(duelistsword);
+                makeUnbreakable(duelistbow);
+
+                player.getInventory().addItem(duelistsword, duelistbow, food, arrows);
+                break;
+
+            case "Healer":
+                ItemStack healerChest = new ItemStack(Material.CHAINMAIL_CHESTPLATE);
+                ItemStack healerBoots = new ItemStack(Material.IRON_BOOTS);
+                makeUnbreakable(healerChest);
+                makeUnbreakable(healerBoots);
+                player.getInventory().setChestplate(healerChest);
+                player.getInventory().setBoots(healerBoots);
+
+                ItemStack healersword = new ItemStack(Material.WOODEN_SWORD);
+                ItemStack healerbow = new ItemStack(Material.BOW);
+                makeUnbreakable(healersword);
+                makeUnbreakable(healerbow);
+
+                ItemStack healingpotion = new ItemStack(Material.SPLASH_POTION);
+                PotionMeta healingpotionsmeta = (PotionMeta) healingpotion.getItemMeta();
+                healingpotionsmeta.setBasePotionType(PotionType.HEALING);
+                healingpotion.setItemMeta(healingpotionsmeta);
+
+                ItemStack regenpotion = new ItemStack(Material.SPLASH_POTION);
+                PotionMeta regenpotionmeta = (PotionMeta) regenpotion.getItemMeta();
+                regenpotionmeta.setBasePotionType(PotionType.REGENERATION);
+                PotionEffect effect = new PotionEffect(PotionEffectType.REGENERATION, 5 * 20, 1);
+                regenpotionmeta.addCustomEffect(effect, true);
+                regenpotion.setItemMeta(regenpotionmeta);
+
+                player.getInventory().addItem(healersword, healerbow, food, goldenapple, healingpotion, regenpotion, arrows);
+                break;
+
+            case "Flanker":
+                ItemStack flankerChest = new ItemStack(Material.LEATHER_CHESTPLATE);
+                ItemStack flankerBoots = new ItemStack(Material.IRON_BOOTS);
+                makeUnbreakable(flankerChest);
+                makeUnbreakable(flankerBoots);
+                player.getInventory().setChestplate(flankerChest);
+                player.getInventory().setBoots(flankerBoots);
+
+                ItemStack flankersword = new ItemStack(Material.STONE_SWORD);
+                ItemStack flankerbow = new ItemStack(Material.BOW);
+                makeUnbreakable(flankersword);
+                makeUnbreakable(flankerbow);
+
+                ItemStack speedpotions = new ItemStack(Material.POTION, 2);
+                PotionMeta speedpotionsmeta = (PotionMeta) speedpotions.getItemMeta();
+                speedpotionsmeta.setBasePotionType(PotionType.SWIFTNESS);
+                speedpotions.setItemMeta(speedpotionsmeta);
+
+                player.getInventory().addItem(flankersword, flankerbow, food, speedpotions, goldenapple, arrows);
+                break;
+
+            default:
+                player.sendMessage("No kit selected!");
+                break;
+        }
+    }
+
+    public void makeUnbreakable(ItemStack item) {
+        if (item == null) return;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return;
+        meta.setUnbreakable(true);
+        item.setItemMeta(meta);
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (!(event.getPlayer() instanceof Player player)) return;
+
+        if (event.getView().getTitle().equals("§eSelect Teleport Location")) {
+            if(!plugin.playerSelectedTeleport.containsKey(player) && plugin.runningTimers.containsKey("pushpoint") && plugin.runningTimers.get("pushpoint").getValue() > 5) {
+                Bukkit.getScheduler().runTask(plugin, () -> player.openInventory(event.getInventory()));
+            }
+        }
+
+        if(plugin.ppTeamKitInventories.containsValue(event.getInventory())){
+            String team = PlayerConfig.get().getString("players." + player.getName() + ".team");
+            if(!plugin.ppTeamSelectedKits.get(team).containsKey(player)) {
+                Bukkit.getScheduler().runTask(plugin, () -> player.openInventory(event.getInventory()));
+            } else {
+                if(plugin.runningTimers.containsKey("pushpointstart")) {
+                    player.sendMessage("§7[§6!§7] §6Press your §a§lOff-hand §6key to re-open the kits inventory before the game starts.");
+                }
+                }
+        }
+    }
+
+    public void replacePlayerHead(Inventory inventory, Player target) {
+        for (int i = 0; i < inventory.getSize(); i++) {
+            ItemStack item = inventory.getItem(i);
+
+            if (item == null || item.getType() != Material.PLAYER_HEAD) continue;
+            if (!(item.getItemMeta() instanceof SkullMeta)) continue;
+
+            SkullMeta meta = (SkullMeta) item.getItemMeta();
+            if (meta.getOwningPlayer() == null) continue;
+
+            if (meta.getOwningPlayer().getUniqueId().equals(target.getUniqueId())) {
+                inventory.setItem(i, new ItemStack(Material.GRAY_STAINED_GLASS));
+            }
+        }
+    }
+
+    @EventHandler
+    public void onSwap(PlayerSwapHandItemsEvent e) {
+        Player player = e.getPlayer();
+
+        if(plugin.runningTimers.containsKey("pushpointstart")){
+            String team = PlayerConfig.get().getString("players." + player.getName() + ".team");
+            player.openInventory(plugin.ppTeamKitInventories.get(team));
+        }
+
+         e.setCancelled(true);
     }
 }
