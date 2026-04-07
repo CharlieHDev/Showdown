@@ -291,6 +291,86 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "0";
                 }
+            case "timerfull_bridgebuilders":
+                if (plugin.runningTimers.containsKey("bridgebuildersstart")) {
+                    return plugin.getFullTimer("bridgebuildersstart");
+                } else if (plugin.runningTimers.containsKey("bridgebuilders")) {
+                    return plugin.getFullTimer("bridgebuilders");
+                } else {
+                    return "Waiting..";
+                }
+            case "timerfull_pushpoint":
+                if (plugin.runningTimers.containsKey("pushpointstart")) {
+                    return plugin.getFullTimer("pushpointstart");
+                } else if (plugin.runningTimers.containsKey("pushpoint")) {
+                    return plugin.getFullTimer("pushpoint");
+                } else {
+                    return "Waiting..";
+                }
+            case "timerfull_crumbleclash":
+                if (plugin.runningTimers.containsKey("crumbleclashstart")) {
+                    return plugin.getFullTimer("crumbleclashstart");
+                } else if (plugin.runningTimers.containsKey("crumbleclash")) {
+                    return plugin.getFullTimer("crumbleclash");
+                } else {
+                    return "Waiting..";
+                }
+            case "timerfull_colourdash":
+                if (plugin.runningTimers.containsKey("colourdashstart")) {
+                    return plugin.getFullTimer("colourdashstart");
+                } else if (plugin.runningTimers.containsKey("colourdash")) {
+                    return plugin.getFullTimer("colourdash");
+                } else {
+                    return "Waiting..";
+                }
+            case "timerfull_dimensiondash":
+                if (plugin.runningTimers.containsKey("dimensiondashstart")) {
+                    return plugin.getFullTimer("dimensiondashstart");
+                } else if (plugin.runningTimers.containsKey("dimensiondash")) {
+                    return plugin.getFullTimer("dimensiondash");
+                } else {
+                    return "Waiting..";
+                }
+            case "timerfull_craftalot":
+                if (plugin.runningTimers.containsKey("craftalotstart")) {
+                    return plugin.getFullTimer("craftalotstart");
+                } else if (plugin.runningTimers.containsKey("craftalot")) {
+                    return plugin.getFullTimer("craftalot");
+                } else {
+                    return "Waiting..";
+                }
+            case "timerfull_gubgame":
+                if (plugin.runningTimers.containsKey("gubgamestart")) {
+                    return plugin.getFullTimer("gubgamestart");
+                } else if (plugin.runningTimers.containsKey("gubgame")) {
+                    return plugin.getFullTimer("gubgame");
+                } else {
+                    return "Waiting..";
+                }
+            case "timerfull_slimegolf":
+                if (plugin.runningTimers.containsKey("slimegolfstart")) {
+                    return plugin.getFullTimer("slimegolfstart");
+                } else if (plugin.runningTimers.containsKey("slimegolftimer")) {
+                    return plugin.getFullTimer("slimegolftimer");
+                } else {
+                    return "Waiting..";
+                }
+            case "timerfull_survivalgames":
+                if (plugin.runningTimers.containsKey("survivalgamesstart")) {
+                    return plugin.getFullTimer("survivalgamesstart");
+                } else if (plugin.runningTimers.containsKey("survivalgames")) {
+                    return plugin.getFullTimer("survivalgames");
+                } else {
+                    return "Waiting..";
+                }
+            case "timerfull_zoomogo":
+                if (plugin.runningTimers.containsKey("zoomogostart")) {
+                    return plugin.getFullTimer("zoomogostart");
+                } else if (plugin.runningTimers.containsKey("zoomogo")) {
+                    return plugin.getFullTimer("zoomogo");
+                } else {
+                    return "Waiting..";
+                }
             case "timer_bridgebuilders":
                 if (plugin.runningTimers.containsKey("bridgebuildersstart")) {
                     return plugin.getTimer("bridgebuildersstart");
@@ -770,8 +850,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 return teamplayers.toString();
 
 
-            case "timermessage":
-                return plugin.timerMessage;
+            case "timerlabel":
+                return plugin.timerLabel;
 
             case "votedmode":
                 return plugin.woolModes.getOrDefault(plugin.playerVote.get(p), "Selecting...");

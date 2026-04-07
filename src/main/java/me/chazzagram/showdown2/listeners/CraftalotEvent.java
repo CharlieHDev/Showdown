@@ -9,13 +9,20 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionType;
+import org.bukkit.util.Vector;
 
 import java.util.*;
 
@@ -28,6 +35,10 @@ public class CraftalotEvent implements Listener {
         this.plugin = plugin;
     }
 
+    List<Material> crumbleItems = List.of(Material.FIRE_CHARGE, Material.POTION);
+
+    List<Material> pushItems = List.of(Material.POTION);
+
 
     @EventHandler
     public void edguardInteractEvent(PlayerInteractEntityEvent e){
@@ -38,6 +49,73 @@ public class CraftalotEvent implements Listener {
 
         EntityType entity = e.getRightClicked().getType();
         Inventory inventory = p.getInventory();
+
+        if (plugin.currentMode.equals("Crumble Clash")) {
+            e.setCancelled(false);
+            Player sender = e.getPlayer();
+            ItemStack item = sender.getInventory().getItemInMainHand();
+
+            if (!crumbleItems.contains(item.getType())) {
+                item = sender.getInventory().getItemInOffHand();
+            }
+
+            if (crumbleItems.contains(item.getType())) {
+                if (item.getType() == Material.FIRE_CHARGE) {
+                    e.setCancelled(true);
+                    Vector direction = sender.getLocation().getDirection();
+                    Fireball fireball = sender.getWorld().spawn(
+                            sender.getEyeLocation().add(direction.multiply(1.5)),
+                            Fireball.class
+                    );
+                    plugin.fireballSenders.put(fireball, e.getPlayer());
+                    fireball.setYield(4.0f);
+                    fireball.setVelocity(direction.multiply(2.0));
+                    fireball.setShooter(sender);
+                    fireball.setIsIncendiary(true);
+                    item.setAmount(item.getAmount() - 1);
+                }
+                if (item.getType() == Material.POTION) {
+                    e.setCancelled(true);
+                    PotionMeta meta = (PotionMeta) item.getItemMeta();
+                    if (meta.getBasePotionType() == PotionType.SWIFTNESS) {
+                        PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, 200, 1, false, false);
+                        sender.addPotionEffect(speed);
+                    }
+                    if (meta.getBasePotionType() == PotionType.LEAPING) {
+                        PotionEffect leaping = new PotionEffect(PotionEffectType.JUMP_BOOST, 200, 1, false, false);
+                        sender.addPotionEffect(leaping);
+                    }
+                    sender.playSound(sender.getLocation(), Sound.BLOCK_BREWING_STAND_BREW, 1F, 1F);
+                    item.setAmount(item.getAmount() - 1);
+                }
+            }
+        }
+
+        if (plugin.currentMode.equals("Push Point") && plugin.runningTimers.containsKey("pushpoint")) {
+            e.setCancelled(false);
+            Player sender = e.getPlayer();
+            ItemStack item = sender.getInventory().getItemInMainHand();
+
+            if (!pushItems.contains(item.getType())) {
+                item = sender.getInventory().getItemInOffHand();
+            }
+
+            if (pushItems.contains(item.getType())) {
+                if (item.getType() == Material.POTION) {
+
+                    e.setCancelled(true);
+
+                    PotionMeta meta = (PotionMeta) item.getItemMeta();
+
+                    if(meta.getBasePotionType() == PotionType.SWIFTNESS){
+                        PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, 200, 1, false, false);
+                        e.getPlayer().addPotionEffect(speed);
+                    }
+                    e.getPlayer().playSound(e.getPlayer().getLocation(), Sound.BLOCK_BREWING_STAND_BREW, 1F, 1F);
+                    item.setAmount(item.getAmount() - 1);
+                }
+            }
+        }
 
         if(plugin.finaleActive){
             if(plugin.currentMode.equals("Craftalot")){

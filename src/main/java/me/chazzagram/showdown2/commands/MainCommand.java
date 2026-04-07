@@ -900,6 +900,8 @@ public class MainCommand implements CommandExecutor {
                                             plugin.ppEscapedPlayers.computeIfAbsent(team, k -> new ArrayList<>())
                                                     .add(p);
                                         }
+                                        // TODO: Add messages to indicate whether a whole team has escaped.
+                                        // TODO: Add a message broadcast to all players in that map that a player has escaped.
                                     }
                                 }
                             }
@@ -1007,7 +1009,7 @@ public class MainCommand implements CommandExecutor {
                     }
                     break;
                 case "clashdeath":
-                    if(plugin.currentMode.equals("Crumble Clash") && !plugin.runningTimers.containsKey("crumbleclashstart")) {
+                    if(plugin.currentMode.equals("Crumble Clash") && plugin.ccRoundStarted) {
                         if (Bukkit.getPlayer(args[1]) != null) {
                             if(plugin.ghostManager.getGhostPlayers().contains(args[1])) break;
                             if (plugin.getPlayers().contains(Bukkit.getPlayer(args[1]))) {

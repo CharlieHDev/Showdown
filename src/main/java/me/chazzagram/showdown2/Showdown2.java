@@ -168,7 +168,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public Boolean lifeCap = false;
     BossBar bossBar = Bukkit.createBossBar("Initial Title", BarColor.BLUE, BarStyle.SOLID);
 
-    public HashMap<String, BossBar> bossBars = new HashMap<>();
+    public HashMap<String, List<BossBar>> bossBars = new HashMap<>();
 
     public HashMap<String, List<String>> craftLists = new HashMap<>();
 
@@ -311,6 +311,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public HashMap<ItemDisplay, TextDisplay> wallTexts = new HashMap<>();
 
+    public HashMap<ItemDisplay, TextDisplay> wallPushersTexts = new HashMap<>();
+
     public HashMap<String, Block[]> mapSides = new HashMap<>();
 
     public HashMap<Material, String> concreteChatColors = new HashMap<>();
@@ -371,6 +373,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     final int SLOT_B = 159;
     final int SLOT_C = 36;
 
+    final int SLOT2_A = 0;
+    final int GAP2 = 0;
+    final int SLOT2_B = 227;
+    final int SLOT2_C = 0;
+
     public HashMap<Fireball, Player> fireballSenders = new HashMap<>();
 
     Interaction goal;
@@ -423,11 +430,15 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public boolean finaleActive = false;
 
-    public String timerMessage = "Time Left:";
-
     public Map<Block, BlockDisplay> blockToDisplay = new HashMap<>();
 
     public LobbyMusicManager musicManager;
+
+    public String timerLabel = "Starting Soon..";
+
+    public int targetTime = 0;
+    
+    public boolean ccRoundStarted = false;
 
 
     // Spawn the particle
@@ -771,12 +782,17 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             txt.remove();
         }
 
+        for(TextDisplay txt : wallPushersTexts.values()){
+            txt.remove();
+        }
+
         for(ItemBox ib : itemBoxes){
             ib.despawn();
         }
 
         mapWalls.clear();
         wallTexts.clear();
+        wallPushersTexts.clear();
 
         blockToDisplay.clear();
 
@@ -1449,6 +1465,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     }
 
     public String getTimer(String timer) {
+        return LocalTime.of(0, (runningTimers.get(timer).getValue() - targetTime) / 60, (runningTimers.get(timer).getValue() - targetTime) % 60).format(DateTimeFormatter.ofPattern("mm:ss"));
+    }
+
+    public String getFullTimer(String timer) {
         return LocalTime.of(0, runningTimers.get(timer).getValue() / 60, runningTimers.get(timer).getValue() % 60).format(DateTimeFormatter.ofPattern("mm:ss"));
     }
 
@@ -3788,7 +3808,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             text.setText(concreteChatColors.get(mapSides.get("map" + (i+1))[0].getType()) + "50.00% §f| " + concreteChatColors.get(mapSides.get("map" + (i+1))[1].getType()) + "50.00%");
             text.setBillboard(Display.Billboard.VERTICAL);
             text.setTransformation(transform);
+            TextDisplay textPushers = loc.getWorld().spawn(loc.clone().add(0, 5, 0), TextDisplay.class);
+            textPushers.setText("");
+            textPushers.setBillboard(Display.Billboard.VERTICAL);
+            textPushers.setTransformation(transform);
             wallTexts.put(wall, text);
+            wallPushersTexts.put(wall, textPushers);
 
             loc = loc.clone().add(36, -6, 0);
             ItemDisplay wall2 = loc.getWorld().spawn(loc, ItemDisplay.class);
@@ -3799,7 +3824,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             text2.setText(concreteChatColors.get(mapSides.get("map" + (i+1))[0].getType()) + "50.00% §f| " + concreteChatColors.get(mapSides.get("map" + (i+1))[1].getType()) + "50.00%");
             text2.setBillboard(Display.Billboard.VERTICAL);
             text2.setTransformation(transform);
+            TextDisplay textPushers2 = loc.getWorld().spawn(loc.clone().add(0, 5, 0), TextDisplay.class);
+            textPushers2.setText("");
+            textPushers2.setBillboard(Display.Billboard.VERTICAL);
+            textPushers2.setTransformation(transform);
             wallTexts.put(wall2, text2);
+            wallPushersTexts.put(wall2, textPushers2);
 
             loc = loc.clone().add(36, 6, 0);
             ItemDisplay wall3 = loc.getWorld().spawn(loc, ItemDisplay.class);
@@ -3810,7 +3840,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             text3.setText(concreteChatColors.get(mapSides.get("map" + (i+1))[0].getType()) + "50.00% §f| " + concreteChatColors.get(mapSides.get("map" + (i+1))[1].getType()) + "50.00%");
             text3.setBillboard(Display.Billboard.VERTICAL);
             text3.setTransformation(transform);
+            TextDisplay textPushers3 = loc.getWorld().spawn(loc.clone().add(0, 5, 0), TextDisplay.class);
+            textPushers3.setText("");
+            textPushers3.setBillboard(Display.Billboard.VERTICAL);
+            textPushers3.setTransformation(transform);
             wallTexts.put(wall3, text3);
+            wallPushersTexts.put(wall3, textPushers3);
         }
     }
 
@@ -3942,19 +3977,23 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             ItemDisplay wall = entry.getKey();
             double movement = entry.getValue();
             TextDisplay text = wallTexts.get(wall);
+            TextDisplay textPusher = wallPushersTexts.get(wall);
             Block[] mapSideBlocks = mapSides.get(mapWalls.get(wall));
 
             // Determine which side the player is on
             Material teamMaterial = teamConcrete.get(team);
             Location wallLoc = wall.getLocation().clone();
             Location textLoc = text.getLocation().clone();
+            Location textPusherLoc = textPusher.getLocation().clone();
 
             if (teamMaterial.equals(mapSideBlocks[0].getType()) && (wallLoc.getZ() + movement) <= PP_PATH_MIN) {
                 wall.teleport(wallLoc.add(0, 0, movement));
                 text.teleport(textLoc.add(0, 0, movement));
+                textPusher.teleport(textPusherLoc.add(0, 0, movement));
             } else if (teamMaterial.equals(mapSideBlocks[1].getType()) && (wallLoc.getZ() - movement) >= PP_PATH_MAX) {
                 wall.teleport(wallLoc.subtract(0, 0, movement));
                 text.teleport(textLoc.subtract(0, 0, movement));
+                textPusher.teleport(textPusherLoc.subtract(0, 0, movement));
             }
 
             // Update wall text
@@ -4021,6 +4060,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             Map<String, List<String>> teamPlayers = playersNearWalls.get(wall);
             Block[] mapSideBlocks = mapSides.get(mapWalls.get(wall));
             TextDisplay text = wallTexts.get(wall);
+            TextDisplay textPusher = wallPushersTexts.get(wall);
 
             String teamSide1 = null;
             String teamSide2 = null;
@@ -4042,6 +4082,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     if(Bukkit.getPlayer(player) != null) {
                         p = Bukkit.getPlayer(player);
                         glowingEntities.setGlowing(wall, p, ChatColor.GRAY);
+                        wallPushersTexts.get(wall).setText("");
                     }
                 }
                 continue;
@@ -4050,6 +4091,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             int pushers = teamPlayers.getOrDefault(teamSide1, Collections.emptyList()).size();
             int opponents = teamPlayers.getOrDefault(teamSide2, Collections.emptyList()).size();
             int diff = pushers - opponents;
+
+            wallPushersTexts.get(wall).setText(teamGlowColors.get(teamSide1).toString() + "⬤".repeat(pushers) + teamGlowColors.get(teamSide2).toString() + "⬤".repeat(opponents));
 
             for(String player : allPlayers){
                 if(Bukkit.getPlayer(player) != null){
@@ -4071,9 +4114,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                 if (diff > 0 && (wall.getLocation().getZ() - movement) >= PP_PATH_MAX) {
                     wall.teleport(wall.getLocation().clone().subtract(0, 0, movement));
                     text.teleport(text.getLocation().clone().subtract(0, 0, movement));
+                    textPusher.teleport(textPusher.getLocation().clone().subtract(0, 0, movement));
+
+                    List<String> pushersList = teamPlayers.get(teamSide1);
 
                     if (finalPush) {
-                        List<String> pushersList = teamPlayers.get(teamSide1);
                         if (pushersList != null && !pushersList.isEmpty()) {
                             double perPlayerMovement = movement / pushersList.size();
                             for (String playerName : pushersList) {
@@ -4083,19 +4128,38 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                         }
                     }
+                    if (pushersList != null && !pushersList.isEmpty()) {
+                        Player player;
+                        for (String playerName : pushersList) {
+                            player = Bukkit.getPlayer(playerName);
+                            if(player != null){
+                                player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 1F, 1F);
+                            }
+                        }
+                    }
 
                 } else if (diff < 0 && (wall.getLocation().getZ() + movement) <= PP_PATH_MIN) {
                     wall.teleport(wall.getLocation().clone().add(0, 0, movement));
                     text.teleport(text.getLocation().clone().add(0, 0, movement));
+                    textPusher.teleport(textPusher.getLocation().clone().add(0, 0, movement));
+                    List<String> pushersList = teamPlayers.get(teamSide2);
 
                     if (finalPush) {
-                        List<String> pushersList = teamPlayers.get(teamSide2);
                         if (pushersList != null && !pushersList.isEmpty()) {
                             double perPlayerMovement = movement / pushersList.size();
                             for (String playerName : pushersList) {
                                 finalPushMovements
                                         .computeIfAbsent(playerName, k -> new HashMap<>())
                                         .merge(wall, perPlayerMovement, Double::sum);
+                            }
+                        }
+                    }
+                    if (pushersList != null && !pushersList.isEmpty()) {
+                        Player player;
+                        for (String playerName : pushersList) {
+                            player = Bukkit.getPlayer(playerName);
+                            if(player != null){
+                                player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 1F, 1F);
                             }
                         }
                     }
@@ -5402,6 +5466,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
 
     public void startCrumbleClash(){
+        ccRoundStarted = false;
         fillVotingSpace(1);
         setPreviousPlacements();
         plugin.shopAllowed = false;
@@ -5410,6 +5475,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             resetModeFullPoints();
             MapsPlayedConfig.get().set("maps.Crumble Clash", new ArrayList<>());
             MapsPlayedConfig.save();
+        }
+
+        targetTime = 11;
+        if(currentRound == 1) {
+            timerLabel = "Game Explanation:";
+        } else {
+            timerLabel = "Starting Round:";
         }
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 61;
@@ -5444,10 +5516,17 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                     throw new RuntimeException(e);
                                 }
                                 for (Player player : getPlayers()) {
-                                    ItemStack pumpkin = new ItemStack(Material.CARVED_PUMPKIN);
-                                    player.getInventory().clear();
-                                    player.getInventory().setHelmet(pumpkin);
+                                    if(currentRound == 1) {
+                                        ItemStack pumpkin = new ItemStack(Material.CARVED_PUMPKIN);
+                                        player.getInventory().clear();
+                                        player.getInventory().setHelmet(pumpkin);
+                                    } else {
+                                        player.setGameMode(GameMode.SURVIVAL);
+                                    }
                                     ghostManager.removeGhostPlayer(player.getName());
+                                }
+                                if(currentRound == 1){
+                                    startCustomPan("clash1");
                                 }
                                 break;
                             case 52:
@@ -5456,11 +5535,6 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                         player.sendTitle("\uD83E\uDD6C", "", 20, 40, 20);
                                     }
                                     playSoundAll(Sound.ENTITY_ARMADILLO_LAND, 1F);
-                                }
-                                break;
-                            case 49:
-                                if(currentRound == 1){
-                                    startCustomPan("clash1");
                                 }
                                 break;
                             case 44:
@@ -5745,6 +5819,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             crumbleMapList.remove(random);
         }
 
+        timerLabel = "Vote for next map:";
+        targetTime = 270;
+
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 301;
             @Override
@@ -5891,6 +5968,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 }
                                 break;
                             case 270:
+                                targetTime = 255;
+                                timerLabel = "Round starting in:";
                                 for(TextDisplay td : mapTitles){
                                     td.remove();
                                 }
@@ -6027,6 +6106,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 }
                                 break;
                             case 255:
+                                ccRoundStarted = true;
+                                targetTime = 205;
+                                timerLabel = "Layer 1 decays in:";
                                 for(int x = 0; x < 85; x++){
                                     for(int z = 0; z <= 84; z++){
                                         if(world.getBlockAt(108-x, y, 458+z).getType() == Material.BARRIER) {
@@ -6056,18 +6138,24 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 }
                                 break;
                             case 205:
+                                targetTime = 145;
+                                timerLabel = "Layer 2 decays in:";
                                 decayCrumbleLayer(new Location(Bukkit.getWorld("build"), 66, 194, 500), 43, 0);
                                 for(Player p : Bukkit.getOnlinePlayers()){
                                     messagePlayer(p, "Layer 1 decaying.");
                                 }
                                 break;
                             case 145:
+                                targetTime = 85;
+                                timerLabel = "Layer 3 decays in:";
                                 decayCrumbleLayer(new Location(Bukkit.getWorld("build"), 66, 187, 500), 43, 0);
                                 for(Player p : Bukkit.getOnlinePlayers()){
                                     messagePlayer(p, "Layer 2 decaying.");
                                 }
                                 break;
                             case 85:
+                                targetTime = 0;
+                                timerLabel = "Time Left:";
                                 decayCrumbleLayer(new Location(Bukkit.getWorld("build"), 66, 179, 500), 43, 5);
                                 for(Player p : Bukkit.getOnlinePlayers()){
                                     messagePlayer(p, "Layer 3 decaying..");
@@ -9254,6 +9342,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             player.stopAllSounds();
         }
         blockBreak = false;
+        targetTime = 0;
         BukkitTask task = new BukkitRunnable() {
             int bridgeCourseId = 0;
             int timeLeft = 71;
@@ -9264,6 +9353,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     runningTimers.get("backtolobby").setValue(timeLeft);
                     switch (timeLeft) {
                         case 70:
+                            ccRoundStarted = false;
+                            timerLabel = "Returning to Lobby:";
                             pvpEnabled = false;
                             doubleJumpEnabled = false;
                             currentBorderRadius = 236;
@@ -9302,7 +9393,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 for (PotionEffect effect : player.getActivePotionEffects()) {
                                     player.removePotionEffect(effect.getType());
                                 }
-                                bossBars.get(player.getName()).removePlayer(player);
+                                bossBars.get(player.getName()).forEach(bar -> bar.removePlayer(player));
                                 bossBars.put(player.getName(), null);
                                 plugin.ghostManager.addGhostPlayer(player.getName());
                                 Bukkit.getScheduler().runTaskLater(plugin, () -> player.setFlying(true), 1L);
@@ -9339,6 +9430,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 }
                             } else {
                                 if(((currentMode.equals("Slime Golf") || currentMode.equals("Colour Dash") || currentMode.equals("Zoomo Go")) && currentRound == 1) || ((currentMode.equals("Zoomo Go") || currentMode.equals("Slime Golf")) && currentRound == 2) || (currentMode.equals("Push Point") && currentRound < 7) || (currentMode.equals("Crumble Clash") && currentRound < 3)){
+                                    timerLabel = "Round Over:";
                                     if(currentMode.equals("Zoomo Go") || currentMode.equals("Crumble Clash")){
                                         for(Player player : Bukkit.getOnlinePlayers()){
                                             player.sendTitle("🦑", "§e★ " + plugin.getTeamDisplayName(winningTeam), 0, 60, 40);
@@ -9464,11 +9556,16 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 for(TextDisplay text : new ArrayList<>(wallTexts.values())){
                                     text.remove();
                                 }
+                                for(TextDisplay text : new ArrayList<>(wallPushersTexts.values())){
+                                    text.remove();
+                                }
                                 for(ItemDisplay wall : new ArrayList<>(mapWalls.keySet())){
                                     wall.remove();
                                 }
+
                                 mapWalls.clear();
                                 wallTexts.clear();
+                                wallPushersTexts.clear();
                                 finalPushMovements.clear();
                             }
                             if(currentMode.equals("Zoomo Go") && currentRound < 3){
@@ -10378,6 +10475,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             int timeLeft = 261;
             int index = 0;
             Location loc;
+
+            double distance;
             @Override
             public void run() {
                 if (plugin.runningTimers.containsKey(name)) {
@@ -10387,12 +10486,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         if(camera != null && timeLeft < 241) {
                             camera.teleport(locs.get(index));
                         }
-                        if(timeLeft == 255){
+                        if(timeLeft == 250){
                             for(Player p : Bukkit.getOnlinePlayers()) {
                                 p.teleport(start);
                             }
                         }
-                        if(timeLeft == 250){
+                        if(timeLeft == 245){
                             camera = (ArmorStand) world.spawnEntity(start, EntityType.ARMOR_STAND);
                             camera.setInvisible(true);
                             camera.setMarker(true);
@@ -10407,6 +10506,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         if(timeLeft < 241) {
                             index++;
                             for(Player p : Bukkit.getOnlinePlayers()) {
+                                distance = p.getLocation().distance(camera.getLocation());
+
+                                if (distance > 2) {
+                                    p.setSpectatorTarget(null);
+
+                                    p.setSpectatorTarget(camera);
+                                }
                                 if (p.getGameMode() == GameMode.SPECTATOR) {
                                     p.setSpectatorTarget(camera);
                                 }
@@ -10419,6 +10525,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 }
                             }
                             if (timeLeft == 0) {
+                                for (Player player : Bukkit.getOnlinePlayers()) {
+                                    player.setSpectatorTarget(null);
+                                }
                                 camera.remove();
                                 plugin.messageConsole("Pan finished.");
                                 plugin.runningTimers.remove(name);
@@ -11741,22 +11850,28 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
 
         StringBuilder output = new StringBuilder();
+        StringBuilder output2 = new StringBuilder();
         int width;
         int blocks;
+        List<BossBar> bossBarList = new ArrayList<>();
         for(Player player : Bukkit.getOnlinePlayers()) {
             output.setLength(0);
+            output2.setLength(0);
             if (bossBars.get(player.getName()) == null) {
-                BossBar boss = Bukkit.createBossBar("", BarColor.GREEN, BarStyle.SOLID);
-                boss.addPlayer(player);
-                bossBars.put(player.getName(), boss);
+                for(int i = 0; i < 3; i++) {
+                    BossBar boss = Bukkit.createBossBar("", BarColor.GREEN, BarStyle.SOLID);
+                    boss.addPlayer(player);
+                    bossBarList.add(boss);
+                }
+                bossBars.put(player.getName(), bossBarList);
             }
             String text = "";
             switch (currentMode) {
                 case "Start":
                     if(runningTimers.containsKey("eventstart")) {
-                        output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC(" ", "§rᴇᴠᴇɴᴛ sᴛᴀʀᴛɪɴɢ ɪɴ " + plugin.runningTimers.get("eventstart").getValue() + " sᴇᴄᴏɴᴅs...", " "));
+                        output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC(" ", "§rᴇᴠᴇɴᴛ sᴛᴀʀᴛɪɴɢ ɪɴ " + plugin.runningTimers.get("eventstart").getValue() + " sᴇᴄᴏɴᴅs...", " ", 1));
                     } else {
-                        output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC(" ", "§rᴛᴇᴀᴍ ʀᴇᴠᴇᴀʟs", " "));
+                        output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC(" ", "§rᴛᴇᴀᴍ ʀᴇᴠᴇᴀʟs", " ", 1));
                     }
                     break;
                 case "Voting":
@@ -11787,7 +11902,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 //                    output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
 //
 //                    output.append("§a§l⏱ §a").append(text);
-                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_points%"), "§rᴛʜᴇ ᴠᴏᴛɪɴɢ ᴘᴀʟᴇᴛᴛᴇ", "§a⏱ " + text));
+                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_points%"), "§rᴛʜᴇ ᴠᴏᴛɪɴɢ ᴘᴀʟᴇᴛᴛᴇ", "§a⏱ " + text, 1));
 
                     break;
                 case "Lobby":
@@ -11818,7 +11933,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 //                    output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
 //
 //                    output.append("§a§l⏱: ").append(text);
-                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_points%"), "§rsʜᴏᴡᴅᴏᴡɴ ᴘᴀʀᴋ", "§a⏱ " + text));
+                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_points%"), "§rsʜᴏᴡᴅᴏᴡɴ ᴘᴀʀᴋ", "§a⏱ " + text, 1));
+                    output2.append("\uD83E\uDEE1").append("\uDAFF\uDFFF".repeat(227)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_points%"), "§rsʜᴏᴡᴅᴏᴡɴ ᴘᴀʀᴋ", "§a⏱ " + text, 2));
 
                     break;
                 case "Slime Golf":
@@ -11838,13 +11954,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 //                    output.append("§rsʟɪᴍᴇ ɢᴏʟғ §7§oSlimey Slipway");
 //                    output.append(" ".repeat(6)).append("§r");
 //
-//                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_slimegolf%"));
+//                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_slimegolf%"));
 //                    blocks = Math.round((float) width / 6);
 //                    output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(blocks)).append("\uD83C\uDF59");
 //                    output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
 //
-//                    output.append("§a§l⏱ §a").append(PlaceholderAPI.setPlaceholders(player, "%mce24_timer_slimegolf%"));
-                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"), "§rsʟɪᴍᴇ ɢᴏʟғ §7§oSlimey Slipway", "§a⏱ §a" + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_slimegolf%")));
+//                    output.append("§a§l⏱ §a").append(PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_slimegolf%"));
+                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"), "§rsʟɪᴍᴇ ɢᴏʟғ §7§oSlimey Slipway", "§a⏱ §a" + PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_slimegolf%"), 1));
                     break;
                 case "Crumble Clash":
 //                    width = FontUtils.getStringWidth("\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"));
@@ -11863,12 +11979,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 //                    output.append("§rᴄʀᴜᴍʙʟᴇ ᴄʟᴀsʜ §7§oCrumble Colosseum");
 //                    output.append(" ".repeat(6)).append("§r");
 //
-//                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_crumbleclash%"));
+//                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_crumbleclash%"));
 //                    blocks = Math.round((float) width / 6);
 //                    output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(blocks)).append("\uD83C\uDF59");
 //                    output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
 
-                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"), "§rᴄʀᴜᴍʙʟᴇ ᴄʟᴀsʜ §7§oColosseum", "§a⏱ §a" + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_crumbleclash%")));
+                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"), "§rᴄʀᴜᴍʙʟᴇ ᴄʟᴀsʜ §7§oColosseum", "§a⏱ §a" + PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_crumbleclash%"), 1));
                     break;
                 case "Bridge Builders":
 //                    width = FontUtils.getStringWidth("\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"));
@@ -11887,13 +12003,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 //                    output.append("§rʙʀɪᴅɢᴇ ʙᴜɪʟᴅᴇʀs §7§oAbandoned Mineshaft");
 //                    output.append(" ".repeat(6)).append("§r");
 //
-//                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_bridgebuilders%"));
+//                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_bridgebuilders%"));
 //                    blocks = Math.round((float) width / 6);
 //                    output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(blocks)).append("\uD83C\uDF59");
 //                    output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
 //
-//                    output.append("§a§l⏱ §a").append(PlaceholderAPI.setPlaceholders(player, "%mce24_timer_bridgebuilders%"));
-                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"), "§rʙʀɪᴅɢᴇ ʙᴜɪʟᴅᴇʀs §7§oMineshaft", "§a⏱ §a" + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_bridgebuilders%")));
+//                    output.append("§a§l⏱ §a").append(PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_bridgebuilders%"));
+                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"), "§rʙʀɪᴅɢᴇ ʙᴜɪʟᴅᴇʀs §7§oMineshaft", "§a⏱ §a" + PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_bridgebuilders%"), 1));
                     break;
                 case "Gub Game":
                     width = FontUtils.getStringWidth("\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"));
@@ -11912,12 +12028,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     output.append("§rɢᴜʙ ɢᴀᴍᴇ §7§oThe Courtyard");
                     output.append(" ".repeat(6)).append("§r");
 
-                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_gubgame%"));
+                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_gubgame%"));
                     blocks = Math.round((float) width / 6);
                     output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(blocks)).append("\uD83C\uDF59");
                     output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
 
-                    output.append("§a§l⏱ §a").append(PlaceholderAPI.setPlaceholders(player, "%mce24_timer_gubgame%"));
+                    output.append("§a§l⏱ §a").append(PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_gubgame%"));
                     break;
                 case "Craftalot":
 //                    width = FontUtils.getStringWidth("\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"));
@@ -11934,13 +12050,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 //                    output.append("§rᴄʀᴀғᴛᴀʟᴏᴛ §7§oSir Craftalot's Castle");
 //                    output.append(" ".repeat(6)).append("§r");
 //
-//                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_craftalot%"));
+//                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_craftalot%"));
 //                    output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(width)).append("\uD83C\uDF59");
 //                    output.append("\uDAFF\uDFFF".repeat(width));
 
-                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"), "§rᴄʀᴀғᴛᴀʟᴏᴛ §7§oSir Craftalot's Castle", "§a⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_craftalot%")));
+                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"), "§rᴄʀᴀғᴛᴀʟᴏᴛ §7§oSir Craftalot's Castle", "§a⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_craftalot%"), 1));
 
-//                    output.append("§a§l⏱ §a").append(PlaceholderAPI.setPlaceholders(player, "%mce24_timer_craftalot%"));
+//                    output.append("§a§l⏱ §a").append(PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_craftalot%"));
                     break;
                 case "Zoomo Go":
 //                    width = FontUtils.getStringWidth("\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"));
@@ -11959,14 +12075,14 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 //                    output.append("§rᴢᴏᴏᴍᴏ ɢᴏ §7§oAdrenaline Ravine");
 //                    output.append(" ".repeat(6)).append("§r");
 //
-//                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_zoomogo%"));
+//                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_zoomogo%"));
 //                    blocks = Math.round((float) width / 6);
 //                    output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(blocks)).append("\uD83C\uDF59");
 //                    output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
 //
-//                    output.append("§a§l⏱ §a").append(PlaceholderAPI.setPlaceholders(player, "%mce24_timer_zoomogo%"));
+//                    output.append("§a§l⏱ §a").append(PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_zoomogo%"));
 
-                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"), "§rᴢᴏᴏᴍᴏ ɢᴏ §7§oAdrenaline Ravine", "§a⏱ §a" + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_zoomogo%")));
+                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"), "§rᴢᴏᴏᴍᴏ ɢᴏ §7§oAdrenaline Ravine", "§a⏱ §a" + PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_zoomogo%"), 1));
 
                     break;
                 case "Colour Dash":
@@ -11986,21 +12102,87 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 //                    output.append("§rᴄᴏʟᴏᴜʀ ᴅᴀsʜᴀᴛʜᴏɴ §7§oThe Journey");
 //                    output.append(" ".repeat(6)).append("§r");
 //
-//                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_colourdash%"));
+//                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_colourdash%"));
 //                    blocks = Math.round((float) width / 6);
 //                    output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(blocks)).append("\uD83C\uDF59");
 //                    output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
 //
-//                    output.append("§a§l⏱ §a").append(PlaceholderAPI.setPlaceholders(player, "%mce24_timer_colourdash%"));
+//                    output.append("§a§l⏱ §a").append(PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_colourdash%"));
 
-                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"), "§rᴄᴏʟᴏᴜʀ ᴅᴀsʜᴀᴛʜᴏɴ §7§oThe Journey", "§a⏱ §a" + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_colourdash%")));
+                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"), "§rᴄᴏʟᴏᴜʀ ᴅᴀsʜᴀᴛʜᴏɴ §7§oThe Journey", "§a⏱ §a" + PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_colourdash%"), 1));
 
                     break;
                 case "Dimension Dash":
-                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"), "§rᴅɪᴍᴇɴsɪᴏɴ ᴅᴀsʜ §7§oEverywhere.", "§a⏱ §a" + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_dimensiondash%")));
+                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"), "§rᴅɪᴍᴇɴsɪᴏɴ ᴅᴀsʜ §7§oEverywhere.", "§a⏱ §a" + PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_dimensiondash%"), 1));
                     break;
                 case "Push Point":
-                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"), "§rᴘᴜsʜ ᴘᴏɪɴᴛ §7§oFailsafe Factory.", "§a⏱ §a" + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_pushpoint%")));
+                    output.append("\uD83E\uDD13").append("\uDAFF\uDFFF".repeat(307)).append(formatABC("§e§l\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"), "§rᴘᴜsʜ ᴘᴏɪɴᴛ §7§oFailsafe Factory.", "§a⏱ §a" + PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_pushpoint%"), 1));
+                    if(PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(player.getName())){
+                        String team = PlayerConfig.get().getString("players." + player.getName() + ".team");
+                        if (ppTeamMatchups.containsKey(team) || ppTeamMatchups.containsValue(team)) {
+                            if (finaleActive) {
+                                List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
+
+                                Block[] mapBlocks = mapSides.get("mapfinale");
+
+                                if (!Objects.equals(teamConcrete.get(team), mapBlocks[0].getType()) && !Objects.equals(teamConcrete.get(team), mapBlocks[1].getType())) continue;
+
+                                List<ItemDisplay> keysWithMap = new ArrayList<>();
+
+                                for (Map.Entry<ItemDisplay, String> entry2 : mapWalls.entrySet()) {
+                                    if (("mapfinale").equals(entry2.getValue())) {
+                                        keysWithMap.add(entry2.getKey());
+                                    }
+                                }
+
+                                keysWithMap.sort(Comparator.comparingDouble(item ->
+                                        item.getLocation().getX()
+                                ));
+
+                                if (Objects.equals(teamConcrete.get(team), mapBlocks[1].getType())) {
+                                    Collections.reverse(keysWithMap);
+                                }
+
+                                output2.append("\uD83E\uDEE1")
+                                        .append("\uDAFF\uDFFF".repeat(255))
+                                        .append(formatABC("", wallTexts.get(keysWithMap.get(0)).getText() + "   " + wallTexts.get(keysWithMap.get(1)).getText() + "   " + wallTexts.get(keysWithMap.get(2)).getText(), "", 2));
+
+                            } else {
+                                int count = 0;
+
+                                for (Map.Entry<String, String> entry : ppTeamMatchups.entrySet()) {
+
+                                    count++;
+
+
+                                    Block[] mapBlocks = mapSides.get("map" + count);
+
+                                    if (!Objects.equals(teamConcrete.get(team), mapBlocks[0].getType()) && !Objects.equals(teamConcrete.get(team), mapBlocks[1].getType())) continue;
+
+                                    List<ItemDisplay> keysWithMap = new ArrayList<>();
+
+                                    for (Map.Entry<ItemDisplay, String> entry2 : mapWalls.entrySet()) {
+                                        if (("map" + count).equals(entry2.getValue())) {
+                                            keysWithMap.add(entry2.getKey());
+                                        }
+                                    }
+
+                                    keysWithMap.sort(Comparator.comparingDouble(item ->
+                                            item.getLocation().getX()
+                                    ));
+
+                                    if (Objects.equals(teamConcrete.get(team), mapBlocks[1].getType())) {
+                                        Collections.reverse(keysWithMap);
+                                    }
+
+                                    output2.append("\uD83E\uDEE1")
+                                            .append("\uDAFF\uDFFF".repeat(255))
+                                            .append(formatABC("", wallTexts.get(keysWithMap.get(0)).getText() + "   " + wallTexts.get(keysWithMap.get(1)).getText() + "   " + wallTexts.get(keysWithMap.get(2)).getText(), "", 2));
+
+                                }
+                            }
+                        }
+                    }
                     break;
                 case "Survival Games":
                     width = FontUtils.getStringWidth("\uD83D\uDCB0" + PlaceholderAPI.setPlaceholders(player, "%mce24_teammodepoints%"));
@@ -12019,17 +12201,18 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     output.append("§rsᴜʀᴠɪᴠᴀʟ ɢᴀᴍᴇs §7§oKondas §aby Kikzo");
                     output.append(" ".repeat(6)).append("§r");
 
-                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timer_survivalgames%"));
+                    width = FontUtils.getStringWidth("⏱ " + PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_survivalgames%"));
                     blocks = Math.round((float) width / 6);
                     output.append("\uD83D\uDE2D\uDAFF\uDFFF").append("\uD83E\uDD13\uDAFF\uDFFF".repeat(blocks)).append("\uD83C\uDF59");
                     output.append("\uDAFF\uDFFF".repeat((blocks * 6) - Math.round((float) ((blocks * 6) - width) / 2))).append("\uDAFF\uDFFA");
 
-                    output.append("§a§l⏱ §a").append(PlaceholderAPI.setPlaceholders(player, "%mce24_timer_survivalgames%"));
+                    output.append("§a§l⏱ §a").append(PlaceholderAPI.setPlaceholders(player, "%mce24_timerfull_survivalgames%"));
                     break;
                 default:
                     break;
             }
-            bossBars.get(player.getName()).setTitle(output.toString());
+            bossBars.get(player.getName()).getFirst().setTitle(output.toString());
+            bossBars.get(player.getName()).get(1).setTitle(output2.toString());
         }
     }
 
@@ -12044,23 +12227,41 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         return getExactSpace(leftPadding) + text + getExactSpace(rightPadding);
     }
 
-    public String formatABC(String textA, String textB, String textC) {
+    public String formatABC(String textA, String textB, String textC, int slot) {
         StringBuilder out = new StringBuilder();
 
-        // A (46px)
-        out.append(centerTextInSlot(textA, SLOT_A));
+        if(slot == 1) {
+            // A (46px)
+            out.append(centerTextInSlot(textA, SLOT_A));
 
-        // gap (6px)
-        out.append(getExactSpace(GAP));
+            // gap (6px)
+            out.append(getExactSpace(GAP));
 
-        // B (145px)
-        out.append(centerTextInSlot(textB, SLOT_B));
+            // B (145px)
+            out.append(centerTextInSlot(textB, SLOT_B));
 
-        // gap (6px)
-        out.append(getExactSpace(GAP));
+            // gap (6px)
+            out.append(getExactSpace(GAP));
 
-        // C (46px)
-        out.append(centerTextInSlot(textC, SLOT_C));
+            // C (46px)
+            out.append(centerTextInSlot(textC, SLOT_C));
+        }
+        if(slot == 2) {
+            // A (46px)
+            out.append(centerTextInSlot(textA, SLOT2_A));
+
+            // gap (6px)
+            out.append(getExactSpace(GAP2));
+
+            // B (145px)
+            out.append(centerTextInSlot(textB, SLOT2_B));
+
+            // gap (6px)
+            out.append(getExactSpace(GAP2));
+
+            // C (46px)
+            out.append(centerTextInSlot(textC, SLOT2_C));
+        }
 
         return out.toString();
     }
@@ -13260,7 +13461,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             for (PotionEffect effect : player.getActivePotionEffects()) {
                 player.removePotionEffect(effect.getType());
             }
-            bossBars.get(player.getName()).removePlayer(player);
+            bossBars.get(player.getName()).forEach(bar -> bar.removePlayer(player));
             bossBars.put(player.getName(), null);
             Bukkit.getScheduler().runTaskLater(plugin, () -> player.setFlying(true), 1L);
             healFeedPlayer(player);
