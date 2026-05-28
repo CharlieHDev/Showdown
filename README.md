@@ -46,4 +46,4 @@ Our games aim to create a unique and enjoyable experience for all players, combi
 
 ## Related
 
-- [Showdown Website](https://github.com/CharlieHDev/mc-showdown-website.git) — Event information, player statistics, and community hub.
+- [Showdown Website](https://github.com/CharlieHDev/ShowdownWebsite.git) — Event information, player statistics, and community hub.
