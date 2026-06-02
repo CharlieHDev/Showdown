@@ -17,6 +17,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -58,31 +59,39 @@ public class InventoryEvent implements Listener {
         if(plugin.currentMode.equals("Dimension Dash")){
             e.setCancelled(true);
         }
+
+        if(plugin.currentMode.equals("Zoomo Go")){
+            if(e.getSlotType() == InventoryType.SlotType.ARMOR) {
+                e.setCancelled(true);
+            }
+        }
         if(plugin.currentMode.equals("Push Point")){
             if(e.getView().getTitle().equalsIgnoreCase("§eSelect Teleport Location")) {
                 List<Integer> pushTeleportsZ = Arrays.asList(
-                        47, 47, 42, 56
+                        45, 45, 39, 49
                 );
                 List<Integer> pushTeleportsX = Arrays.asList(
-                        -37, 37, 0, 0
+                        -31, 31, 0, 0
                 );
-                int pitch = 0;
-                int yaw = 180;
+                float pitch = 0f;
+                float yaw = 180f;
                 int index = 0;
                 World world = Bukkit.getWorld("build");
-                Location baseLoc = new Location(world, 1037.5, -60, -458.5);
+                Location baseLoc = new Location(world, 1073.5, -60, -451.5);
+                double baseX = 1073.5;
                 e.setCancelled(true);
                 Player pushPlayer = (Player) e.getWhoClicked();
                 if (PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(pushPlayer.getName())) {
                     String team = PlayerConfig.get().getString("players." + pushPlayer.getName() + ".team");
-                    for (Block[] blocks : plugin.mapSides.values()) {
+                    Map<String, Block[]> sortedMap = new TreeMap<>(plugin.mapSides);
+                    for (Block[] blocks : sortedMap.values()) {
                         if (blocks[0].getType().equals(plugin.teamConcrete.get(team)) || blocks[1].getType().equals(plugin.teamConcrete.get(team))) {
-                            baseLoc.setX(baseLoc.getX() + (index * 111));
+                            baseLoc.setX(baseX + (index * 101));
                         }
                         if (blocks[1].getType().equals(plugin.teamConcrete.get(team))) {
                             pushTeleportsZ.replaceAll(integer -> -integer);
                             pushTeleportsX.replaceAll(integer -> -integer);
-                            yaw = 0;
+                            yaw = 0f;
                             break;
                         }
                         index++;
@@ -139,6 +148,7 @@ public class InventoryEvent implements Listener {
 
                         break;
                     case 40:
+                        baseLoc.setY(-51);
                         if (plugin.runningTimers.containsKey(pushPlayer.getName() + "respawn")) {
                             plugin.playerSelectedTeleport.put(pushPlayer, new Location(Bukkit.getWorld("build"), baseLoc.getX() + pushTeleportsX.get(3), baseLoc.getY(), baseLoc.getZ() + pushTeleportsZ.get(3), yaw, pitch));
                             pushPlayer.sendTitle("§c§lYou Died.", "§aBase selected.", 0, 30, 0);
@@ -954,7 +964,8 @@ public class InventoryEvent implements Listener {
 
                 ItemStack regenpotion = new ItemStack(Material.SPLASH_POTION);
                 PotionMeta regenpotionmeta = (PotionMeta) regenpotion.getItemMeta();
-                regenpotionmeta.setBasePotionType(PotionType.REGENERATION);
+                regenpotionmeta.setBasePotionType(PotionType.WATER);
+                regenpotionmeta.setDisplayName("§fSplash Regeneration Potion");
                 PotionEffect effect = new PotionEffect(PotionEffectType.REGENERATION, 5 * 20, 1);
                 regenpotionmeta.addCustomEffect(effect, true);
                 regenpotion.setItemMeta(regenpotionmeta);
@@ -1009,13 +1020,17 @@ public class InventoryEvent implements Listener {
 
         if(plugin.ppTeamKitInventories.containsValue(event.getInventory())){
             String team = PlayerConfig.get().getString("players." + player.getName() + ".team");
-            if(!plugin.ppTeamSelectedKits.get(team).containsKey(player)) {
-                Bukkit.getScheduler().runTask(plugin, () -> player.openInventory(event.getInventory()));
+            if(plugin.ppTeamSelectedKits.get(team) != null) {
+                if (!plugin.ppTeamSelectedKits.get(team).containsKey(player)) {
+                    Bukkit.getScheduler().runTask(plugin, () -> player.openInventory(event.getInventory()));
+                } else {
+                    if (plugin.runningTimers.containsKey("pushpointstart")) {
+                        player.sendMessage("§7[§6!§7] §6Press your §a§lOff-hand §6key to re-open the kits inventory before the game starts.");
+                    }
+                }
             } else {
-                if(plugin.runningTimers.containsKey("pushpointstart")) {
-                    player.sendMessage("§7[§6!§7] §6Press your §a§lOff-hand §6key to re-open the kits inventory before the game starts.");
-                }
-                }
+                Bukkit.getScheduler().runTask(plugin, () -> player.openInventory(event.getInventory()));
+            }
         }
     }
 
@@ -1043,7 +1058,5 @@ public class InventoryEvent implements Listener {
             String team = PlayerConfig.get().getString("players." + player.getName() + ".team");
             player.openInventory(plugin.ppTeamKitInventories.get(team));
         }
-
-         e.setCancelled(true);
     }
 }

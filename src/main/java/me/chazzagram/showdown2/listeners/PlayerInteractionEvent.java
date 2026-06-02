@@ -40,6 +40,9 @@ public class PlayerInteractionEvent implements Listener {
 
     @EventHandler
     public void onPlayerFish(PlayerFishEvent event) {
+
+        if(plugin.ghostManager.getGhostPlayers().contains(event.getPlayer().getName())) { event.setCancelled(true); return; }
+
         event.setCancelled(false);
         if(plugin.currentMode.equals("Crumble Clash")){
             if (event.getState() != PlayerFishEvent.State.CAUGHT_ENTITY) return;
@@ -126,7 +129,7 @@ public class PlayerInteractionEvent implements Listener {
             if (e.getItem() != null && e.getItem().getType().name().endsWith("_BOAT")) {
                 e.setCancelled(true);
             }
-        } else if (plugin.currentMode.equals("Colour Dash")) {
+        } else if (plugin.currentMode.equals("Dimension Dash")) {
             e.setCancelled(false);
         } else if (plugin.runningTimers.containsKey("readytimer") && plugin.readyType.equals("snowballs")) {
             Action action = e.getAction();
@@ -162,6 +165,11 @@ public class PlayerInteractionEvent implements Listener {
             }
         } else if (plugin.currentMode.equals("Crumble Clash")) {
             e.setCancelled(false);
+
+            if(plugin.ghostManager.getGhostPlayers().contains(e.getPlayer().getName())) { e.setCancelled(true); return; }
+
+            if(!plugin.blockBreak && !plugin.copperDecay) e.setCancelled(true);
+
             if (e.getItem() != null && e.getItem().getType() == Material.FISHING_ROD) {
                 e.setCancelled(false);
             }
@@ -295,7 +303,7 @@ public class PlayerInteractionEvent implements Listener {
     @EventHandler
     public void onShoot(EntityShootBowEvent event) {
 
-        if(!plugin.currentMode.equals("Voting") && !plugin.votingEnabled && !plugin.votingMode.equals("guns")) return;
+        if(!plugin.currentMode.equals("Voting") || !plugin.votingEnabled || !plugin.votingMode.equals("guns")) return;
 
         if (!(event.getEntity() instanceof Player player)) return;
 

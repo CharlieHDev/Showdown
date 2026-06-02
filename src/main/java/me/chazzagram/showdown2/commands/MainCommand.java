@@ -27,6 +27,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MainCommand implements CommandExecutor {
 
@@ -115,7 +116,7 @@ public class MainCommand implements CommandExecutor {
                     }
                     break;
                 case "givetrident":
-                    if(plugin.currentMode.equals("Colour Dash")) {
+                    if(plugin.currentMode.equals("Dimension Dash")) {
                         if (args.length > 1) {
                             if (Bukkit.getPlayer(args[1]) != null) {
                                 Player p = Bukkit.getPlayer(args[1]);
@@ -132,8 +133,26 @@ public class MainCommand implements CommandExecutor {
                         }
                     }
                     break;
+                case "givetrident3":
+                    if(plugin.currentMode.equals("Dimension Dash")) {
+                        if (args.length > 1) {
+                            if (Bukkit.getPlayer(args[1]) != null) {
+                                Player p = Bukkit.getPlayer(args[1]);
+                                if(plugin.getPlayers().contains(p)) {
+                                    ItemStack trident = new ItemStack(Material.TRIDENT);
+                                    ItemMeta meta = trident.getItemMeta();
+                                    meta.setUnbreakable(true);
+                                    meta.addEnchant(Enchantment.RIPTIDE, 3, true);
+                                    trident.setItemMeta(meta);
+                                    p.getInventory().addItem(trident);
+                                    p.sendTitle("", "§b§l+ ᴛʀɪᴅᴇɴᴛ", 0, 40, 0);
+                                }
+                            }
+                        }
+                    }
+                    break;
                 case "taketrident":
-                    if(plugin.currentMode.equals("Colour Dash")) {
+                    if(plugin.currentMode.equals("Dimension Dash")) {
                         if (args.length > 1) {
                             if (Bukkit.getPlayer(args[1]) != null) {
                                 Player p = Bukkit.getPlayer(args[1]);
@@ -142,6 +161,24 @@ public class MainCommand implements CommandExecutor {
                                     ItemMeta meta = trident.getItemMeta();
                                     meta.setUnbreakable(true);
                                     meta.addEnchant(Enchantment.RIPTIDE, 2, true);
+                                    trident.setItemMeta(meta);
+                                    p.getInventory().remove(trident);
+                                    p.sendTitle("", "§b§l- ᴛʀɪᴅᴇɴᴛ", 0, 40, 0);
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case "taketrident3":
+                    if(plugin.currentMode.equals("Dimension Dash")) {
+                        if (args.length > 1) {
+                            if (Bukkit.getPlayer(args[1]) != null) {
+                                Player p = Bukkit.getPlayer(args[1]);
+                                if(plugin.getPlayers().contains(p)) {
+                                    ItemStack trident = new ItemStack(Material.TRIDENT);
+                                    ItemMeta meta = trident.getItemMeta();
+                                    meta.setUnbreakable(true);
+                                    meta.addEnchant(Enchantment.RIPTIDE, 3, true);
                                     trident.setItemMeta(meta);
                                     p.getInventory().remove(trident);
                                     p.sendTitle("", "§b§l- ᴛʀɪᴅᴇɴᴛ", 0, 40, 0);
@@ -203,35 +240,73 @@ public class MainCommand implements CommandExecutor {
                         if (Bukkit.getPlayer(args[1]) != null) {
                             if(plugin.ghostManager.getGhostPlayers().contains(args[1])) break;
                             if (plugin.getPlayers().contains(Bukkit.getPlayer(args[1]))) {
-                                if (plugin.runningTimers.containsKey("dimensiondash")) {
-                                    if (plugin.currentRound == Integer.parseInt(args[2])) {
-                                        if (plugin.colourDashCheckpoints.get(args[1]) < 10) {
-                                            plugin.cdCompletions++;
-                                            int placement = 1;
-                                            for (Integer checkpoint : plugin.colourDashCheckpoints.values()) {
-                                                if (checkpoint == 10) {
-                                                    placement++;
+                                if(plugin.finaleActive){
+                                    if (plugin.colourDashCheckpoints.get(args[1]) < 10) {
+                                        plugin.cdCompletions++;
+
+                                        Player p = Bukkit.getServer().getPlayer(args[1]);
+                                        String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
+                                        plugin.modeCompletions.put(team, (plugin.modeCompletions.get(team) + 1));
+                                        p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("dimensiondashwatch"), 0, 100, 5);
+                                        plugin.messagePlayer(p, "\n§a§lCourse Completed!");
+                                        plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("dimensiondashwatch") + "\n");
+                                        plugin.colourDashCheckpoints.put(args[1], 10);
+                                        plugin.ghostManager.addGhostPlayer(p.getName());
+                                        for (Player player : Bukkit.getOnlinePlayers()) {
+                                            plugin.messagePlayer(player, "§f\uD83D\uDC51 §8| " + plugin.getPlayerDisplayName(p.getName()) + "§e was §f§l#" + plugin.cdCompletions + " §eto cross all dimensions!");
+                                        }
+                                        int teamSize = TeamsConfig.get().getStringList("team." + team + ".players").size();
+                                        int completions = plugin.modeCompletions.getOrDefault(team, 0);
+                                        if (completions >= teamSize) {
+                                            plugin.runningTimers.remove("dimensiondashwatch");
+                                            plugin.finaleRoundOver(team);
+                                        }
+                                    }
+                                } else {
+                                    if (plugin.runningTimers.containsKey("dimensiondash")) {
+                                        if (plugin.currentRound == Integer.parseInt(args[2])) {
+                                            if (plugin.colourDashCheckpoints.get(args[1]) < 10) {
+                                                plugin.cdCompletions++;
+                                                int placement = 1;
+                                                for (Integer checkpoint : plugin.colourDashCheckpoints.values()) {
+                                                    if (checkpoint == 10) {
+                                                        placement++;
+                                                    }
                                                 }
-                                            }
-                                            int pointsEarned = 143 - (placement*3);
-                                            plugin.earnPoints(args[1], pointsEarned, true);
+                                                int pointsEarned = plugin.ddPoints().get(placement - 1);
+                                                plugin.earnPoints(args[1], pointsEarned, true);
 
-                                            Player p = Bukkit.getServer().getPlayer(args[1]);
-                                            String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
-                                            plugin.modeCompletions.put(team, (plugin.modeCompletions.get(team) + 1));
-                                            p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("dimensiondashwatch"), 0, 100, 5);
-                                            plugin.messagePlayer(p, "\n§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lCourse Completed!");
-                                            plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("dimensiondashwatch") + "\n");
-                                            plugin.colourDashCheckpoints.put(args[1], 10);
-                                            plugin.ghostManager.addGhostPlayer(p.getName());
-                                            for (Player player : plugin.getPlayers()) {
-                                                plugin.messagePlayer(player, "§f\uD83D\uDC51 §8| " + plugin.getPlayerDisplayName(p.getName()) + "§e was §f§l#" + placement + " §eto cross all dimensions!");
-                                            }
+                                                Player p = Bukkit.getServer().getPlayer(args[1]);
+                                                String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
+                                                plugin.modeCompletions.put(team, (plugin.modeCompletions.get(team) + 1));
+                                                p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("dimensiondashwatch"), 0, 100, 5);
+                                                plugin.messagePlayer(p, "\n§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lCourse Completed!");
+                                                plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("dimensiondashwatch") + "\n");
+                                                plugin.colourDashCheckpoints.put(args[1], 10);
+                                                plugin.ghostManager.addGhostPlayer(p.getName());
+                                                for (Player player : plugin.getPlayers()) {
+                                                    plugin.messagePlayer(player, "§f\uD83D\uDC51 §8| " + plugin.getPlayerDisplayName(p.getName()) + "§e was §f§l#" + placement + " §eto cross all dimensions!");
+                                                }
 
-                                            if (plugin.cdCompletions == PlayerConfig.get().getConfigurationSection("players").getKeys(false).size()) {
-                                                plugin.runningTimers.remove("dimensiondash");
-                                                plugin.runningTimers.remove("dimensiondashwatch");
-                                                plugin.gameEnd();
+                                                plugin.dashLapData.get(p.getName()).setlap3Time();
+
+                                                plugin.unfinishedPlayers.remove(p);
+
+                                                p.spigot().sendMessage(
+                                                        ChatMessageType.ACTION_BAR,
+                                                        TextComponent.fromLegacy(
+                                                                "§8[§e" + plugin.dashLapData.get(p.getName()).getFinalCompletionTimeConverted() +
+                                                                        "§8] [§6" +
+                                                                        plugin.formatTime(plugin.dashLapData.get(p.getName()).getLap3Timestamp() - plugin.dashLapData.get(p.getName()).getLap2Timestamp()) +
+                                                                        "§8]"
+                                                        )
+                                                );
+
+                                                if (plugin.cdCompletions == PlayerConfig.get().getConfigurationSection("players").getKeys(false).size()) {
+                                                    plugin.runningTimers.remove("dimensiondash");
+                                                    plugin.runningTimers.remove("dimensiondashwatch");
+                                                    plugin.gameEnd();
+                                                }
                                             }
                                         }
                                     }
@@ -245,7 +320,12 @@ public class MainCommand implements CommandExecutor {
                         if (Bukkit.getPlayer(args[2]) != null) {
                             if(plugin.ghostManager.getGhostPlayers().contains(args[2])) break;
                             if (plugin.getPlayers().contains(Bukkit.getPlayer(args[2]))) {
-                                if (plugin.runningTimers.containsKey("bridgebuilders")) {
+                                if(plugin.finaleActive){
+
+                                    List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
+                                    String firstTeam = leaderteams.getFirst();
+                                    String secondTeam = leaderteams.get(1);
+
                                     String teamName = PlayerConfig.get().getString("players." + args[2] + ".team");
                                     if (teamName != null) {
                                         int zOffset = 38 * (Integer.parseInt(args[1]) - 1);
@@ -253,41 +333,68 @@ public class MainCommand implements CommandExecutor {
                                             zOffset += 20;
                                         }
                                         int xOffset = 35;
-                                        double x = 247.5;
-                                        int y = -21;
-                                        double z = 661.5;
-                                        switch (teamName) {
-                                            case "RubyRaiders":
-                                                xOffset *= 0;
-                                                break;
-                                            case "AmberAmbushers":
-                                                break;
-                                            case "TopazTroopers":
-                                                xOffset *= 2;
-                                                break;
-                                            case "KyaniteKillers":
-                                                xOffset *= 3;
-                                                break;
-                                            case "DiamondDestroyers":
-                                                xOffset *= 4;
-                                                break;
-                                            case "SapphireSoldiers":
-                                                xOffset *= 5;
-                                                break;
-                                            case "SmithsoniteSlayers":
-                                                xOffset *= 6;
-                                                break;
-                                            case "CrystalCrashers":
-                                                xOffset *= 7;
-                                                break;
-                                            default:
-                                                break;
+                                        double x = 2053.5;
+                                        int y = -37;
+                                        double z = 900.5;
+
+                                        if(teamName.equals(firstTeam)){
+                                            xOffset *= 0;
+                                        }
+                                        if(teamName.equals(secondTeam)){
+                                            xOffset *= 1;
                                         }
                                         if (Bukkit.getPlayer(args[2]) != null) {
                                             Player p = Bukkit.getPlayer(args[2]);
                                             Location tpLoc = new Location(Bukkit.getWorld("build"), (x + xOffset), y, (z - zOffset), 180, 0);
                                             p.teleport(tpLoc);
                                             plugin.messagePlayer(p, "§7§oYou fell! Teleporting you back..");
+                                        }
+                                    }
+                                } else {
+                                    if (plugin.runningTimers.containsKey("bridgebuilders")) {
+                                        String teamName = PlayerConfig.get().getString("players." + args[2] + ".team");
+                                        if (teamName != null) {
+                                            int zOffset = 38 * (Integer.parseInt(args[1]) - 1);
+                                            if ((plugin.bridgeTally.get(teamName) & 1) == 0) {
+                                                zOffset += 20;
+                                            }
+                                            int xOffset = 35;
+                                            double x = 247.5;
+                                            int y = -21;
+                                            double z = 661.5;
+                                            switch (teamName) {
+                                                case "RubyRaiders":
+                                                    xOffset *= 0;
+                                                    break;
+                                                case "AmberAmbushers":
+                                                    break;
+                                                case "TopazTroopers":
+                                                    xOffset *= 2;
+                                                    break;
+                                                case "KyaniteKillers":
+                                                    xOffset *= 3;
+                                                    break;
+                                                case "DiamondDestroyers":
+                                                    xOffset *= 4;
+                                                    break;
+                                                case "SapphireSoldiers":
+                                                    xOffset *= 5;
+                                                    break;
+                                                case "SmithsoniteSlayers":
+                                                    xOffset *= 6;
+                                                    break;
+                                                case "CrystalCrashers":
+                                                    xOffset *= 7;
+                                                    break;
+                                                default:
+                                                    break;
+                                            }
+                                            if (Bukkit.getPlayer(args[2]) != null) {
+                                                Player p = Bukkit.getPlayer(args[2]);
+                                                Location tpLoc = new Location(Bukkit.getWorld("build"), (x + xOffset), y, (z - zOffset), 180, 0);
+                                                p.teleport(tpLoc);
+                                                plugin.messagePlayer(p, "§7§oYou fell! Teleporting you back..");
+                                            }
                                         }
                                     }
                                 }
@@ -391,6 +498,16 @@ public class MainCommand implements CommandExecutor {
                                             if (Bukkit.getServer().getPlayer(args[2]) != null) {
                                                 Player p2 = Bukkit.getServer().getPlayer(args[2]);
                                                 plugin.messagePlayer(p2, "§e\uD83D\uDCB025 §7| §eYou have completed this jump!");
+
+                                                for(String teamPlayer : TeamsConfig.get().getStringList("teams." + PlayerConfig.get().getString("players." + args[2] + ".team") + ".players")){
+                                                    if(teamPlayer.equals(args[2])) continue;
+                                                    if(Bukkit.getServer().getPlayer(teamPlayer) != null) {
+                                                        Player p = Bukkit.getServer().getPlayer(teamPlayer);
+                                                        p.showPlayer(p2);
+                                                        p2.showPlayer(p);
+                                                    }
+                                                }
+
                                             }
                                             StringBuilder playerCompletions = new StringBuilder();
                                             playerCompletions.append("§a✔ ".repeat(register));
@@ -464,7 +581,7 @@ public class MainCommand implements CommandExecutor {
                                                         int xC = (Objects.equals(team, leaderteams.getFirst())) ? 2053 : 2088;
                                                         for (int x = xC - 3; x <= xC + 3; x++) {
                                                             for (int y = -35 - 2; y <= -35 + 9; y++) {
-                                                                Bukkit.getWorld("build").getBlockAt(x, y, 844 - (Integer.parseInt(args[1]) * 38)).setType(Material.BARRIER);
+                                                                Bukkit.getWorld("build").getBlockAt(x, y, 920 - (Integer.parseInt(args[1]) * 38)).setType(Material.BARRIER);
                                                             }
                                                         }
                                                         plugin.bridgeJumpCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);
@@ -473,7 +590,7 @@ public class MainCommand implements CommandExecutor {
                                             }
                                             if (Bukkit.getServer().getPlayer(args[2]) != null) {
                                                 Player p2 = Bukkit.getServer().getPlayer(args[2]);
-                                                plugin.messagePlayer(p2, "§e\uD83D\uDCB025 §7| §eYou have completed this jump!");
+                                                plugin.messagePlayer(p2, "§eYou have completed this jump!");
                                             }
                                             StringBuilder playerCompletions = new StringBuilder();
                                             playerCompletions.append("§a✔ ".repeat(register));
@@ -538,7 +655,7 @@ public class MainCommand implements CommandExecutor {
                                         }
                                         if (Bukkit.getServer().getPlayer(args[1]) != null) {
                                             Player p2 = Bukkit.getServer().getPlayer(args[1]);
-                                            plugin.messagePlayer(p2, "§e\uD83D\uDCB025 §7| §eYou have completed this jump!");
+                                            plugin.messagePlayer(p2, "§eYou have completed this jump!");
                                         }
 
                                         StringBuilder playerCompletions = new StringBuilder();
@@ -733,14 +850,22 @@ public class MainCommand implements CommandExecutor {
                                             if (plugin.lastHitPlayer.containsKey(args[1])) {
                                                 if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
                                                     plugin.killRecord.add(plugin.getPlayerDisplayName(plugin.lastHitPlayer.get(args[1])) + " §f⚔ " + plugin.getPlayerDisplayName(args[1]));
-                                                    plugin.playerKillCount.putIfAbsent(plugin.lastHitPlayer.get(args[1]), plugin.playerKillCount.get(plugin.lastHitPlayer.get(args[1])) + 1);
+                                                    plugin.playerKillCount.merge(plugin.lastHitPlayer.get(args[1]), 1, Integer::sum);
+                                                    plugin.earnPoints(plugin.lastHitPlayer.get(args[1]), 4, true);
                                                 }
                                             }
 
                                             for (Player player : Bukkit.getOnlinePlayers()) {
                                                 if (plugin.lastHitPlayer.containsKey(args[1])) {
                                                     if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
-                                                        plugin.messagePlayer(player, "§c❤ §7| " + plugin.getPlayerDisplayName(p.getName()) + " §7lost a life to " + plugin.getPlayerDisplayName(plugin.lastHitPlayer.get(args[1])));
+                                                        String killerName = plugin.lastHitPlayer.get(args[1]);
+                                                        String deathMessage = "§c❤ §7| " + plugin.getPlayerDisplayName(p.getName()) + " §7lost a life to " + plugin.getPlayerDisplayName(killerName);
+
+                                                        if (player.getName().equals(killerName)) {
+                                                            plugin.messagePlayer(player, "§e\uD83D\uDCB04 §7| " + deathMessage);
+                                                        } else {
+                                                            plugin.messagePlayer(player, deathMessage);
+                                                        }
                                                     } else {
                                                         plugin.messagePlayer(player, "§c❤ §7| " + plugin.getPlayerDisplayName(p.getName()) + " §7lost a life.");
                                                     }
@@ -759,15 +884,24 @@ public class MainCommand implements CommandExecutor {
                                                             timeLeft--;
                                                             switch (timeLeft) {
                                                                 case 5:
-                                                                    p.sendTitle("§c§lYou Died.", "1§c❤ §fRemaining.");
-                                                                    int[] island = plugin.activeIslands.getLast();
-                                                                    p.teleport(new Location(Bukkit.getWorld("build"), island[0], p.getLocation().getY() + 20, island[1]));
-                                                                    PotionEffect levitation = new PotionEffect(PotionEffectType.LEVITATION, 100, 1);
-                                                                    p.addPotionEffect(levitation);
+                                                                    p.sendTitle("1§c❤ §fRemaining.", "You're immune for 5 seconds.");
+//                                                                    int[] island = plugin.activeIslands.getLast();
+                                                                    if(plugin.zoomoMap.equals("§a§lAdrenaline Ravine")) {
+                                                                        plugin.zoomoRespawn(p);
+                                                                    }
+                                                                    if(plugin.zoomoMap.equals("§6§lDesert")) {
+                                                                        plugin.zoomoDesertRespawn(p);
+                                                                    }
+                                                                    p.getInventory().setHelmet(new ItemStack(Material.IRON_HELMET));
+                                                                    p.getInventory().setChestplate(new ItemStack(Material.IRON_CHESTPLATE));
+                                                                    p.getInventory().setLeggings(new ItemStack(Material.IRON_LEGGINGS));
+                                                                    p.getInventory().setBoots(new ItemStack(Material.IRON_BOOTS));
                                                                     break;
                                                                 case 1:
-                                                                    PotionEffect slowfall = new PotionEffect(PotionEffectType.SLOW_FALLING, 80, 1);
-                                                                    p.addPotionEffect(slowfall);
+                                                                    p.getInventory().setHelmet(new ItemStack(Material.AIR));
+                                                                    p.getInventory().setChestplate(new ItemStack(Material.AIR));
+                                                                    p.getInventory().setLeggings(new ItemStack(Material.AIR));
+                                                                    p.getInventory().setBoots(new ItemStack(Material.AIR));
                                                                     break;
                                                             }
                                                             if (timeLeft == 0) {
@@ -786,6 +920,17 @@ public class MainCommand implements CommandExecutor {
 
                                             plugin.runningTimers.put(args[1] + "respawn", new AbstractMap.SimpleEntry<>(task, 6));
                                         } else {
+                                            if(p.getInventory().getChestplate() != null) {
+                                                if (p.getInventory().getChestplate().getType().equals(Material.IRON_CHESTPLATE)) {
+                                                    if (plugin.zoomoMap.equals("§a§lAdrenaline Ravine")) {
+                                                        plugin.zoomoRespawn(p);
+                                                    }
+                                                    if (plugin.zoomoMap.equals("§6§lDesert")) {
+                                                        plugin.zoomoDesertRespawn(p);
+                                                    }
+                                                    break;
+                                                }
+                                            }
                                             plugin.zoomoLives.replace(args[1], 0);
                                             plugin.deadPlayers.add(args[1]);
                                             plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| You died.");
@@ -892,7 +1037,15 @@ public class MainCommand implements CommandExecutor {
                                 if(plugin.ghostManager.getGhostPlayers().contains(args[2])) break;
                                 String team = PlayerConfig.get().getString("players." + args[2] + ".team");
                                 if(plugin.finalPush) {
-                                    if ((plugin.ppTeamMatchups.containsKey(team) && args[1].equals("left")) || (plugin.ppTeamMatchups.containsValue(team) && args[1].equals("right"))) {
+                                    List<Material> firstBlocks = plugin.mapSides.values().stream()
+                                            .filter(blocks -> blocks != null && blocks.length > 0 && blocks[0] != null)
+                                            .map(blocks -> blocks[0].getType())
+                                            .toList();
+                                    List<Material> secondBlocks = plugin.mapSides.values().stream()
+                                            .filter(blocks -> blocks != null && blocks.length > 1 && blocks[1] != null)
+                                            .map(blocks -> blocks[1].getType())
+                                            .toList();
+                                    if ((firstBlocks.contains(plugin.teamConcrete.get(team)) && args[1].equals("left")) || (secondBlocks.contains(plugin.teamConcrete.get(team)) && args[1].equals("right"))) {
                                         if (plugin.getPlayers().contains(p) && p.getGameMode() != GameMode.SPECTATOR) {
                                             plugin.messagePlayer(p, "§aYou have escaped!");
                                             p.sendTitle("§a§lYou have escaped!", "§f§oPhew!", 0, 40, 20);
@@ -911,6 +1064,7 @@ public class MainCommand implements CommandExecutor {
                 case "ddchange":
                     if(args.length > 2){
                         Player p = Bukkit.getPlayer(args[2]);
+                        if(!plugin.currentMode.equals("Dimension Dash")) break;
                         if(plugin.ghostManager.getGhostPlayers().contains(args[2])) break;
                         if(p.getGameMode() != GameMode.SPECTATOR) {
                             if (Objects.equals(args[1], "back") && plugin.currentRound == 2) {
@@ -924,6 +1078,7 @@ public class MainCommand implements CommandExecutor {
                     break;
                 case "ddsetmap":
                     if(args.length > 1){
+                        if(!plugin.currentMode.equals("Dimension Dash")) break;
                         if(plugin.ghostManager.getGhostPlayers().contains(args[1])) break;
                         if(Objects.equals(plugin.ddChosenMap, "")) {
                             plugin.ddChosenMap = plugin.ddMapVotes.get(args[1]);
@@ -945,6 +1100,7 @@ public class MainCommand implements CommandExecutor {
                 case "ddteleport":
                     if(args.length > 2){
                         Player p = Bukkit.getPlayer(args[2]);
+                        if(!plugin.currentMode.equals("Dimension Dash")) break;
                         if(plugin.ghostManager.getGhostPlayers().contains(args[2])) break;
                         if(p.getGameMode() != GameMode.SPECTATOR) {
                             String name = args[2] + "teleport";
@@ -986,6 +1142,11 @@ public class MainCommand implements CommandExecutor {
                                                                 1
                                                         );
                                                         p.playSound(p.getLocation(), Sound.BLOCK_PORTAL_TRAVEL, 1F, 1F);
+                                                        plugin.messagePlayer(p, "§a[✔] \uD83C\uDFC3-1\n§8[§f§l⏱§8] §e§o" + plugin.getTimer("dimensiondashwatch"));
+                                                        for (Player player : Bukkit.getOnlinePlayers()) {
+                                                            plugin.messagePlayer(player, "§a§l⏱ §8| " + plugin.getPlayerDisplayName(p.getName()) + "§7 has crossed §aDimension Lap #1§7!");
+                                                        }
+                                                        plugin.dashLapData.get(p.getName()).setlap1Time();
                                                         break;
                                                     default:
                                                         break;
@@ -1004,6 +1165,115 @@ public class MainCommand implements CommandExecutor {
                                 }.runTaskTimer(plugin, 0L,  20L);
 
                                 plugin.runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, 4));
+                            }
+                        }
+                    }
+                    break;
+                case "ddteleportback":
+                    if(args.length > 2){
+                        Player p = Bukkit.getPlayer(args[2]);
+                        if(plugin.ghostManager.getGhostPlayers().contains(args[2])) break;
+                        if(p.getGameMode() != GameMode.SPECTATOR) {
+                            String name = args[2] + "teleport";
+                                BukkitTask task = new BukkitRunnable() {
+                                    int timeLeft = 6;
+                                    @Override
+                                    public void run() {
+                                        if (plugin.runningTimers.containsKey(name)) {
+                                            if (!plugin.pausedTimers.contains(name)) {
+                                                timeLeft--;
+                                                plugin.runningTimers.get(name).setValue(timeLeft);
+                                                switch (timeLeft) {
+                                                    case 5:
+                                                        p.playSound(p.getLocation(), Sound.BLOCK_PORTAL_TRIGGER, 1F, 1F);
+                                                        PotionEffect darkness = new PotionEffect(PotionEffectType.DARKNESS, 100, 1, true, false);
+                                                        p.addPotionEffect(darkness);
+                                                        break;
+                                                    case 2:
+                                                        Location tpLoc;
+                                                        if(plugin.currentRound == 1){
+                                                            tpLoc = new Location(Bukkit.getWorld("build"), 77, 140, 1127, 0, 0);
+                                                        } else {
+                                                            tpLoc = new Location(Bukkit.getWorld("build"), 77, 140, 1123, 180, 0);
+                                                        }
+                                                        double mapBaseX = 77;
+
+                                                        switch(args[3]){
+                                                            case "2023": mapBaseX = -564; break;
+                                                            case "SkiResort": mapBaseX = -976; break;
+                                                            case "ChaosCanyon": mapBaseX = -1199; break;
+                                                        }
+
+                                                        double playerX = p.getLocation().getX();
+                                                        double distance = Math.abs(playerX) - Math.abs(mapBaseX);
+                                                        double targetX;
+
+                                                        if (plugin.currentRound == 1) {
+                                                            targetX = 77 - distance;
+                                                            tpLoc.setYaw(p.getLocation().getYaw());
+                                                        } else {
+                                                            targetX = (77 - 43) + distance;
+                                                            tpLoc.setYaw(p.getLocation().getYaw() + 180f);
+                                                        }
+
+                                                        tpLoc.setX(targetX);
+                                                        tpLoc.setPitch(p.getLocation().getPitch());
+
+                                                        p.teleport(tpLoc);
+                                                        break;
+                                                    case 1:
+                                                        p.getWorld().spawnParticle(
+                                                                Particle.EXPLOSION,
+                                                                p.getLocation(),
+                                                                1
+                                                        );
+                                                        plugin.messagePlayer(p, "§a[✔] \uD83C\uDFC3-2\n§8[§f§l⏱§8] §e§o" + plugin.getTimer("dimensiondashwatch"));
+                                                        for (Player player : Bukkit.getOnlinePlayers()) {
+                                                            plugin.messagePlayer(player, "§a§l⏱ §8| " + plugin.getPlayerDisplayName(p.getName()) + "§7 has crossed §aDimension Lap #2§7!");
+                                                        }
+                                                        plugin.dashLapData.get(p.getName()).setlap2Time();
+                                                        p.playSound(p.getLocation(), Sound.BLOCK_PORTAL_TRAVEL, 1F, 1F);
+                                                        break;
+                                                    default:
+                                                        break;
+                                                }
+                                                if (timeLeft == 0) {
+                                                    plugin.runningTimers.remove(name);
+                                                    cancel();
+                                                }
+                                            }
+                                        } else {
+                                            plugin.messageConsole("Timer removed by external factor.");
+                                            cancel();
+                                        }
+                                    }
+
+                                }.runTaskTimer(plugin, 0L,  20L);
+
+                                plugin.runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, 4));
+                            }
+                    }
+                    break;
+                case "finalefall":
+                    if(args.length > 1) {
+                        if (plugin.finaleActive) {
+                            List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
+                            String firstTeam = leaderteams.getFirst();
+                            String secondTeam = leaderteams.get(1);
+                            List<String> firstPlayers = TeamsConfig.get().getStringList("teams." + firstTeam + ".players");
+                            List<String> secondPlayers = TeamsConfig.get().getStringList("teams." + secondTeam + ".players");
+                            World world = Bukkit.getWorld("build");
+                            Player p = Bukkit.getPlayer(args[1]);
+                            if(p != null) {
+                                if (plugin.getPlayers().contains(p)){
+                                    if(firstPlayers.contains(p.getName()) && plugin.finaleFirstTeamRevealed){
+                                        p.teleport(new Location(world, 1833.5, 157, 895.5, 180, 0));
+                                    } else if(secondPlayers.contains(p.getName()) && plugin.finaleSecondTeamRevealed){
+                                        p.teleport(new Location(world, 1843.5, 157, 895.5, 180, 0));
+                                    } else {
+                                        p.teleport(new Location(world, 1838.5, 161, 863.5, 0, 0));
+                                    }
+                                }
                             }
                         }
                     }
@@ -1029,12 +1299,16 @@ public class MainCommand implements CommandExecutor {
                                         if (data != null && System.currentTimeMillis() - data.time < 5000) {
                                             Player killer = Bukkit.getPlayer(data.attacker);
                                             if (killer != null && !killer.equals(p)) {
-                                                // Credit kill
-                                                plugin.killRecord.add(plugin.getPlayerDisplayName(data.attacker) + " §c⚔ " + plugin.getPlayerDisplayName(args[1]));
-                                                plugin.playerKillCount.putIfAbsent(data.attacker, plugin.playerKillCount.get(data.attacker) + 1);
-                                                if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(data.attacker)) {
-                                                    PlayerInfoConfig.get().set("players." + data.attacker + ".kills", PlayerInfoConfig.get().getInt("players." + data.attacker + ".kills") + 1);
-                                                    PlayerInfoConfig.save();
+                                                String killerTeam = PlayerConfig.get().getString("player." + killer.getName() + ".team");
+                                                String victimTeam = PlayerConfig.get().getString("player." + args[1] + ".team");
+                                                if(!Objects.equals(killerTeam, victimTeam)) {
+                                                    // Credit kill
+                                                    plugin.killRecord.add(plugin.getPlayerDisplayName(data.attacker) + " §c⚔ " + plugin.getPlayerDisplayName(args[1]));
+                                                    plugin.playerKillCount.putIfAbsent(data.attacker, plugin.playerKillCount.get(data.attacker) + 1);
+                                                    if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(data.attacker)) {
+                                                        PlayerInfoConfig.get().set("players." + data.attacker + ".kills", PlayerInfoConfig.get().getInt("players." + data.attacker + ".kills") + 1);
+                                                        PlayerInfoConfig.save();
+                                                    }
                                                 }
                                             }
                                         }
@@ -1114,12 +1388,16 @@ public class MainCommand implements CommandExecutor {
                                             Player killer = Bukkit.getPlayer(data.attacker);
                                             if (killer != null && !killer.equals(p)) {
                                                 // Credit kill
-                                                plugin.killRecord.add(plugin.getPlayerDisplayName(data.attacker) + " §c⚔ " + plugin.getPlayerDisplayName(args[1]));
-                                                plugin.playerKillCount.putIfAbsent(data.attacker, plugin.playerKillCount.get(data.attacker) + 1);
-                                                plugin.earnPoints(data.attacker, 16, true);
-                                                if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(data.attacker)) {
-                                                    PlayerInfoConfig.get().set("players." + data.attacker + ".kills", PlayerInfoConfig.get().getInt("players." + data.attacker + ".kills") + 1);
-                                                    PlayerInfoConfig.save();
+                                                String killerTeam = PlayerConfig.get().getString("player." + killer.getName() + ".team");
+                                                String victimTeam = PlayerConfig.get().getString("player." + args[1] + ".team");
+                                                if(!Objects.equals(killerTeam, victimTeam)) {
+                                                    plugin.killRecord.add(plugin.getPlayerDisplayName(data.attacker) + " §c⚔ " + plugin.getPlayerDisplayName(args[1]));
+                                                    plugin.playerKillCount.putIfAbsent(data.attacker, plugin.playerKillCount.get(data.attacker) + 1);
+                                                    plugin.earnPoints(data.attacker, 16, true);
+                                                    if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(data.attacker)) {
+                                                        PlayerInfoConfig.get().set("players." + data.attacker + ".kills", PlayerInfoConfig.get().getInt("players." + data.attacker + ".kills") + 1);
+                                                        PlayerInfoConfig.save();
+                                                    }
                                                 }
                                             }
                                         }
@@ -1849,15 +2127,28 @@ public class MainCommand implements CommandExecutor {
                     }
                     world2.getBlockAt(78, 139, 1235).setType(Material.REDSTONE_BLOCK);
                     world2.getBlockAt(78, 139, 1235).setType(Material.AIR);
+
+                    // Castle elytra barriers
+                    world2.getBlockAt(39, 156, 1213).setType(Material.REDSTONE_BLOCK);
+                    world2.getBlockAt(39, 156, 1213).setType(Material.AIR);
+
+                    world2.getBlockAt(94, 159, 1213).setType(Material.REDSTONE_BLOCK);
+                    world2.getBlockAt(94, 159, 1213).setType(Material.AIR);
+                    // -------
+
+                    world2.getBlockAt(60, 156, 1250).setType(Material.REDSTONE_BLOCK);
+                    world2.getBlockAt(60, 156, 1250).setType(Material.AIR);
                     plugin.startDimensionDash();
                     break;
                 case "startbridgebuilders":
                     plugin.startBridgeBuilders();
                     break;
                 case "startcrumbleclash":
+                    plugin.currentRound = 1;
                     plugin.startCrumbleClash();
                     break;
                 case "startpushpoint":
+                    plugin.currentRound = 1;
                     plugin.startPushPoint();
                     break;
                 case "startcraftalot":
@@ -2230,6 +2521,15 @@ public class MainCommand implements CommandExecutor {
                                     p.setFlying(false);
 
                                     p.teleport(teleportLoc);
+
+                                    for (String player2 : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
+                                        if (Bukkit.getServer().getPlayer(player2) != null) {
+                                            Player p2 = Bukkit.getServer().getPlayer(player2);
+                                            if (p.getName().equals(p2.getName())) continue;
+                                            p.hidePlayer(p2);
+                                            p2.hidePlayer(p);
+                                        }
+                                    }
                                 }
                             }
                             plugin.bridgeCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);

@@ -48,9 +48,13 @@ public class VoteWalkEvent implements Listener {
                     if (event.getFrom().getBlock().equals(event.getTo().getBlock())) return;
                     plugin.handleDecay(event.getPlayer());
                 }
-                if(plugin.currentMode.equals("Dimension Dash")){
+                if(plugin.currentMode.equals("Dimension Dash") && !plugin.finaleActive){
                     if(plugin.ghostManager.getGhostPlayers().contains(event.getPlayer().getName())) return;
                     Block block = event.getTo().getBlock().getRelative(BlockFace.DOWN);
+
+                    String value = plugin.ddMapWalkableBlock.get(block.getType());
+
+                    if (value == null) return;
                     if(!Objects.equals(plugin.ddMapVotes.get(event.getPlayer().getName()), plugin.ddMapWalkableBlock.get(block.getType()))) {
                         int x = block.getX();
                         int y = block.getY();

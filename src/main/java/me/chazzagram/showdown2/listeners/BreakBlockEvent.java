@@ -26,8 +26,8 @@ public class BreakBlockEvent implements Listener {
     public void onBlockBreak(BlockBreakEvent e) {
         Player p = e.getPlayer();
 
-        if(plugin.ghostManager.getGhostPlayers().contains(p.getName())) return;
-
+        if(plugin.ghostManager.getGhostPlayers().contains(p.getName())) { e.setCancelled(true); return; }
+        
         if(plugin.getPlayers().contains(p)) {
             if (plugin.currentMode.equals("Craftalot")) {
                 e.setCancelled(true);

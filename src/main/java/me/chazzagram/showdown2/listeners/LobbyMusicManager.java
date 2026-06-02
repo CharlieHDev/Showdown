@@ -30,28 +30,60 @@ public class LobbyMusicManager implements Listener {
     Map<UUID, BukkitTask> musicTasks = new HashMap<>();
 
     public void startMusic(Player player) {
-        if(plugin.currentMode.equals("Lobby")) {
-            if(!musicTasks.containsKey(player.getUniqueId())) {
-                BukkitTask task = new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        player.playSound(player.getLocation(),
-                                Sound.MUSIC_DISC_WARD,
-                                SoundCategory.VOICE,
-                                1f,
-                                1f);
-                    }
-                }.runTaskTimer(plugin, 0L, 20L * 205);
+        if (!plugin.currentMode.equals("Lobby")) return;
 
-                musicTasks.put(player.getUniqueId(), task);
-            }
+        UUID uuid = player.getUniqueId();
+
+        BukkitTask existing = musicTasks.get(uuid);
+        if (existing != null) {
+            existing.cancel();
         }
+
+        BukkitTask task = new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!player.isOnline()) {
+                    cancel();
+                    return;
+                }
+
+                player.playSound(player.getLocation(),
+                        Sound.MUSIC_DISC_WARD,
+                        SoundCategory.VOICE,
+                        1f,
+                        1f);
+            }
+        }.runTaskTimer(plugin, 0L, 20L * 205);
+
+        musicTasks.put(uuid, task);
     }
 
     public void stopMusic(Player player) {
         BukkitTask task = musicTasks.remove(player.getUniqueId());
         if (task != null) task.cancel();
         player.stopSound(Sound.MUSIC_DISC_WARD, SoundCategory.VOICE);
+    }
+
+    public void stopMusicAll(){
+        for (Map.Entry<UUID, BukkitTask> entry : musicTasks.entrySet()) {
+            if (entry.getValue() != null) {
+                entry.getValue().cancel();
+                entry.setValue(null);
+            }
+        }
+
+        for(Player player : Bukkit.getOnlinePlayers()) {
+            player.stopSound(Sound.MUSIC_DISC_WARD, SoundCategory.VOICE);
+        }
+    }
+
+    public void restartMusicAll(){
+        for (UUID uuid : musicTasks.keySet()) {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player != null && player.isOnline()) {
+                startMusic(player);
+            }
+        }
     }
 
     public Map<UUID, BukkitTask> getMusicTasks() {

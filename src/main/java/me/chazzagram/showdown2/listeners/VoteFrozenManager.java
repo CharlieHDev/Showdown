@@ -171,22 +171,26 @@ public class VoteFrozenManager implements Listener {
             int timeLeft = 32;
             @Override
             public void run() {
-                if (!plugin.pausedTimers.contains(name)) {
-                    timeLeft--;
-                    plugin.runningTimers.get(name).setValue(timeLeft);
+                if(plugin.votingEnabled) {
+                    if (!plugin.pausedTimers.contains(name)) {
+                        timeLeft--;
+                        plugin.runningTimers.get(name).setValue(timeLeft);
 
-                    switch (timeLeft){
-                        case 31,30,29,28:
-                            changeBlocksInRadius(player, loc, 32-timeLeft, true);
-                            break;
-                        case 1:
-                            changeBlocksInRadius(player, loc, 4, false);
-                            break;
-                        default:
-                            break;
-                    }
-                    if (timeLeft == 0) {
-                        plugin.runningTimers.remove(name);
+                        switch (timeLeft) {
+                            case 31, 30, 29, 28:
+                                changeBlocksInRadius(player, loc, 32 - timeLeft, true);
+                                break;
+                            case 1:
+                                changeBlocksInRadius(player, loc, 4, false);
+                                break;
+                            default:
+                                break;
+                        }
+                        if (timeLeft == 0) {
+                            plugin.runningTimers.remove(name);
+                            cancel();
+                        }
+                    } else {
                         cancel();
                     }
                 } else {

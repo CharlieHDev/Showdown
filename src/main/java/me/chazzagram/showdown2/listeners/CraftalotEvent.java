@@ -47,6 +47,17 @@ public class CraftalotEvent implements Listener {
 
         if(plugin.ghostManager.getGhostPlayers().contains(p.getName())) return;
 
+        Entity itemFrame = e.getRightClicked();
+
+        if (itemFrame instanceof ItemFrame frame) {
+            if(plugin.getPlayers().contains(p)) {
+
+                if (frame.getItem() != null && frame.getItem().getType().isItem()) {
+                    e.setCancelled(true);
+                }
+            }
+        }
+
         EntityType entity = e.getRightClicked().getType();
         Inventory inventory = p.getInventory();
 
@@ -203,19 +214,35 @@ public class CraftalotEvent implements Listener {
                                         newItemsAdded = true;
                                         item.setAmount(item.getAmount() - 1);
                                         switch (index) {
-                                            case 0 -> points = 20;
-                                            case 1 -> points = 30;
-                                            case 2 -> points = 40;
+                                            case 0 -> points = 15;
+                                            case 1 -> points = 25;
+                                            case 2 -> points = 35;
                                         }
                                         overallPoints += points;
                                         plugin.playerCrafts.get(p.getName()).set(index, plugin.playerCrafts.get(p.getName()).get(index) + 1);
                                         plugin.earnPoints(p.getName(), points, true);
-                                        String newItem = plugin.craftDifficultyLists.get(index).get(plugin.playerCrafts.get(p.getName()).get(index));
-                                        plugin.itemsToCraft.get(p.getName()).set(index, newItem);
-//                                        plugin.teamCrafts.put(team, plugin.teamCrafts.get(team) + 1);
-                                        plugin.craftTop.put(p.getName(), plugin.craftTop.get(p.getName()) + 1);
+                                        String newItem = plugin.craftDifficultyLists.get(index)
+                                                .get(plugin.playerCrafts.get(p.getName()).get(index));
 
-                                        newItems.append("- ").append(plugin.toPrettyCase(newItem)).append("\n");
+                                        plugin.itemsToCraft.get(p.getName()).set(index, newItem);
+
+                                        if (newItem.equals("[COMPLETE]")) {
+
+                                            String difficulty = switch (index) {
+                                                case 0 -> "§aEasy";
+                                                case 1 -> "§6Medium";
+                                                case 2 -> "§cHard";
+                                                default -> "Unknown";
+                                            };
+
+                                            p.sendMessage("§aYou have completed the " + difficulty + " craft list!");
+
+                                        } else {
+
+                                            newItems.append("- ")
+                                                    .append(plugin.toPrettyCase(newItem))
+                                                    .append("\n");
+                                        }
                                         break;
                                     }
                                 }
@@ -233,8 +260,9 @@ public class CraftalotEvent implements Listener {
                                     §e§l""" + newItems + """
                                     §8
                                     """);
+                            plugin.craftTop.put(p.getName(), plugin.craftTop.get(p.getName()) + craftCount);
                             for (Player players : Bukkit.getOnlinePlayers()) {
-                                plugin.messagePlayer(players, "§8[§c§l!§8] " + plugin.getPlayerDisplayName(e.getPlayer().getName()) + " §7has crafted §e" + craftCount + " item(s)! (§e" + plugin.craftTop.get(p.getName()) + "§7)");
+                                plugin.messagePlayer(players, "§8[§c§l!§8] " + plugin.getPlayerDisplayName(e.getPlayer().getName()) + " §7has crafted §e" + craftCount + " item(s)! §7(§e" + plugin.craftTop.get(p.getName()) + "§7)");
                             }
                         } else {
                             plugin.messagePlayer(p, """

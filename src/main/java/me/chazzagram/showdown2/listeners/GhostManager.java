@@ -55,6 +55,12 @@ public class GhostManager {
                     }
                 }
             }
+            for(String player2 : ghostPlayers){
+                Player p = Bukkit.getPlayer(player2);
+                if(p != null) {
+                    p.hidePlayer(plugin, ghostPlayer);
+                }
+            }
             ghostPlayer.setAllowFlight(true);
             ghostPlayer.setFlying(true);
             ghostPlayer.getInventory().clear();
@@ -71,6 +77,12 @@ public class GhostManager {
         if(ghostPlayer != null) {
             for (Player p : plugin.getPlayers()) {
                 if (p != null) {
+                    p.showPlayer(plugin, ghostPlayer);
+                }
+            }
+            for(String player2 : ghostPlayers){
+                Player p = Bukkit.getPlayer(player2);
+                if(p != null) {
                     p.showPlayer(plugin, ghostPlayer);
                 }
             }

@@ -210,10 +210,40 @@ public class LastHitEvent implements Listener {
                 }
             }
         } else if (plugin.currentMode.equals("Zoomo Go") && plugin.pvpEnabled) {
-            if (e.getDamager() instanceof Player killer && e.getEntity() instanceof Player victim) {
-                if (PlayerConfig.get().getString("players." + killer.getName() + ".team").equals(PlayerConfig.get().getString("players." + victim.getName() + ".team"))) {
+            if (e.getDamager() instanceof Player killer &&
+                    e.getEntity() instanceof Player victim) {
+
+                ItemStack victimChestplate = victim.getInventory().getChestplate();
+                ItemStack killerChestplate = killer.getInventory().getChestplate();
+
+                // Victim is invulnerable while wearing iron chestplate
+                if (victimChestplate != null &&
+                        victimChestplate.getType() == Material.IRON_CHESTPLATE) {
+
                     e.setCancelled(true);
+                    return;
+                }
+
+                // Attacker loses invulnerability if they attack another player
+                if (killerChestplate != null &&
+                        killerChestplate.getType() == Material.IRON_CHESTPLATE) {
+
+                    killer.getInventory().setHelmet(null);
+                    killer.getInventory().setChestplate(null);
+                    killer.getInventory().setLeggings(null);
+                    killer.getInventory().setBoots(null);
+
+                    killer.sendMessage("§cInvulnerability disabled by attacking another player.");
+                }
+
+                // Prevent team damage
+                if (PlayerConfig.get().getString("players." + killer.getName() + ".team")
+                        .equals(PlayerConfig.get().getString("players." + victim.getName() + ".team"))) {
+
+                    e.setCancelled(true);
+
                 } else {
+
                     plugin.lastHitPlayer.put(victim.getName(), killer.getName());
                 }
             }
@@ -673,6 +703,8 @@ public class LastHitEvent implements Listener {
                     victim.getInventory().clear();
                     givePPKits(victim);
                     victim.setHealth(20);
+                    victim.setFoodLevel(20);
+                    victim.setSaturation(20f);
                     killer.sendTitle("", "§c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
                     BukkitTask task = new BukkitRunnable() {
                         int timeLeft = 6;

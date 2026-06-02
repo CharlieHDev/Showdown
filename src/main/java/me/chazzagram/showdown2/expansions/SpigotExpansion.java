@@ -10,6 +10,8 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.block.Block;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,26 +70,26 @@ public class SpigotExpansion extends PlaceholderExpansion {
         StringBuilder teamsplayersalive = new StringBuilder();
         int position = 1;
 
-        if(plugin.getPlayers().contains(p)) {
+        if (plugin.getPlayers().contains(p)) {
             int idx = leaderteams.indexOf(PlayerConfig.get().getString("players." + p.getName() + ".team"));
-            if(idx >= 0) position = idx + 1;
+            if (idx >= 0) position = idx + 1;
         }
         int count = 0;
         teamplayers.setLength(0);
         int index = 0;
-        if(p == null){
+        if (p == null) {
             return "";
         }
         if (params.startsWith("indivplayer_")) {
             try {
-                int number = Integer.parseInt(params.substring("indivplayer_".length()))-1;
+                int number = Integer.parseInt(params.substring("indivplayer_".length())) - 1;
                 int width = 126;
-                if(number > 8){
-                    width-=6;
+                if (number > 8) {
+                    width -= 6;
                 }
                 if (number >= 0 && number < indivNames.size()) {
-                    for(boolean truefalse : plugin.teamShown){
-                        if(!truefalse){
+                    for (boolean truefalse : plugin.teamShown) {
+                        if (!truefalse) {
                             return formatLine("§8§k00000000", "§e§l\uD83D\uDCB0" + "§8§k0000", width);
 
                         }
@@ -103,10 +105,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
         }
         if (params.startsWith("indivpoints_")) {
             try {
-                int number = Integer.parseInt(params.substring("indivpoints_".length()))-1;
+                int number = Integer.parseInt(params.substring("indivpoints_".length())) - 1;
                 if (number >= 0 && number < indivPoints.size()) {
-                    for(boolean truefalse : plugin.teamShown){
-                        if(!truefalse){
+                    for (boolean truefalse : plugin.teamShown) {
+                        if (!truefalse) {
                             return "§8§k0000";
                         }
                     }
@@ -123,7 +125,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 int killindex = Integer.parseInt(params.split("_")[1]);
 
                 if (killindex >= 0 && killindex < plugin.killRecord.toArray().length) {
-                    return plugin.killRecord.get((plugin.killRecord.toArray().length-killindex)-1);
+                    return plugin.killRecord.get((plugin.killRecord.toArray().length - killindex) - 1);
                 } else {
                     return "§7------------";
                 }
@@ -131,16 +133,16 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 return "Invalid number format!";
             }
         }
-        if(params.startsWith("placementchange_")){
+        if (params.startsWith("placementchange_")) {
             try {
-                int number = Integer.parseInt(params.substring("placementchange_".length()))-1;
+                int number = Integer.parseInt(params.substring("placementchange_".length())) - 1;
                 if (number >= 0 && number < indivNames.size()) {
                     String name = indivNames.get(number);
                     Integer current = plugin.currentPlacements.get(name);
                     Integer previous = plugin.previousPlacements.get(name);
                     if (current != null && previous != null) {
-                        for(boolean truefalse : plugin.teamShown){
-                            if(!truefalse){
+                        for (boolean truefalse : plugin.teamShown) {
+                            if (!truefalse) {
                                 return "§8§k0";
                             }
                         }
@@ -166,36 +168,36 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "player":
                 return p.getName();
             case "bestgame":
-                if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())){
-                    return PlayerInfoConfig.get().getString("players."+p.getName()+".bestgame");
+                if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
+                    return PlayerInfoConfig.get().getString("players." + p.getName() + ".bestgame");
                 } else {
                     return "N/A";
                 }
             case "playersonline":
                 return plugin.getPlayers().size() + "/" + PlayerConfig.get().getConfigurationSection("players").getKeys(false).size();
             case "kills":
-                if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())){
-                    return PlayerInfoConfig.get().getString("players."+p.getName()+".kills");
+                if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
+                    return PlayerInfoConfig.get().getString("players." + p.getName() + ".kills");
                 } else {
                     return "N/A";
                 }
             case "bestreadycheck":
-                if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())){
-                    return PlayerInfoConfig.get().getString("players."+p.getName()+".bestreadycheck");
+                if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
+                    return PlayerInfoConfig.get().getString("players." + p.getName() + ".bestreadycheck");
                 } else {
                     return "N/A";
                 }
             case "highestplacement":
-                if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())){
-                    return PlayerInfoConfig.get().getString("players."+p.getName()+".highestplacement");
+                if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
+                    return PlayerInfoConfig.get().getString("players." + p.getName() + ".highestplacement");
                 } else {
                     return "N/A";
                 }
             case "eventplacement":
-                if(PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())){
-                    for(int i = 0; i < indivNames.size(); i++){
-                        if(p.getName().equals(indivNames.get(i))){
-                            return Integer.toString(i+1);
+                if (PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
+                    for (int i = 0; i < indivNames.size(); i++) {
+                        if (p.getName().equals(indivNames.get(i))) {
+                            return Integer.toString(i + 1);
                         }
                     }
                     return "N/A";
@@ -207,13 +209,13 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "zoomolives":
                 StringBuilder livesCount = new StringBuilder();
                 int lives = plugin.zoomoLives.get(p.getName());
-                if(lives > 0){
+                if (lives > 0) {
                     return livesCount.append("§c❤".repeat(lives)).toString();
                 } else {
                     return "§f☠";
                 }
             case "playerprefix":
-                if(PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
+                if (PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
                     return TeamsConfig.get().get("teams." + PlayerConfig.get().getString("players." + p.getName() + ".team") + ".colour") + TeamsConfig.get().getString("teams." + PlayerConfig.get().get("players." + p.getName() + ".team") + ".icon");
                 } else if (SpectatorConfig.get().getConfigurationSection("spectators").getKeys(false).contains(p.getName())) {
                     return "§7§l\uD83D\uDD27§7";
@@ -240,8 +242,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return Objects.requireNonNullElse(points, "N/A");
                 } else {
                     String points = PlayerConfig.get().getString("players." + p.getName() + ".points");
-                    for(boolean truefalse : plugin.teamShown){
-                        if(!truefalse){
+                    for (boolean truefalse : plugin.teamShown) {
+                        if (!truefalse) {
                             return "N/A";
                         }
                     }
@@ -250,8 +252,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "teampoints":
                 String selectTeam = PlayerConfig.get().getString("players." + p.getName() + ".team");
                 String teampoints = String.valueOf(TeamsConfig.get().getInt("teams." + selectTeam + ".points"));
-                for(boolean truefalse : plugin.teamShown){
-                    if(!truefalse){
+                for (boolean truefalse : plugin.teamShown) {
+                    if (!truefalse) {
                         return "N/A";
                     }
                 }
@@ -261,7 +263,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return teampoints;
                 }
             case "teamicon":
-                if(SpectatorConfig.get().getStringList("spectators").contains(p.getName())){
+                if (SpectatorConfig.get().getStringList("spectators").contains(p.getName())) {
                     return "SP";
                 } else {
                     String playersTeam = PlayerConfig.get().getString("players." + p.getName() + ".team");
@@ -273,7 +275,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     }
                 }
             case "teammodepoints":
-                if(SpectatorConfig.get().getStringList("spectators").contains(p.getName())){
+                if (SpectatorConfig.get().getStringList("spectators").contains(p.getName())) {
                     return "N/A";
                 } else {
                     String playersTeam = PlayerConfig.get().getString("players." + p.getName() + ".team");
@@ -286,7 +288,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "roundcount":
                 return String.valueOf(plugin.currentRound);
             case "killcount":
-                if(plugin.playerKillCount.containsKey(p.getName())) {
+                if (plugin.playerKillCount.containsKey(p.getName())) {
                     return String.valueOf(plugin.playerKillCount.get(p.getName()));
                 } else {
                     return "0";
@@ -331,6 +333,27 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 } else {
                     return "Waiting..";
                 }
+            case "ddchosenmap":
+                if(Objects.equals(plugin.ddChosenMap, "")){
+                    return "&8N/A";
+                } else {
+                    return plugin.ddChosenMap;
+                }
+            case "laptime_1":
+                if(!plugin.dashLapData.containsKey(p.getName())){
+                    return "&800:00:000";
+                }
+                return plugin.dashLapData.get(p.getName()).getLap1TimeConverted();
+            case "laptime_2":
+                if(!plugin.dashLapData.containsKey(p.getName())){
+                    return "&800:00:000";
+                }
+                return plugin.dashLapData.get(p.getName()).getLap2TimeConverted();
+            case "laptime_3":
+                if(!plugin.dashLapData.containsKey(p.getName())){
+                    return "&800:00:000";
+                }
+                return plugin.dashLapData.get(p.getName()).getLap3TimeConverted();
             case "timerfull_craftalot":
                 if (plugin.runningTimers.containsKey("craftalotstart")) {
                     return plugin.getFullTimer("craftalotstart");
@@ -374,7 +397,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "timer_bridgebuilders":
                 if (plugin.runningTimers.containsKey("bridgebuildersstart")) {
                     return plugin.getTimer("bridgebuildersstart");
-                } else if (plugin.runningTimers.containsKey("bridgebuilders")){
+                } else if (plugin.runningTimers.containsKey("bridgebuilders")) {
                     return plugin.getTimer("bridgebuilders");
                 } else {
                     return "Waiting..";
@@ -382,15 +405,18 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "timer_pushpoint":
                 if (plugin.runningTimers.containsKey("pushpointstart")) {
                     return plugin.getTimer("pushpointstart");
-                } else if (plugin.runningTimers.containsKey("pushpoint")){
+                } else if (plugin.runningTimers.containsKey("pushpoint")) {
                     return plugin.getTimer("pushpoint");
                 } else {
                     return "Waiting..";
                 }
             case "timer_crumbleclash":
+                if(plugin.suddenDeath) {
+                    return "";
+                }
                 if (plugin.runningTimers.containsKey("crumbleclashstart")) {
                     return plugin.getTimer("crumbleclashstart");
-                } else if (plugin.runningTimers.containsKey("crumbleclash")){
+                } else if (plugin.runningTimers.containsKey("crumbleclash")) {
                     return plugin.getTimer("crumbleclash");
                 } else {
                     return "Waiting..";
@@ -398,7 +424,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "timer_colourdash":
                 if (plugin.runningTimers.containsKey("colourdashstart")) {
                     return plugin.getTimer("colourdashstart");
-                } else if (plugin.runningTimers.containsKey("colourdash")){
+                } else if (plugin.runningTimers.containsKey("colourdash")) {
                     return plugin.getTimer("colourdash");
                 } else {
                     return "Waiting..";
@@ -406,7 +432,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "timer_dimensiondash":
                 if (plugin.runningTimers.containsKey("dimensiondashstart")) {
                     return plugin.getTimer("dimensiondashstart");
-                } else if (plugin.runningTimers.containsKey("dimensiondash")){
+                } else if (plugin.runningTimers.containsKey("dimensiondash")) {
                     return plugin.getTimer("dimensiondash");
                 } else {
                     return "Waiting..";
@@ -414,7 +440,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "timer_craftalot":
                 if (plugin.runningTimers.containsKey("craftalotstart")) {
                     return plugin.getTimer("craftalotstart");
-                } else if (plugin.runningTimers.containsKey("craftalot")){
+                } else if (plugin.runningTimers.containsKey("craftalot")) {
                     return plugin.getTimer("craftalot");
                 } else {
                     return "Waiting..";
@@ -422,7 +448,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "timer_gubgame":
                 if (plugin.runningTimers.containsKey("gubgamestart")) {
                     return plugin.getTimer("gubgamestart");
-                } else if (plugin.runningTimers.containsKey("gubgame")){
+                } else if (plugin.runningTimers.containsKey("gubgame")) {
                     return plugin.getTimer("gubgame");
                 } else {
                     return "Waiting..";
@@ -430,7 +456,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "timer_slimegolf":
                 if (plugin.runningTimers.containsKey("slimegolfstart")) {
                     return plugin.getTimer("slimegolfstart");
-                } else if (plugin.runningTimers.containsKey("slimegolftimer")){
+                } else if (plugin.runningTimers.containsKey("slimegolftimer")) {
                     return plugin.getTimer("slimegolftimer");
                 } else {
                     return "Waiting..";
@@ -438,7 +464,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "timer_survivalgames":
                 if (plugin.runningTimers.containsKey("survivalgamesstart")) {
                     return plugin.getTimer("survivalgamesstart");
-                } else if (plugin.runningTimers.containsKey("survivalgames")){
+                } else if (plugin.runningTimers.containsKey("survivalgames")) {
                     return plugin.getTimer("survivalgames");
                 } else {
                     return "Waiting..";
@@ -450,9 +476,12 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "Waiting..";
                 }
             case "timer_zoomogo":
+                if(plugin.suddenDeath) {
+                     return "";
+                }
                 if (plugin.runningTimers.containsKey("zoomogostart")) {
                     return plugin.getTimer("zoomogostart");
-                } else if (plugin.runningTimers.containsKey("zoomogo")){
+                } else if (plugin.runningTimers.containsKey("zoomogo")) {
                     return plugin.getTimer("zoomogo");
                 } else {
                     return "Waiting..";
@@ -466,7 +495,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "spleefround":
                 return plugin.currentSpleef;
             case "pp_opponent":
-                if(plugin.ppTeamMatchups.containsKey(PlayerConfig.get().getString("players." + p.getName() + ".team"))){
+                if (plugin.ppTeamMatchups.containsKey(PlayerConfig.get().getString("players." + p.getName() + ".team"))) {
                     return plugin.getTeamDisplayName(plugin.ppTeamMatchups.get(PlayerConfig.get().getString("players." + p.getName() + ".team")));
                 } else {
                     for (Map.Entry<String, String> entry : plugin.ppTeamMatchups.entrySet()) {
@@ -479,7 +508,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "pp_team":
                 return plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + p.getName() + ".team"));
             case "pp_opponent_standings":
-                if(plugin.ppTeamMatchups.isEmpty()){
+                if (plugin.ppTeamMatchups.isEmpty()) {
                     return "§6§lᴡɪɴ§a§l 0§f§l |§c§l 0§6§l ʟᴏss";
                 } else {
                     if (plugin.ppTeamMatchups.containsKey(PlayerConfig.get().getString("players." + p.getName() + ".team"))) {
@@ -495,10 +524,75 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     }
                 }
             case "pp_team_standings":
-                if(plugin.ppTeamMatchups.isEmpty()){
+                if (plugin.ppTeamMatchups.isEmpty()) {
                     return "§6§lᴡɪɴ§a§l 0§f§l |§c§l 0§6§l ʟᴏss";
                 } else {
                     return "§6§lᴡɪɴ§a§l " + plugin.ppTeamStandings.get(PlayerConfig.get().getString("players." + p.getName() + ".team")).getFirst() + "§f§l |§c§l " + plugin.ppTeamStandings.get(PlayerConfig.get().getString("players." + p.getName() + ".team")).get(1) + "§6§l ʟᴏss";
+                }
+            case "pp_percentages":
+                if (PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
+                    String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
+                    Map<String, Block[]> sortedMap = new TreeMap<>(plugin.mapSides);
+                    if (plugin.ppTeamMatchups.containsKey(team) || plugin.ppTeamMatchups.containsValue(team)) {
+                        if (plugin.finaleActive) {
+
+                            Block[] mapBlocks = plugin.mapSides.get("map5finale");
+
+                            if (!Objects.equals(plugin.teamConcrete.get(team), mapBlocks[0].getType()) && !Objects.equals(plugin.teamConcrete.get(team), mapBlocks[1].getType()))
+                                return "";
+
+                            List<ItemDisplay> keysWithMap = new ArrayList<>();
+
+                            for (Map.Entry<ItemDisplay, String> entry2 : plugin.mapWalls.entrySet()) {
+                                if (("map5finale").equals(entry2.getValue())) {
+                                    keysWithMap.add(entry2.getKey());
+                                }
+                            }
+
+                            keysWithMap.sort(Comparator.comparingDouble(item ->
+                                    item.getLocation().getX()
+                            ));
+
+                            if (Objects.equals(plugin.teamConcrete.get(team), mapBlocks[1].getType())) {
+                                Collections.reverse(keysWithMap);
+                            }
+
+                            return plugin.formatABC("", plugin.wallTexts.get(keysWithMap.get(0)).getText() + "   " + plugin.wallTexts.get(keysWithMap.get(1)).getText() + "   " + plugin.wallTexts.get(keysWithMap.get(2)).getText(), "", 2);
+
+                        } else {
+                            int count2 = 0;
+
+                            for (Map.Entry<String, String> entry : plugin.ppTeamMatchups.entrySet()) {
+
+                                count2++;
+
+
+                                Block[] mapBlocks = sortedMap.get("map" + count2);
+
+                                if (!Objects.equals(plugin.teamConcrete.get(team), mapBlocks[0].getType()) && !Objects.equals(plugin.teamConcrete.get(team), mapBlocks[1].getType()))
+                                    continue;
+
+                                List<ItemDisplay> keysWithMap = new ArrayList<>();
+
+                                for (Map.Entry<ItemDisplay, String> entry2 : plugin.mapWalls.entrySet()) {
+                                    if (("map" + count2).equals(entry2.getValue())) {
+                                        keysWithMap.add(entry2.getKey());
+                                    }
+                                }
+
+                                keysWithMap.sort(Comparator.comparingDouble(item ->
+                                        item.getLocation().getX()
+                                ));
+
+                                if (Objects.equals(plugin.teamConcrete.get(team), mapBlocks[1].getType())) {
+                                    Collections.reverse(keysWithMap);
+                                }
+
+                                return plugin.formatABC("", plugin.wallTexts.get(keysWithMap.get(0)).getText() + "   " + plugin.wallTexts.get(keysWithMap.get(1)).getText() + "   " + plugin.wallTexts.get(keysWithMap.get(2)).getText(), "", 2);
+
+                            }
+                        }
+                    }
                 }
             case "topteam_1":
                 return getTopTeamLine(1, position, p);
@@ -512,82 +606,82 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "topteam_4":
                 return getTopTeamLine(4, position, p);
             case "topboardteam_1":
-                if(!leaderteams.isEmpty() && leaderteams.getFirst() != null && plugin.teamShown[0]) {
+                if (!leaderteams.isEmpty() && leaderteams.getFirst() != null && plugin.teamShown[0]) {
                     return formatLine(plugin.getTeamDisplayName(leaderteams.getFirst()), "§e§l\uD83D\uDCB0" + leaderteampoints.getFirst(), 150);
-                } else if(!leaderteams.isEmpty()) {
+                } else if (!leaderteams.isEmpty()) {
                     return formatLine("§8§k00000000000000000000", "§8§l\uD83D\uDCB0§8§k00000", 150);
                 } else {
                     return "§8N/A";
                 }
 
             case "topboardteam_2":
-                if(leaderteams.size() > 1 && leaderteams.get(1) != null && plugin.teamShown[1]) {
+                if (leaderteams.size() > 1 && leaderteams.get(1) != null && plugin.teamShown[1]) {
                     return formatLine(plugin.getTeamDisplayName(leaderteams.get(1)), "§e§l\uD83D\uDCB0" + leaderteampoints.get(1), 150);
-                } else if(leaderteams.size() > 1) {
+                } else if (leaderteams.size() > 1) {
                     return formatLine("§8§k00000000000000000000", "§8§l\uD83D\uDCB0§8§k00000", 150);
                 } else {
                     return "§8N/A";
                 }
 
             case "topboardteam_3":
-                if(leaderteams.size() > 2 && leaderteams.get(2) != null && plugin.teamShown[2]) {
+                if (leaderteams.size() > 2 && leaderteams.get(2) != null && plugin.teamShown[2]) {
                     return formatLine(plugin.getTeamDisplayName(leaderteams.get(2)), "§e§l\uD83D\uDCB0" + leaderteampoints.get(2), 150);
-                } else if(leaderteams.size() > 2) {
+                } else if (leaderteams.size() > 2) {
                     return formatLine("§8§k00000000000000000000", "§8§l\uD83D\uDCB0§8§k00000", 150);
                 } else {
                     return "§8N/A";
                 }
 
             case "topboardteam_4":
-                if(leaderteams.size() > 3 && leaderteams.get(3) != null && plugin.teamShown[3]) {
+                if (leaderteams.size() > 3 && leaderteams.get(3) != null && plugin.teamShown[3]) {
                     return formatLine(plugin.getTeamDisplayName(leaderteams.get(3)), "§e§l\uD83D\uDCB0" + leaderteampoints.get(3), 150);
-                } else if(leaderteams.size() > 3) {
+                } else if (leaderteams.size() > 3) {
                     return formatLine("§8§k00000000000000000000", "§8§l\uD83D\uDCB0§8§k00000", 150);
                 } else {
                     return "§8N/A";
                 }
 
             case "topboardteam_5":
-                if(leaderteams.size() > 4 && leaderteams.get(4) != null && plugin.teamShown[4]) {
+                if (leaderteams.size() > 4 && leaderteams.get(4) != null && plugin.teamShown[4]) {
                     return formatLine(plugin.getTeamDisplayName(leaderteams.get(4)), "§e§l\uD83D\uDCB0" + leaderteampoints.get(4), 150);
-                } else if(leaderteams.size() > 4) {
+                } else if (leaderteams.size() > 4) {
                     return formatLine("§8§k00000000000000000000", "§8§l\uD83D\uDCB0§8§k00000", 150);
                 } else {
                     return "§8N/A";
                 }
 
             case "topboardteam_6":
-                if(leaderteams.size() > 5 && leaderteams.get(5) != null && plugin.teamShown[5]) {
+                if (leaderteams.size() > 5 && leaderteams.get(5) != null && plugin.teamShown[5]) {
                     return formatLine(plugin.getTeamDisplayName(leaderteams.get(5)), "§e§l\uD83D\uDCB0" + leaderteampoints.get(5), 150);
-                } else if(leaderteams.size() > 5) {
+                } else if (leaderteams.size() > 5) {
                     return formatLine("§8§k00000000000000000000", "§8§l\uD83D\uDCB0§8§k00000", 150);
                 } else {
                     return "§8N/A";
                 }
 
             case "topboardteam_7":
-                if(leaderteams.size() > 6 && leaderteams.get(6) != null && plugin.teamShown[6]) {
+                if (leaderteams.size() > 6 && leaderteams.get(6) != null && plugin.teamShown[6]) {
                     return formatLine(plugin.getTeamDisplayName(leaderteams.get(6)), "§e§l\uD83D\uDCB0" + leaderteampoints.get(6), 150);
-                } else if(leaderteams.size() > 6) {
+                } else if (leaderteams.size() > 6) {
                     return formatLine("§8§k00000000000000000000", "§8§l\uD83D\uDCB0§8§k00000", 150);
                 } else {
                     return "§8N/A";
                 }
 
             case "topboardteam_8":
-                if(leaderteams.size() > 7 && leaderteams.get(7) != null && plugin.teamShown[7]) {
+                if (leaderteams.size() > 7 && leaderteams.get(7) != null && plugin.teamShown[7]) {
                     return formatLine(plugin.getTeamDisplayName(leaderteams.get(7)), "§e§l\uD83D\uDCB0" + leaderteampoints.get(7), 150);
-                } else if(leaderteams.size() > 7) {
+                } else if (leaderteams.size() > 7) {
                     return formatLine("§8§k00000000000000000000", "§8§l\uD83D\uDCB0§8§k00000", 150);
                 } else {
                     return "§8N/A";
                 }
 
             case "modepoints_1":
-                if(!modeteampoints.isEmpty()) {
-                    if(modeteampoints.getFirst() != null) {
-                        for(boolean truefalse : plugin.teamShown){
-                            if(!truefalse){
+                if (!modeteampoints.isEmpty()) {
+                    if (modeteampoints.getFirst() != null) {
+                        for (boolean truefalse : plugin.teamShown) {
+                            if (!truefalse) {
                                 return "§8§l\uD83D\uDCB0§8§k0000";
                             }
                         }
@@ -599,10 +693,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "modetop_1":
-                if(!modeteams.isEmpty()) {
-                    if(modeteams.getFirst() != null) {
-                        for(boolean truefalse : plugin.teamShown){
-                            if(!truefalse){
+                if (!modeteams.isEmpty()) {
+                    if (modeteams.getFirst() != null) {
+                        for (boolean truefalse : plugin.teamShown) {
+                            if (!truefalse) {
                                 return "§8§k0000";
                             }
                         }
@@ -614,10 +708,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "modepoints_2":
-                if(modeteampoints.size() > 1) {
-                    if(modeteampoints.get(1) != null) {
-                        for(boolean truefalse : plugin.teamShown){
-                            if(!truefalse){
+                if (modeteampoints.size() > 1) {
+                    if (modeteampoints.get(1) != null) {
+                        for (boolean truefalse : plugin.teamShown) {
+                            if (!truefalse) {
                                 return "§8§l\uD83D\uDCB0§8§k0000";
                             }
                         }
@@ -629,10 +723,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "modetop_2":
-                if(modeteams.size() > 1) {
-                    if(modeteams.get(1) != null) {
-                        for(boolean truefalse : plugin.teamShown){
-                            if(!truefalse){
+                if (modeteams.size() > 1) {
+                    if (modeteams.get(1) != null) {
+                        for (boolean truefalse : plugin.teamShown) {
+                            if (!truefalse) {
                                 return "§8§k0000";
                             }
                         }
@@ -644,10 +738,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "modepoints_3":
-                if(modeteampoints.size() > 2) {
-                    if(modeteampoints.get(2) != null) {
-                        for(boolean truefalse : plugin.teamShown){
-                            if(!truefalse){
+                if (modeteampoints.size() > 2) {
+                    if (modeteampoints.get(2) != null) {
+                        for (boolean truefalse : plugin.teamShown) {
+                            if (!truefalse) {
                                 return "§8§l\uD83D\uDCB0§8§k0000";
                             }
                         }
@@ -659,10 +753,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "modetop_3":
-                if(modeteams.size() > 2) {
-                    if(modeteams.get(2) != null) {
-                        for(boolean truefalse : plugin.teamShown){
-                            if(!truefalse){
+                if (modeteams.size() > 2) {
+                    if (modeteams.get(2) != null) {
+                        for (boolean truefalse : plugin.teamShown) {
+                            if (!truefalse) {
                                 return "§8§k0000";
                             }
                         }
@@ -674,10 +768,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "modepoints_4":
-                if(modeteampoints.size() > 3) {
-                    if(modeteampoints.get(3) != null) {
-                        for(boolean truefalse : plugin.teamShown){
-                            if(!truefalse){
+                if (modeteampoints.size() > 3) {
+                    if (modeteampoints.get(3) != null) {
+                        for (boolean truefalse : plugin.teamShown) {
+                            if (!truefalse) {
                                 return "§8§l\uD83D\uDCB0§8§k0000";
                             }
                         }
@@ -689,10 +783,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "modetop_4":
-                if(modeteams.size() > 3) {
-                    if(modeteams.get(3) != null) {
-                        for(boolean truefalse : plugin.teamShown){
-                            if(!truefalse){
+                if (modeteams.size() > 3) {
+                    if (modeteams.get(3) != null) {
+                        for (boolean truefalse : plugin.teamShown) {
+                            if (!truefalse) {
                                 return "§8§k0000";
                             }
                         }
@@ -704,7 +798,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "playersalive":
-                if(plugin.currentMode.equals("Zoomo Go") || plugin.currentMode.equals("Survival Games")){
+                if (plugin.currentMode.equals("Zoomo Go") || plugin.currentMode.equals("Survival Games")) {
                     return String.valueOf(PlayerConfig.get().getConfigurationSection("players").getKeys(false).size() - plugin.deadPlayers.size());
                 } else {
                     return "§8N/A";
@@ -715,10 +809,10 @@ public class SpigotExpansion extends PlaceholderExpansion {
 
             case "teamlist_1":
                 teamplayers.append("§r§0     ");
-                for(String player : TeamsConfig.get().getStringList("teams.RubyRaiders.players")){
+                for (String player : TeamsConfig.get().getStringList("teams.RubyRaiders.players")) {
                     index++;
-                    if(Bukkit.getPlayer(player) != null){
-                        if(plugin.deadPlayers.contains(player)) {
+                    if (Bukkit.getPlayer(player) != null) {
+                        if (plugin.deadPlayers.contains(player)) {
                             teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.RubyRaiders.icon") + player).append("§r§0     ");
                         } else {
                             teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
@@ -786,11 +880,11 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 for (String player : TeamsConfig.get().getStringList("teams.DiamondDestroyers.players")) {
                     index++;
                     if (Bukkit.getPlayer(player) != null) {
-                            if (plugin.deadPlayers.contains(player)) {
-                                teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.DiamondDestroyers.icon") + Bukkit.getPlayer(player).getName()).append("§r§0     ");
-                            } else {
-                                teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
-                            }
+                        if (plugin.deadPlayers.contains(player)) {
+                            teamplayers.append("§8§m" + TeamsConfig.get().getString("teams.DiamondDestroyers.icon") + Bukkit.getPlayer(player).getName()).append("§r§0     ");
+                        } else {
+                            teamplayers.append(plugin.getPlayerDisplayName(player)).append("§r§0     ");
+                        }
                     } else {
                         teamplayers.append("§8").append(player).append("§r§0     ");
                     }
@@ -858,7 +952,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "completions_Team1":
                 return plugin.getCompletionProgress("RubyRaiders").toString();
             case "itemtocraft":
-                if(plugin.itemToCraft.containsKey(p.getName())){
+                if (plugin.itemToCraft.containsKey(p.getName())) {
                     return plugin.itemToCraft.get(p.getName()).replaceAll("_", " ");
                 } else {
                     return "§8Waiting..";
@@ -866,27 +960,39 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "itemtocraft_easy":
                 StringBuilder easyCraft = new StringBuilder();
                 easyCraft.append("§a◆ ");
-                if(plugin.itemsToCraft.containsKey(p.getName()) && !plugin.itemsToCraft.get(p.getName()).isEmpty()){
-                    easyCraft.append(plugin.toPrettyCase(plugin.itemsToCraft.get(p.getName()).getFirst()));
+                if (plugin.itemsToCraft.containsKey(p.getName()) && !plugin.itemsToCraft.get(p.getName()).isEmpty()) {
+                    if(plugin.itemsToCraft.get(p.getName()).getFirst().equals("[COMPLETE]")){
+                        easyCraft.append("§a§l✔ Complete");
+                    } else {
+                        easyCraft.append(plugin.toPrettyCase(plugin.itemsToCraft.get(p.getName()).getFirst()));
+                    }
                 }
                 return easyCraft.toString();
             case "itemtocraft_medium":
                 StringBuilder mediumCraft = new StringBuilder();
                 mediumCraft.append("§6◆ ");
-                if(plugin.itemsToCraft.containsKey(p.getName()) && !plugin.itemsToCraft.get(p.getName()).isEmpty()){
-                    mediumCraft.append(plugin.toPrettyCase(plugin.itemsToCraft.get(p.getName()).get(1)));
+                if (plugin.itemsToCraft.containsKey(p.getName()) && !plugin.itemsToCraft.get(p.getName()).isEmpty()) {
+                    if(plugin.itemsToCraft.get(p.getName()).get(1).equals("[COMPLETE]")){
+                        mediumCraft.append("§a§l✔ Complete");
+                    } else {
+                        mediumCraft.append(plugin.toPrettyCase(plugin.itemsToCraft.get(p.getName()).get(1)));
+                    }
                 }
                 return mediumCraft.toString();
             case "itemtocraft_hard":
                 StringBuilder hardCraft = new StringBuilder();
                 hardCraft.append("§c◆ ");
-                if(plugin.itemsToCraft.containsKey(p.getName()) && !plugin.itemsToCraft.get(p.getName()).isEmpty()){
-                    hardCraft.append(plugin.toPrettyCase(plugin.itemsToCraft.get(p.getName()).get(2)));
+                if (plugin.itemsToCraft.containsKey(p.getName()) && !plugin.itemsToCraft.get(p.getName()).isEmpty()) {
+                    if(plugin.itemsToCraft.get(p.getName()).get(2).equals("[COMPLETE]")){
+                        hardCraft.append("§a§l✔ Complete");
+                    } else {
+                        hardCraft.append(plugin.toPrettyCase(plugin.itemsToCraft.get(p.getName()).get(2)));
+                    }
                 }
                 return hardCraft.toString();
             case "totalcrafts":
                 String crafts;
-                if(plugin.playerCrafts.containsKey(p.getName())){
+                if (plugin.playerCrafts.containsKey(p.getName())) {
                     List<Integer> playerCraftScores = plugin.playerCrafts.get(p.getName());
                     crafts = "§a◆" + playerCraftScores.getFirst() + "§8 | §6◆" + playerCraftScores.get(1) + "§8 | §c◆" + playerCraftScores.get(2);
                 } else {
@@ -894,8 +1000,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 }
                 return crafts;
             case "topcrafteritem_1":
-                if(!craftPoints.isEmpty()) {
-                    if(craftPoints.getFirst() != null) {
+                if (!craftPoints.isEmpty()) {
+                    if (craftPoints.getFirst() != null) {
                         return String.valueOf(craftPoints.getFirst());
                     } else {
                         return "§8N/A";
@@ -904,8 +1010,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "topcraftername_1":
-                if(!craftPlayers.isEmpty()) {
-                    if(craftPlayers.getFirst() != null) {
+                if (!craftPlayers.isEmpty()) {
+                    if (craftPlayers.getFirst() != null) {
                         return plugin.getPlayerDisplayName(craftPlayers.getFirst());
                     } else {
                         return "§8N/A";
@@ -914,8 +1020,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "topcrafteritem_2":
-                if(craftPoints.size() > 1) {
-                    if(craftPoints.get(1) != null) {
+                if (craftPoints.size() > 1) {
+                    if (craftPoints.get(1) != null) {
                         return String.valueOf(craftPoints.get(1));
                     } else {
                         return "§8N/A";
@@ -924,8 +1030,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "topcraftername_2":
-                if(craftPlayers.size() > 1) {
-                    if(craftPlayers.get(1) != null) {
+                if (craftPlayers.size() > 1) {
+                    if (craftPlayers.get(1) != null) {
                         return plugin.getPlayerDisplayName(craftPlayers.get(1));
                     } else {
                         return "§8N/A";
@@ -934,8 +1040,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "topcrafteritem_3":
-                if(craftPoints.size() > 2) {
-                    if(craftPoints.get(2) != null) {
+                if (craftPoints.size() > 2) {
+                    if (craftPoints.get(2) != null) {
                         return String.valueOf(craftPoints.get(2));
                     } else {
                         return "§8N/A";
@@ -944,8 +1050,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "topcraftername_3":
-                if(craftPlayers.size() > 2) {
-                    if(craftPlayers.get(2) != null) {
+                if (craftPlayers.size() > 2) {
+                    if (craftPlayers.get(2) != null) {
                         return plugin.getPlayerDisplayName(craftPlayers.get(2));
                     } else {
                         return "§8N/A";
@@ -954,8 +1060,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "topcrafteritem_4":
-                if(craftPoints.size() > 3) {
-                    if(craftPoints.get(3) != null) {
+                if (craftPoints.size() > 3) {
+                    if (craftPoints.get(3) != null) {
                         return String.valueOf(craftPoints.get(3));
                     } else {
                         return "§8N/A";
@@ -964,8 +1070,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "topcraftername_4":
-                if(craftPlayers.size() > 3) {
-                    if(craftPlayers.get(3) != null) {
+                if (craftPlayers.size() > 3) {
+                    if (craftPlayers.get(3) != null) {
                         return plugin.getPlayerDisplayName(craftPlayers.get(3));
                     } else {
                         return "§8N/A";
@@ -975,8 +1081,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 }
 
             case "gubkit":
-                if(plugin.currentMode.equals("Gub Game")){
-                    if(plugin.gubGameKills.containsKey(p.getName())){
+                if (plugin.currentMode.equals("Gub Game")) {
+                    if (plugin.gubGameKills.containsKey(p.getName())) {
                         return plugin.gubGameKills.get(p.getName()).toString() + "/14";
                     } else {
                         return "0/14";
@@ -986,8 +1092,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 }
 
             case "gubkillscount_1":
-                if(!gubKillsCount.isEmpty()) {
-                    if(gubKillsCount.getFirst() != null) {
+                if (!gubKillsCount.isEmpty()) {
+                    if (gubKillsCount.getFirst() != null) {
                         return String.valueOf(gubKillsCount.getFirst());
                     } else {
                         return "§8N/A";
@@ -996,8 +1102,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "gubkillsname_1":
-                if(!gubKillsPlayers.isEmpty()) {
-                    if(gubKillsPlayers.getFirst() != null) {
+                if (!gubKillsPlayers.isEmpty()) {
+                    if (gubKillsPlayers.getFirst() != null) {
                         return plugin.getPlayerDisplayName(gubKillsPlayers.getFirst());
                     } else {
                         return "§8N/A";
@@ -1006,8 +1112,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "gubkillscount_2":
-                if(gubKillsCount.size() > 1) {
-                    if(gubKillsCount.get(1) != null) {
+                if (gubKillsCount.size() > 1) {
+                    if (gubKillsCount.get(1) != null) {
                         return String.valueOf(gubKillsCount.get(1));
                     } else {
                         return "§8N/A";
@@ -1016,8 +1122,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "gubkillsname_2":
-                if(gubKillsPlayers.size() > 1) {
-                    if(gubKillsPlayers.get(1) != null) {
+                if (gubKillsPlayers.size() > 1) {
+                    if (gubKillsPlayers.get(1) != null) {
                         return plugin.getPlayerDisplayName(gubKillsPlayers.get(1));
                     } else {
                         return "§8N/A";
@@ -1026,8 +1132,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "gubkillscount_3":
-                if(gubKillsCount.size() > 2) {
-                    if(gubKillsCount.get(2) != null) {
+                if (gubKillsCount.size() > 2) {
+                    if (gubKillsCount.get(2) != null) {
                         return String.valueOf(gubKillsCount.get(2));
                     } else {
                         return "§8N/A";
@@ -1036,8 +1142,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "gubkillsname_3":
-                if(gubKillsPlayers.size() > 2) {
-                    if(gubKillsPlayers.get(2) != null) {
+                if (gubKillsPlayers.size() > 2) {
+                    if (gubKillsPlayers.get(2) != null) {
                         return plugin.getPlayerDisplayName(gubKillsPlayers.get(2));
                     } else {
                         return "§8N/A";
@@ -1046,8 +1152,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "gubkillscount_4":
-                if(gubKillsCount.size() > 3) {
-                    if(gubKillsCount.get(3) != null) {
+                if (gubKillsCount.size() > 3) {
+                    if (gubKillsCount.get(3) != null) {
                         return String.valueOf(gubKillsCount.get(3));
                     } else {
                         return "§8N/A";
@@ -1056,8 +1162,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "gubkillsname_4":
-                if(gubKillsPlayers.size() > 3) {
-                    if(gubKillsPlayers.get(3) != null) {
+                if (gubKillsPlayers.size() > 3) {
+                    if (gubKillsPlayers.get(3) != null) {
                         return plugin.getPlayerDisplayName(gubKillsPlayers.get(3));
                     } else {
                         return "§8N/A";
@@ -1067,16 +1173,16 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 }
 
             case "bordersize":
-                if(plugin.currentMode.equals("Survival Games")){
+                if (plugin.currentMode.equals("Survival Games")) {
                     return String.valueOf(plugin.currentBorderRadius);
                 } else {
                     return "§8N/A";
                 }
 
             case "bridge_ruby":
-                if(plugin.currentMode.equals("Bridge Builders")){
+                if (plugin.currentMode.equals("Bridge Builders")) {
                     StringBuilder tally = new StringBuilder();
-                    if(plugin.bridgeTally.containsKey("RubyRaiders")) {
+                    if (plugin.bridgeTally.containsKey("RubyRaiders")) {
                         tally.append("§c§l✔".repeat(plugin.bridgeTally.get("RubyRaiders")));
                         tally.append("§8§l✔".repeat(12 - plugin.bridgeTally.get("RubyRaiders")));
                     } else {
@@ -1087,9 +1193,9 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "bridge_amber":
-                if(plugin.currentMode.equals("Bridge Builders")){
+                if (plugin.currentMode.equals("Bridge Builders")) {
                     StringBuilder tally = new StringBuilder();
-                    if(plugin.bridgeTally.containsKey("AmberAmbushers")) {
+                    if (plugin.bridgeTally.containsKey("AmberAmbushers")) {
                         tally.append("§6§l✔".repeat(plugin.bridgeTally.get("AmberAmbushers")));
                         tally.append("§8§l✔".repeat(12 - plugin.bridgeTally.get("AmberAmbushers")));
                     } else {
@@ -1100,9 +1206,9 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "bridge_topaz":
-                if(plugin.currentMode.equals("Bridge Builders")){
+                if (plugin.currentMode.equals("Bridge Builders")) {
                     StringBuilder tally = new StringBuilder();
-                    if(plugin.bridgeTally.containsKey("TopazTroopers")) {
+                    if (plugin.bridgeTally.containsKey("TopazTroopers")) {
                         tally.append("§e§l✔".repeat(plugin.bridgeTally.get("TopazTroopers")));
                         tally.append("§8§l✔".repeat(12 - plugin.bridgeTally.get("TopazTroopers")));
                     } else {
@@ -1113,9 +1219,9 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "bridge_kyanite":
-                if(plugin.currentMode.equals("Bridge Builders")){
+                if (plugin.currentMode.equals("Bridge Builders")) {
                     StringBuilder tally = new StringBuilder();
-                    if(plugin.bridgeTally.containsKey("KyaniteKillers")) {
+                    if (plugin.bridgeTally.containsKey("KyaniteKillers")) {
                         tally.append("§a§l✔".repeat(plugin.bridgeTally.get("KyaniteKillers")));
                         tally.append("§8§l✔".repeat(12 - plugin.bridgeTally.get("KyaniteKillers")));
                     } else {
@@ -1126,9 +1232,9 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "bridge_diamond":
-                if(plugin.currentMode.equals("Bridge Builders")){
+                if (plugin.currentMode.equals("Bridge Builders")) {
                     StringBuilder tally = new StringBuilder();
-                    if(plugin.bridgeTally.containsKey("DiamondDestroyers")) {
+                    if (plugin.bridgeTally.containsKey("DiamondDestroyers")) {
                         tally.append("§b§l✔".repeat(plugin.bridgeTally.get("DiamondDestroyers")));
                         tally.append("§8§l✔".repeat(12 - plugin.bridgeTally.get("DiamondDestroyers")));
                     } else {
@@ -1139,9 +1245,9 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "bridge_sapphire":
-                if(plugin.currentMode.equals("Bridge Builders")){
+                if (plugin.currentMode.equals("Bridge Builders")) {
                     StringBuilder tally = new StringBuilder();
-                    if(plugin.bridgeTally.containsKey("SapphireSoldiers")) {
+                    if (plugin.bridgeTally.containsKey("SapphireSoldiers")) {
                         tally.append("§9§l✔".repeat(plugin.bridgeTally.get("SapphireSoldiers")));
                         tally.append("§8§l✔".repeat(12 - plugin.bridgeTally.get("SapphireSoldiers")));
                     } else {
@@ -1152,9 +1258,9 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "bridge_smithsonite":
-                if(plugin.currentMode.equals("Bridge Builders")){
+                if (plugin.currentMode.equals("Bridge Builders")) {
                     StringBuilder tally = new StringBuilder();
-                    if(plugin.bridgeTally.containsKey("SmithsoniteSlayers")) {
+                    if (plugin.bridgeTally.containsKey("SmithsoniteSlayers")) {
                         tally.append("§d§l✔".repeat(plugin.bridgeTally.get("SmithsoniteSlayers")));
                         tally.append("§8§l✔".repeat(12 - plugin.bridgeTally.get("SmithsoniteSlayers")));
                     } else {
@@ -1165,9 +1271,9 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "bridge_crystal":
-                if(plugin.currentMode.equals("Bridge Builders")){
+                if (plugin.currentMode.equals("Bridge Builders")) {
                     StringBuilder tally = new StringBuilder();
-                    if(plugin.bridgeTally.containsKey("CrystalCrashers")) {
+                    if (plugin.bridgeTally.containsKey("CrystalCrashers")) {
                         tally.append("§f§l✔".repeat(plugin.bridgeTally.get("CrystalCrashers")));
                         tally.append("§8§l✔".repeat(12 - plugin.bridgeTally.get("CrystalCrashers")));
                     } else {
@@ -1180,7 +1286,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
 
 
             case "currentmode":
-                if(plugin.finaleActive){
+                if (plugin.finaleActive) {
                     return "Finale";
                 } else {
                     return plugin.currentMode;

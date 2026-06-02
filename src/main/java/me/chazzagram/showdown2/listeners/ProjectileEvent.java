@@ -16,6 +16,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.projectiles.ProjectileSource;
@@ -28,47 +29,63 @@ public class ProjectileEvent implements Listener {
 
     private static Showdown2 plugin;
 
+    // Crumble Clash Border
+    private static final int MIN_X = 21,  MAX_X = 112;
+    private static final int MIN_Y = 171, MAX_Y = 241;
+    private static final int MIN_Z = 455, MAX_Z = 546;
+
     public ProjectileEvent(Showdown2 plugin) {
         this.plugin = plugin;
     }
 
     @EventHandler
     public void onProjectileLaunch(ProjectileLaunchEvent event) {
-        if(plugin.currentMode.equals("Crumble Clash") && plugin.copperDecay) {
-            if (event.getEntity().getType() != EntityType.WIND_CHARGE) return;
+        if(plugin.currentMode.equals("Push Point")){
+            event.setCancelled(false);
+        }
 
-            if (!(event.getEntity().getShooter() instanceof Player player)) return;
+        if(plugin.currentMode.equals("Crumble Clash")) {
+            if (!plugin.blockBreak && !plugin.copperDecay) event.setCancelled(true);
 
-            ItemStack windcharge = new ItemStack(Material.WIND_CHARGE, 1);
-            ItemMeta meta = windcharge.getItemMeta();
-            meta.setDisplayName("§fWind Charge");
-            windcharge.setItemMeta(meta);
+            if (plugin.copperDecay) {
+                if (event.getEntity().getType() != EntityType.WIND_CHARGE) return;
 
-            BukkitTask task = new BukkitRunnable() {
-                int timeLeft = 0;
-                @Override
-                public void run() {
-                    if(plugin.runningTimers.containsKey(player.getName() + "wc")) {
-                        if (!plugin.pausedTimers.contains(player.getName() + "wc")) {
-                            timeLeft++;
-                            plugin.runningTimers.get(player.getName() + "wc").setValue(timeLeft);
-                            if(timeLeft == 4){
-                                player.getInventory().setItemInOffHand(windcharge);
-                                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§7[§a+§7] §r" + windcharge.getItemMeta().getDisplayName()));
-                                player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1F, 1F);
-                                plugin.runningTimers.remove(player.getName() + "wc");
-                                cancel();
+                if (!(event.getEntity().getShooter() instanceof Player player)) return;
+
+                ItemStack windcharge = new ItemStack(Material.WIND_CHARGE, 1);
+                ItemMeta meta = windcharge.getItemMeta();
+                meta.setDisplayName("§fWind Charge");
+                windcharge.setItemMeta(meta);
+
+                BukkitTask task = new BukkitRunnable() {
+                    int timeLeft = 0;
+
+                    @Override
+                    public void run() {
+                        if (plugin.runningTimers.containsKey(player.getName() + "wc")) {
+                            if (!plugin.pausedTimers.contains(player.getName() + "wc")) {
+                                timeLeft++;
+                                plugin.runningTimers.get(player.getName() + "wc").setValue(timeLeft);
+                                if (timeLeft == 4) {
+                                    if (!plugin.ghostManager.getGhostPlayers().contains(player.getName())) {
+                                        player.getInventory().setItemInOffHand(windcharge);
+                                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§7[§a+§7] §r" + windcharge.getItemMeta().getDisplayName()));
+                                        player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1F, 1F);
+                                    }
+                                    plugin.runningTimers.remove(player.getName() + "wc");
+                                    cancel();
+                                }
                             }
+                        } else {
+                            plugin.runningTimers.remove(player.getName() + "wc");
+                            cancel();
                         }
-                    } else {
-                        plugin.runningTimers.remove(player.getName() + "wc");
-                        cancel();
                     }
-                }
-            }.runTaskTimer(plugin, 20L, 20L);
+                }.runTaskTimer(plugin, 20L, 20L);
 
-            plugin.runningTimers.put(player.getName() + "wc", new AbstractMap.SimpleEntry<>(task, 0));
+                plugin.runningTimers.put(player.getName() + "wc", new AbstractMap.SimpleEntry<>(task, 0));
 
+            }
         }
         if (plugin.runningTimers.containsKey("readytimer") && plugin.readyType.equals("snowballs")) {
             if (!(event.getEntity().getShooter() instanceof Player player)) return;
@@ -118,27 +135,75 @@ public class ProjectileEvent implements Listener {
     String[] congratsMessages = { "Good Job!", "Amazing!", "Class!", "Thanks!", "Smashing!", "Sneaky!", "Bravo!", "Legendary!", "Proper Job!", "Massive!", "GGs!" };
 
     @EventHandler
-    public void onProjectileHit(ProjectileHitEvent event) {
-        if(event.getEntity() instanceof EnderPearl pearl && pearl.getShooter() instanceof Player player) {
-            Block hitBlock = event.getHitBlock();
+    public void onPearlTeleport(PlayerTeleportEvent event) {
 
-            if (hitBlock != null) {
-                if(hitBlock.getType() == Material.BARRIER) {
-                    event.setCancelled(true);
-                    plugin.messagePlayer(player, "Your ender pearl did not land safely, it has been returned to your inventory.");
-                    ItemStack enderpearl = new ItemStack(Material.ENDER_PEARL);
-                    ItemMeta meta = enderpearl.getItemMeta();
+        if (!plugin.currentMode.equals("Crumble Clash")) return;
+        if (event.getCause() != PlayerTeleportEvent.TeleportCause.ENDER_PEARL) return;
 
-                    meta.setDisplayName("§aEnder Pearl");
-                    enderpearl.setItemMeta(meta);
+        Location dest = event.getTo();
 
-                    player.getInventory().addItem(enderpearl);
-                    player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1F, 1F);
-                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§7[§a+§7] §r" + enderpearl.getItemMeta().getDisplayName()));
+        boolean outOfBounds = dest.getX() < MIN_X || dest.getX() > MAX_X
+                || dest.getY() < MIN_Y || dest.getY() > MAX_Y
+                || dest.getZ() < MIN_Z || dest.getZ() > MAX_Z;
 
-                }
+
+        if (outOfBounds) {
+            event.setCancelled(true);
+
+            Player player = event.getPlayer();
+            player.sendMessage("§cYour ender pearl did not land safely.");
+            returnPearl(player);
+        }
+    }
+
+    private void returnPearl(Player player) {
+        int pearlCount = 0;
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && item.getType() == Material.ENDER_PEARL) {
+                pearlCount += item.getAmount();
             }
         }
+
+        if (pearlCount < 3) {
+            ItemStack pearl = new ItemStack(Material.ENDER_PEARL);
+            ItemMeta meta = pearl.getItemMeta();
+            meta.setDisplayName("§aEnder Pearl");
+            pearl.setItemMeta(meta);
+            player.getInventory().addItem(pearl);
+
+            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1F, 1F);
+            player.spigot().sendMessage(
+                    ChatMessageType.ACTION_BAR,
+                    TextComponent.fromLegacyText("§7[§a+§7] §r" + pearl.getItemMeta().getDisplayName())
+            );
+            player.sendMessage("§aA pearl has been returned to your inventory.");
+        } else {
+            player.sendMessage("§cYou have reached the maximum pearl capacity.");
+        }
+    }
+
+    @EventHandler
+    public void onProjectileHit(ProjectileHitEvent event) {
+//        if(event.getEntity() instanceof EnderPearl pearl && pearl.getShooter() instanceof Player player) {
+//            Block hitBlock = event.getHitBlock();
+//
+//            if (hitBlock != null) {
+//                if(hitBlock.getType() == Material.BARRIER) {
+//                    event.setCancelled(true);
+//                    plugin.messagePlayer(player, "Your ender pearl did not land safely, it has been returned to your inventory.");
+//                    ItemStack enderpearl = new ItemStack(Material.ENDER_PEARL);
+//                    ItemMeta meta = enderpearl.getItemMeta();
+//
+//                    meta.setDisplayName("§aEnder Pearl");
+//                    enderpearl.setItemMeta(meta);
+//
+//                    player.getInventory().addItem(enderpearl);
+//                    player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1F, 1F);
+//                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§7[§a+§7] §r" + enderpearl.getItemMeta().getDisplayName()));
+//
+//                }
+//            }
+//        }
 
         if (event.getEntity() instanceof Snowball snowball && event.getHitEntity() instanceof Player victim && snowball.getShooter() instanceof Player shooter) {
             if(plugin.currentMode.equals("Crumble Clash")) {
