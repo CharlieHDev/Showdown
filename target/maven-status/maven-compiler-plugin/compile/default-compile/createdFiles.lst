@@ -147,6 +147,7 @@ me\chazzagram\showdown2\listeners\RiptideEvent.class
 me\chazzagram\showdown2\Showdown2$27.class
 me\chazzagram\showdown2\commands\MainCommand$7.class
 me\chazzagram\showdown2\listeners\CustomFurnace.class
+me\chazzagram\showdown2\listeners\SlimeSplittingEvent.class
 me\chazzagram\showdown2\Showdown2$72.class
 me\chazzagram\showdown2\Showdown2$32.class
 me\chazzagram\showdown2\files\DeathMessagesConfig.class

@@ -707,14 +707,15 @@ public class LastHitEvent implements Listener {
                     victim.setSaturation(20f);
                     killer.sendTitle("", "§c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
                     BukkitTask task = new BukkitRunnable() {
-                        int timeLeft = 6;
+                        int timeLeft = plugin.finalPush ? 4 : 6;;
+                        final int startTimeRespawn = plugin.finalPush ? 3 : 5;
 
                         @Override
                         public void run() {
                             if (plugin.runningTimers.containsKey(victim.getName() + "respawn")) {
                                 if (!plugin.pausedTimers.contains(victim.getName() + "respawn")) {
                                     plugin.runningTimers.get(victim.getName() + "respawn").setValue(timeLeft);
-                                    if(timeLeft == 5){
+                                    if(timeLeft == startTimeRespawn){
                                         victim.openInventory(ppTeleportGUI);
                                     }
                                     timeLeft--;

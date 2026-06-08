@@ -245,22 +245,30 @@ public class MainCommand implements CommandExecutor {
                                         plugin.cdCompletions++;
 
                                         Player p = Bukkit.getServer().getPlayer(args[1]);
-                                        String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
-                                        plugin.modeCompletions.put(team, (plugin.modeCompletions.get(team) + 1));
+                                        String team = PlayerConfig.get().getString("players." + args[1] + ".team");
+                                        plugin.ddFinaleTeamCompletions.put(team, (plugin.ddFinaleTeamCompletions.get(team) + 1));
                                         p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("dimensiondashwatch"), 0, 100, 5);
                                         plugin.messagePlayer(p, "\n§a§lCourse Completed!");
                                         plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("dimensiondashwatch") + "\n");
                                         plugin.colourDashCheckpoints.put(args[1], 10);
-                                        plugin.ghostManager.addGhostPlayer(p.getName());
                                         for (Player player : Bukkit.getOnlinePlayers()) {
-                                            plugin.messagePlayer(player, "§f\uD83D\uDC51 §8| " + plugin.getPlayerDisplayName(p.getName()) + "§e was §f§l#" + plugin.cdCompletions + " §eto cross all dimensions!");
+                                            plugin.messagePlayer(player, "§f\uD83D\uDC51 §8| " + plugin.getPlayerDisplayName(args[1]) + "§e was §f§l#" + plugin.cdCompletions + " §eto cross all dimensions!");
                                         }
-                                        int teamSize = TeamsConfig.get().getStringList("team." + team + ".players").size();
-                                        int completions = plugin.modeCompletions.getOrDefault(team, 0);
+                                        int teamSize = TeamsConfig.get().getStringList("teams." + team + ".players").size();
+                                        int completions = plugin.ddFinaleTeamCompletions.get(team);
+
+
+                                        // CRASHED OUT AT THIS. I put "team" instead of "teams".
+//                                        plugin.messageConsole("DDF: " + completions + "/" + teamSize + " have completed the race on team: " + team);
+
+
                                         if (completions >= teamSize) {
                                             plugin.runningTimers.remove("dimensiondashwatch");
                                             plugin.finaleRoundOver(team);
                                         }
+
+                                        plugin.ghostManager.addGhostPlayer(p.getName());
+                                        plugin.revealOtherPlayers(p);
                                     }
                                 } else {
                                     if (plugin.runningTimers.containsKey("dimensiondash")) {
@@ -2737,4 +2745,5 @@ public class MainCommand implements CommandExecutor {
 
         plugin.runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, 21));
     }
+
 }
