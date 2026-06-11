@@ -4,6 +4,7 @@ import me.chazzagram.showdown2.Showdown2;
 import me.chazzagram.showdown2.files.CraftalotConfig;
 import me.chazzagram.showdown2.files.PhilipConfig;
 import me.chazzagram.showdown2.files.PlayerConfig;
+import me.chazzagram.showdown2.files.TeamsConfig;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -152,8 +153,9 @@ public class CraftalotEvent implements Listener {
                                 plugin.itemToCraft.put(p.getName(), itemToCraft);
                                 plugin.craftLists.get(p.getName()).add(itemToCraft);
                                 String newItem = plugin.itemToCraft.get(p.getName()).replaceAll("_", " ");
+                                String teamIcon = TeamsConfig.get().getString("teams." + team + ".icon");
                                 for (Player players : Bukkit.getOnlinePlayers()) {
-                                    plugin.messagePlayer(players, "§8[§c§l!§8] " + plugin.getPlayerDisplayName(e.getPlayer().getName()) + " §7has crafted an item! (§e" + currentItem + "§7)");
+                                    plugin.messagePlayer(players, "§8[§c§l!§8] " + plugin.getPlayerDisplayName(e.getPlayer().getName()) + " §7has crafted an item! (§e" + currentItem + "§7) §8[§f" + teamIcon + plugin.teamCrafts.get(team) + " Crafts§8]");
                                 }
                                 plugin.messagePlayer(p, """
                                     §8
@@ -162,11 +164,41 @@ public class CraftalotEvent implements Listener {
                                     §7Next item to craft: §e§l""" + newItem + """
                                     §8
                                     """);
-                                p.getInventory().clear();
-                                for (int i = 0; i <= 3; i++) {
-                                    p.getInventory().addItem(plugin.craftalotKit()[i]);
+                                ItemStack[] kitItems = plugin.craftalotKit();
+
+                                for (int slot = 0; slot < p.getInventory().getSize(); slot++) {
+                                    ItemStack slotItem = p.getInventory().getItem(slot);
+                                    if (slotItem == null) continue;
+
+                                    boolean isKitItem = false;
+                                    for (ItemStack kitItem : kitItems) {
+                                        if (kitItem != null && slotItem.isSimilar(kitItem)) {
+                                            isKitItem = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if (!isKitItem) {
+                                        p.getInventory().clear(slot);
+                                    }
                                 }
-                                p.getInventory().setItemInOffHand(plugin.craftalotKit()[4]);
+
+                                ItemStack offhand = p.getInventory().getItemInOffHand();
+                                boolean offhandIsKitItem = false;
+                                for (ItemStack kitItem : kitItems) {
+                                    if (kitItem != null && offhand.isSimilar(kitItem)) {
+                                        offhandIsKitItem = true;
+                                        break;
+                                    }
+                                }
+                                if (!offhandIsKitItem) {
+                                    p.getInventory().setItemInOffHand(null);
+                                }
+
+                                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                                    p.getInventory().setItemInOffHand(null);
+                                    p.getInventory().setItemInOffHand(offhand);
+                                }, 1L);
                             }
                         } else {
                             String currentItem = plugin.itemToCraft.get(p.getName()).replaceAll("_", " ");

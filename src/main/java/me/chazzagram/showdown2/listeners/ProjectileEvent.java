@@ -31,7 +31,7 @@ public class ProjectileEvent implements Listener {
 
     // Crumble Clash Border
     private static final int MIN_X = 21,  MAX_X = 112;
-    private static final int MIN_Y = 171, MAX_Y = 241;
+    private static final int MIN_Y = 175, MAX_Y = 230;
     private static final int MIN_Z = 455, MAX_Z = 546;
 
     public ProjectileEvent(Showdown2 plugin) {

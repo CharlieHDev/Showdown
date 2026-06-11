@@ -23,7 +23,7 @@ public class MongoManager {
     private boolean dbConnected = false;
 
     // TODO: REPLACE EVENT NAME
-    private String eventName = "Test";
+    private String eventName = "Test 11/06/2026";
 
     public void connect(String uri, String dbName) {
         try {
@@ -131,6 +131,7 @@ public class MongoManager {
             for (String player : overallPlayers.keySet()) {
                 int overall = overallPlayers.get(player);
                 Integer modePoints = modePlayers.get(player);
+                String teamName = teamNamesFormatted.get(PlayerConfig.get().getString("players." + player + ".team"));
 
                 collection.updateOne(
                         Filters.and(
@@ -142,7 +143,7 @@ public class MongoManager {
                         ),
                         Updates.push("seasons.$.player_leaderboard",
                                 new Document("player_name", player)
-                                        .append("team", PlayerConfig.get().getString("players." + player + ".team"))
+                                        .append("team", teamName)
                                         .append("Overall", 0)
                                         .append(currentMode, 0)
                         )

@@ -594,6 +594,32 @@ public class SpigotExpansion extends PlaceholderExpansion {
                         }
                     }
                 }
+            case "gameorder_1":
+                if(plugin.gameOrderTab.isEmpty()){
+                    return "  §7§l➛ §7-";
+                } else {
+                    if (plugin.finaleRound == 1) {
+                        return "  §7§l➛ §7-";
+                    } else {
+                        return "  §a§l✔ §a" + plugin.gameOrderTab.get(plugin.finaleRound-2);
+                    }
+                }
+            case "gameorder_2":
+                if(plugin.gameOrderTab.isEmpty()){
+                    return "  §7§l➛ §7-";
+                } else {
+                    return "  §e§l➛ §e" + plugin.gameOrderTab.get(plugin.finaleRound-1);
+                }
+            case "gameorder_3":
+                if(plugin.gameOrderTab.isEmpty()){
+                    return "  §7§l➛ §7-";
+                } else {
+                    if (plugin.finaleRound == 7) {
+                        return "  §7§l➛ §7-";
+                    } else {
+                        return "  §7§l➛ §7" + plugin.gameOrderTab.get(plugin.finaleRound);
+                    }
+                }
             case "topteam_1":
                 return getTopTeamLine(1, position, p);
 
@@ -1282,6 +1308,13 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return tally.toString();
                 } else {
                     return "§8N/A";
+                }
+
+            case "finaleboard":
+                if(plugin.finaleFirstTeamRevealed && plugin.finaleSecondTeamRevealed) {
+                    return plugin.getFinaleScoreboard();
+                } else {
+                    return "&f\uD83E\uDED3 \uD83E\uDED3 \uD83E\uDD57 \uD83C\uDF73 \uD83E\uDD57 \uD83E\uDED3 \uD83E\uDED3";
                 }
 
 

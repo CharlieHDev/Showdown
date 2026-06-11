@@ -14,6 +14,8 @@ import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerAnimationEvent;
 import org.bukkit.event.player.PlayerAnimationType;
@@ -22,6 +24,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
@@ -34,6 +37,8 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class LastHitEvent implements Listener {
 
@@ -256,9 +261,11 @@ public class LastHitEvent implements Listener {
             if (e.getDamager() instanceof Slime && e.getEntity() instanceof Player) {
                 e.setCancelled(true);
             }
-            if(e.getDamager() instanceof Player && e.getEntity() instanceof Player) {
+            if (e.getDamager() instanceof Player && e.getEntity() instanceof Player) {
                 e.setCancelled(true);
             }
+        } else if (plugin.currentMode.equals("Dimension Dash")){
+                e.setCancelled(true);
         } else if (plugin.currentMode.equals("Colour Dash")  && plugin.pvpEnabled) {
             if(e.getDamager() instanceof Player attacker && e.getEntity() instanceof EnderCrystal enderCrystal){
                 if(!plugin.runningTimers.containsKey(attacker.getName() + "mysterybox")) {
@@ -679,6 +686,15 @@ public class LastHitEvent implements Listener {
 
                 }
             } else if (plugin.currentMode.equals("Push Point")) {
+
+                if (e.getDamager() instanceof Arrow arrow) {
+                    if (arrow.getPersistentDataContainer().has(
+                            new NamespacedKey(plugin, "crossbow_arrow"),
+                            PersistentDataType.BOOLEAN)) {
+                        e.setDamage(e.getDamage() * 0.75);
+                    }
+                }
+
                 if (victim.getHealth() - e.getFinalDamage() <= 0) {
                     Inventory ppTeleportGUI = Bukkit.createInventory(null, 54, "§eSelect Teleport Location");
                     ppTeleportGUI.setItem(10, getRespawnLocs().getFirst());
@@ -688,10 +704,29 @@ public class LastHitEvent implements Listener {
                     Bukkit.getWorld("build").spawnParticle(Particle.RAID_OMEN, victim.getLocation().clone().add(0,1,0), 20, 0.2, 0.5, 0.2, 0);
                     killer.playSound(killer.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 2);
                     Bukkit.getScheduler().runTaskLater(plugin, () -> killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(plugin.getPlayerDisplayName(victim.getName()) + " §7| §c♥§c§l0.0")), 1L);
-                    // TODO: Change to only send to team and opponent.
-                    for (Player p : Bukkit.getOnlinePlayers()) {
-                        plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
+
+                    if(plugin.finaleActive){
+                        for(Player player : Bukkit.getOnlinePlayers()) {
+                            plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
+                        }
+                    } else {
+
+                        String victimTeam = PlayerConfig.get().getString("players." + victim.getName() + ".team");
+                        List<String> victimTeamPlayers = TeamsConfig.get().getStringList("teams." + victimTeam + ".players");
+
+                        String killerTeam = PlayerConfig.get().getString("players." + killer.getName() + ".team");
+                        List<String> killerTeamPlayers = TeamsConfig.get().getStringList("teams." + killerTeam + ".players");
+
+                        List<Player> allPlayers = Stream.concat(victimTeamPlayers.stream(), killerTeamPlayers.stream())
+                                .map(Bukkit::getPlayer)
+                                .filter(Objects::nonNull)
+                                .toList();
+
+                        for(Player player : allPlayers) {
+                            plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(killer.getName(), victim.getName()));
+                        }
                     }
+
                     plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died to " + plugin.getPlayerDisplayName(killer.getName()));
                     plugin.playerKillCount.put(killer.getName(), plugin.playerKillCount.get(killer.getName()) + 1);
                     if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(killer.getName())) {
@@ -1042,5 +1077,30 @@ public class LastHitEvent implements Listener {
         if (meta == null) return;
         meta.setUnbreakable(true);
         item.setItemMeta(meta);
+    }
+
+    @EventHandler
+    public void onEntityDamage(EntityDamageEvent e) {
+        if(plugin.currentMode.equals("Dimension Dash")
+            || plugin.currentMode.equals("Bridge Builders")
+            || plugin.currentMode.equals("Slime Golf")
+            || plugin.currentMode.equals("Craftalot")
+            || plugin.currentMode.equals("Lobby")) {
+            if (e.getEntity() instanceof Player) {
+                e.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onShoot(EntityShootBowEvent event) {
+        if (event.getBow().getType() == Material.CROSSBOW) {
+            if (event.getProjectile() instanceof Arrow arrow) {
+                arrow.getPersistentDataContainer().set(
+                        new NamespacedKey(plugin, "crossbow_arrow"),
+                        PersistentDataType.BOOLEAN, true
+                );
+            }
+        }
     }
 }

@@ -310,6 +310,9 @@ public class MainCommand implements CommandExecutor {
                                                         )
                                                 );
 
+                                                plugin.ghostManager.addGhostPlayer(p.getName());
+                                                plugin.revealOtherPlayers(p);
+
                                                 if (plugin.cdCompletions == PlayerConfig.get().getConfigurationSection("players").getKeys(false).size()) {
                                                     plugin.runningTimers.remove("dimensiondash");
                                                     plugin.runningTimers.remove("dimensiondashwatch");
@@ -1061,8 +1064,6 @@ public class MainCommand implements CommandExecutor {
                                             plugin.ppEscapedPlayers.computeIfAbsent(team, k -> new ArrayList<>())
                                                     .add(p);
                                         }
-                                        // TODO: Add messages to indicate whether a whole team has escaped.
-                                        // TODO: Add a message broadcast to all players in that map that a player has escaped.
                                     }
                                 }
                             }
@@ -1474,7 +1475,7 @@ public class MainCommand implements CommandExecutor {
                                 }
                             }
                         }
-                    } else if (plugin.currentMode.equals("Crumble Clash") && plugin.runningTimers.containsKey("crumbleclashstart")) {
+                    } else if (plugin.currentMode.equals("Crumble Clash")) {
                         if (Bukkit.getPlayer(args[1]) != null) {
                             if (plugin.getPlayers().contains(Bukkit.getPlayer(args[1]))) {
                                 Bukkit.getPlayer(args[1]).teleport(ccSafeSpace);
@@ -2321,34 +2322,35 @@ public class MainCommand implements CommandExecutor {
                             for (String player : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
                                 if (Bukkit.getServer().getPlayer(player) != null) {
                                     Player p = Bukkit.getServer().getPlayer(player);
-                                    p.sendTitle("§a[✔] \uD83D\uDDFB-" + args[1], "§8[§f§l⏱§8] §e§o" + plugin.getTimer("slimegolf"), 0, 100, 5);
+                                    p.sendTitle("§a[✔] \uD83D\uDDFB-" + args[1], "§8[§f§l⏱§8] §e§o" + plugin.formatTime(System.currentTimeMillis() - plugin.slimeGolfStartTime), 0, 100, 5);
                                     plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Checkpoint reached!");
                                 }
                             }
                             plugin.slimeCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);
-                        }
-                        if(plugin.runningTimers.containsKey("finale")){
-                            Integer placement = plugin.slimeCheckpoints.get(Integer.parseInt(args[1]));
-                            if (placement == 1) {
-                                for (Player p : plugin.getPlayers()) {
-                                    plugin.messagePlayer(p, "§8| §b★ §8| " + plugin.getTeamDisplayName(args[2]) + "§e was 1st to reach §a\uD83D\uDDFB-" + args[1] + "§7!");
+                        } else {
+                            if (plugin.finaleActive) {
+                                Integer placement = plugin.slimeCheckpoints.get(Integer.parseInt(args[1]));
+                                if (placement == 1) {
+                                    for (Player p : plugin.getPlayers()) {
+                                        plugin.messagePlayer(p, "§8| §b★ §8| " + plugin.getTeamDisplayName(args[2]) + "§e was 1st to reach §a\uD83D\uDDFB-" + args[1] + "§7!");
+                                    }
+                                } else {
+                                    for (Player p : plugin.getPlayers()) {
+                                        plugin.messagePlayer(p, "§8| §a§l⏱ §8| " + plugin.getTeamDisplayName(args[2]) + "§7 has reached §a\uD83D\uDDFB-" + args[1] + "§7!");
+                                    }
                                 }
-                            } else {
-                                for (Player p : plugin.getPlayers()) {
-                                    plugin.messagePlayer(p, "§8| §a§l⏱ §8| " + plugin.getTeamDisplayName(args[2]) + "§7 has reached §a\uD83D\uDDFB-" + args[1] + "§7!");
-                                }
-                            }
 
-                            plugin.teamCheckpoints.put(args[2], Integer.parseInt(args[1]));
+                                plugin.teamCheckpoints.put(args[2], Integer.parseInt(args[1]));
 
-                            for (String player : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
-                                if (Bukkit.getServer().getPlayer(player) != null) {
-                                    Player p = Bukkit.getServer().getPlayer(player);
-                                    p.sendTitle("§a[✔] \uD83D\uDDFB-" + args[1], "§8[§f§l⏱§8] §e§o" + plugin.getTimer("finale"), 0, 100, 5);
-                                    plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Checkpoint reached!");
+                                for (String player : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
+                                    if (Bukkit.getServer().getPlayer(player) != null) {
+                                        Player p = Bukkit.getServer().getPlayer(player);
+                                        p.sendTitle("§a[✔] \uD83D\uDDFB-" + args[1], "§8[§f§l⏱§8] §e§o" + plugin.formatTime(System.currentTimeMillis() - plugin.slimeGolfStartTime), 0, 100, 5);
+                                        plugin.messagePlayer(p, "§a[\uD83D\uDDFB-" + args[1] + "] Checkpoint reached!");
+                                    }
                                 }
+                                plugin.slimeCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);
                             }
-                            plugin.slimeCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);
                         }
                     }
                     break;
@@ -2387,9 +2389,9 @@ public class MainCommand implements CommandExecutor {
                             for (String player : TeamsConfig.get().getStringList("teams." + args[1] + ".players")) {
                                 if (Bukkit.getServer().getPlayer(player) != null) {
                                     Player p = Bukkit.getServer().getPlayer(player);
-                                    p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("slimegolf"), 0, 100, 5);
+                                    p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.formatTime(System.currentTimeMillis() - plugin.slimeGolfStartTime), 0, 100, 5);
                                     plugin.messagePlayer(p, "§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lHole Completed!");
-                                    plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("slimegolf"));
+                                    plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.formatTime(System.currentTimeMillis() - plugin.slimeGolfStartTime));
                                     plugin.earnPoints(player, dividedPointsEarned, true);
                                     p.setGameMode(GameMode.SPECTATOR);
                                 }
@@ -2408,28 +2410,17 @@ public class MainCommand implements CommandExecutor {
                                 plugin.runningTimers.remove("slimegolftimer");
                                 plugin.gameEnd();
                             }
-                        }
-                        if (plugin.runningTimers.containsKey("finale")) {
-                            Integer placement = plugin.slimeCheckpoints.get(plugin.slimeCheckpoints.size());
-                            for (Player p : plugin.getPlayers()) {
-                                plugin.messagePlayer(p, "§8| §e\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(args[1]) + "§e was §e§l1st §eto finish!");
-                            }
-                            plugin.teamCheckpoints.put(args[1], 6);
-                            plugin.slimeFinishers.put(args[1], plugin.runningTimers.get("finale").getValue());
-
-                            for (String player : TeamsConfig.get().getStringList("teams." + args[1] + ".players")) {
-                                if (Bukkit.getServer().getPlayer(player) != null) {
-                                    Player p = Bukkit.getServer().getPlayer(player);
-                                    p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("finale"), 0, 100, 5);
-                                    plugin.messagePlayer(p, "§a§lHole Completed!");
-                                    plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("finale"));
-                                    p.setGameMode(GameMode.SPECTATOR);
+                        } else {
+                            if (plugin.finaleActive) {
+                                Integer placement = plugin.slimeCheckpoints.get(plugin.slimeCheckpoints.size());
+                                for (Player p : plugin.getPlayers()) {
+                                    plugin.messagePlayer(p, "§8| §e\uD83D\uDC51 §8| " + plugin.getTeamDisplayName(args[1]) + "§e was §e§l1st §eto finish!");
                                 }
+                                plugin.teamCheckpoints.put(args[1], 6);
+                                
+                                plugin.slimeCheckpoints.replace(plugin.slimeCheckpoints.size(), placement + 1);
+                                plugin.finaleRoundOver(args[1]);
                             }
-                            plugin.slimeCheckpoints.replace(plugin.slimeCheckpoints.size(), placement + 1);
-                            plugin.runningTimers.remove("slimegolftimer");
-                            plugin.runningTimers.remove("finale");
-                            plugin.finaleRoundOver(args[1]);
                         }
 
                     }
@@ -2690,6 +2681,11 @@ public class MainCommand implements CommandExecutor {
         }
 
         String name = "build" + team + index;
+
+        if (blockList.isEmpty()) {
+            plugin.runningTimers.remove(name);
+            return;
+        }
 
         BukkitTask task = new BukkitRunnable() {
             int timeLeft = 20;

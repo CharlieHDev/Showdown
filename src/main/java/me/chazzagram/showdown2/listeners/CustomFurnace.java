@@ -91,6 +91,12 @@ public class CustomFurnace implements Listener {
         ItemStack input = furnace.getItem(0);
         if (input == null || input.getType() == Material.AIR) return;
 
+        if(input.getType() == Material.IRON_SWORD
+            || input.getType() == Material.IRON_PICKAXE
+            || input.getType() == Material.IRON_SHOVEL
+            || input.getType() == Material.IRON_AXE
+            || input.getType() == Material.TRIDENT) return;
+
         ItemStack result = getSmeltResult(input);
         if (result == null) return;
 

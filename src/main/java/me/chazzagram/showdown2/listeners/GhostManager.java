@@ -68,6 +68,26 @@ public class GhostManager {
         }
     }
 
+    public void giveCompasses() {
+        ItemStack compass = new ItemStack(Material.COMPASS);
+
+        ItemMeta meta = compass.getItemMeta();
+
+        meta.setDisplayName("§ePlayer Finder");
+
+        meta.addEnchant(Enchantment.UNBREAKING, 3, true);
+
+        compass.setItemMeta(meta);
+
+        for(String player : ghostPlayers){
+            Player p = Bukkit.getPlayer(player);
+            if(p != null) {
+                p.getInventory().clear();
+                p.getInventory().addItem(compass);
+            }
+        }
+    }
+
     public void removeGhostPlayer(String player) {
 
         if(!ghostPlayers.contains(player)) return;

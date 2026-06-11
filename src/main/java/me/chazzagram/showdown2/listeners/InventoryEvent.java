@@ -96,6 +96,9 @@ public class InventoryEvent implements Listener {
                         }
                         index++;
                     }
+                    if(plugin.finaleActive){
+                        baseLoc.setX(1506.5);
+                    }
                 }
 
                 switch (e.getSlot()) {

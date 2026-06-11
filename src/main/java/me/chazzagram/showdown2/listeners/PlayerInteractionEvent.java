@@ -303,7 +303,11 @@ public class PlayerInteractionEvent implements Listener {
     @EventHandler
     public void onShoot(EntityShootBowEvent event) {
 
-        if(!plugin.currentMode.equals("Voting") || !plugin.votingEnabled || !plugin.votingMode.equals("guns")) return;
+        if(!plugin.currentMode.equals("Voting")) return;
+
+        event.setCancelled(true);
+
+        if(!plugin.votingEnabled || !plugin.votingMode.equals("guns")) return;
 
         if (!(event.getEntity() instanceof Player player)) return;
 
@@ -316,8 +320,6 @@ public class PlayerInteractionEvent implements Listener {
         if(!plugin.playerVote.containsKey(player)) return;
 
         float force = event.getForce();
-
-        event.setCancelled(true);
 
         Vector direction = player.getLocation().getDirection().normalize();
 
