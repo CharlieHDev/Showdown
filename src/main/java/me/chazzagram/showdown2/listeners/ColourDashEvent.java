@@ -65,6 +65,12 @@ public class ColourDashEvent implements Listener {
                         Block placed = e.getBlockPlaced();
                         Block other = placed.getLocation().clone().add(20,0,0).getBlock();
 
+                        if (plugin.blockToDisplay.containsKey(placed)) {
+                            BlockDisplay existingDisplay = plugin.blockToDisplay.get(placed);
+                            existingDisplay.remove();
+                            plugin.blockToDisplay.remove(placed);
+                        }
+
                         if (placed.getType() != other.getType()) {
                             setGlowing(p, placed);
                             return;

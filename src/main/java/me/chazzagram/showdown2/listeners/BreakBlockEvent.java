@@ -12,6 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class BreakBlockEvent implements Listener {
@@ -70,18 +71,34 @@ public class BreakBlockEvent implements Listener {
                 if(!Objects.equals(plugin.currentSpleef, "§6§lCopper Spleef")){
                     Player breaker = e.getPlayer();
                     Block block = e.getBlock();
+                    String layer = "";
 
-                    for (Player target : block.getWorld().getPlayers()) {
-                        if (target.equals(breaker)) continue;
+                    int blockX = block.getLocation().getBlockX();
+                    int blockY = block.getLocation().getBlockY();
+                    int blockZ = block.getLocation().getBlockZ();
 
-                        Location feet = target.getLocation();
-                        if (feet.getBlock().getRelative(BlockFace.DOWN).equals(block)) {
-                            plugin.crumbleKillTracker.put(
-                                    target.getName(),
-                                    new CrumbleKillData(breaker.getName(), System.currentTimeMillis())
-                            );
-                        }
+                    CrumbleBlockRecord record = new CrumbleBlockRecord(breaker.getName(), System.currentTimeMillis(), blockX, blockY, blockZ);
+
+                    switch(blockY){
+                        case 194 -> layer = "layer1";
+                        case 187 -> layer = "layer2";
+                        case 179 -> layer = "layer3";
                     }
+
+                    plugin.crumbleBlockRecords.computeIfAbsent(layer, k -> new ArrayList<>()).add(record);
+
+                    // Old logic.
+//                    for (Player target : block.getWorld().getPlayers()) {
+//                        if (target.equals(breaker)) continue;
+//
+//                        Location feet = target.getLocation();
+//                        if (feet.getBlock().getRelative(BlockFace.DOWN).equals(block)) {
+//                            plugin.crumbleKillTracker.put(
+//                                    target.getName(),
+//                                    new CrumbleKillData(breaker.getName(), System.currentTimeMillis())
+//                            );
+//                        }
+//                    }
                 }
                 e.setCancelled(false);
             } else {

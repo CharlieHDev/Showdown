@@ -23,7 +23,7 @@ public class MongoManager {
     private boolean dbConnected = false;
 
     // TODO: REPLACE EVENT NAME
-    private String eventName = "Test 11/06/2026";
+    private String eventName = "Test";
 
     public void connect(String uri, String dbName) {
         try {

@@ -114,6 +114,7 @@ public class VoteWalkEvent implements Listener {
         }
     }
 
+
     private Material[] getWoolColors() {
         return new Material[]{
                 Material.RED_WOOL, Material.WHITE_WOOL, Material.ORANGE_WOOL, Material.LIGHT_BLUE_WOOL, Material.LIME_WOOL,

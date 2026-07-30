@@ -311,7 +311,7 @@ public class MainCommand implements CommandExecutor {
                                                 );
 
                                                 plugin.ghostManager.addGhostPlayer(p.getName());
-                                                plugin.revealOtherPlayers(p);
+                                                plugin.revealAllOtherPlayers(p);
 
                                                 if (plugin.cdCompletions == PlayerConfig.get().getConfigurationSection("players").getKeys(false).size()) {
                                                     plugin.runningTimers.remove("dimensiondash");
@@ -954,7 +954,6 @@ public class MainCommand implements CommandExecutor {
                                             if (plugin.lastHitPlayer.containsKey(args[1])) {
                                                 if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
                                                     plugin.killRecord.add(plugin.getPlayerDisplayName(plugin.lastHitPlayer.get(args[1])) + " §c⚔ " + plugin.getPlayerDisplayName(args[1]));
-                                                    plugin.earnPoints(plugin.lastHitPlayer.get(args[1]), 16, true);
                                                     if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(plugin.lastHitPlayer.get(args[1]))) {
                                                         PlayerInfoConfig.get().set("players." + plugin.lastHitPlayer.get(args[1]) + ".kills", PlayerInfoConfig.get().getInt("players." + plugin.lastHitPlayer.get(args[1]) + ".kills") + 1);
                                                         PlayerInfoConfig.save();
@@ -962,24 +961,30 @@ public class MainCommand implements CommandExecutor {
                                                 }
                                             }
 
+                                            String attacker = plugin.lastHitPlayer.getOrDefault(args[1], "");
+                                            boolean hasCredit = !attacker.isEmpty();
+
                                             for (Player player : Bukkit.getOnlinePlayers()) {
+                                                boolean isKiller = hasCredit && player.getName().equals(attacker);
+
                                                 if (!plugin.deadPlayers.contains(player.getName()) && !plugin.getSpectators().contains(player)) {
-                                                    if (plugin.lastHitPlayer.containsKey(args[1])) {
-                                                        if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
-                                                            plugin.messagePlayer(player, "§e\uD83D\uDCB03 §7| " + plugin.formatKillMessage(plugin.lastHitPlayer.get(args[1]), p.getName()));
+                                                    if (hasCredit) {
+                                                        if (isKiller) {
+                                                            plugin.messagePlayer(player, "§e\uD83D\uDCB016 §7| " + plugin.formatKillMessage(attacker, p.getName()));
+                                                            plugin.earnPoints(player.getName(), 16, true);
                                                         } else {
-                                                            plugin.messagePlayer(player, "§e\uD83D\uDCB03 §7| " + plugin.formatDeathMessage(p.getName()));
+                                                            plugin.messagePlayer(player, "§e\uD83D\uDCB03 §7| " + plugin.formatKillMessage(attacker, p.getName()));
+                                                            plugin.earnPoints(player.getName(), 3, true);
                                                         }
+                                                    } else {
+                                                        plugin.messagePlayer(player, "§e\uD83D\uDCB03 §7| " + plugin.formatDeathMessage(p.getName()));
+                                                        plugin.earnPoints(player.getName(), 3, true);
                                                     }
-                                                    plugin.earnPoints(player.getName(), 3, true);
-                                                }
-                                                if (plugin.deadPlayers.contains(player.getName()) || plugin.getSpectators().contains(player)) {
-                                                    if (plugin.lastHitPlayer.containsKey(args[1])) {
-                                                        if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
-                                                            plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(plugin.lastHitPlayer.get(args[1]), p.getName()));
-                                                        } else {
-                                                            plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatDeathMessage(p.getName()));
-                                                        }
+                                                } else {
+                                                    if (hasCredit) {
+                                                        plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(attacker, p.getName()));
+                                                    } else {
+                                                        plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatDeathMessage(p.getName()));
                                                     }
                                                 }
                                             }
@@ -1287,6 +1292,18 @@ public class MainCommand implements CommandExecutor {
                         }
                     }
                     break;
+                case "clashfall":
+                    if(args.length > 2) {
+                        String layer = args[1];
+                        String playerName = args[2];
+                        Player p = Bukkit.getPlayer(playerName);
+                        if(p != null){
+                            if(plugin.getPlayers().contains(p)){
+                                plugin.onPlayerFallThrough(p, layer);
+                            }
+                        }
+                    }
+                    break;
                 case "clashdeath":
                     if(plugin.currentMode.equals("Crumble Clash") && plugin.ccRoundStarted) {
                         if (Bukkit.getPlayer(args[1]) != null) {
@@ -1402,7 +1419,6 @@ public class MainCommand implements CommandExecutor {
                                                 if(!Objects.equals(killerTeam, victimTeam)) {
                                                     plugin.killRecord.add(plugin.getPlayerDisplayName(data.attacker) + " §c⚔ " + plugin.getPlayerDisplayName(args[1]));
                                                     plugin.playerKillCount.putIfAbsent(data.attacker, plugin.playerKillCount.get(data.attacker) + 1);
-                                                    plugin.earnPoints(data.attacker, 16, true);
                                                     if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(data.attacker)) {
                                                         PlayerInfoConfig.get().set("players." + data.attacker + ".kills", PlayerInfoConfig.get().getInt("players." + data.attacker + ".kills") + 1);
                                                         PlayerInfoConfig.save();
@@ -1414,23 +1430,27 @@ public class MainCommand implements CommandExecutor {
                                         plugin.crumbleKillTracker.remove(p.getName());
 
                                         for (Player player : Bukkit.getOnlinePlayers()) {
+                                            boolean creditValid = data != null && System.currentTimeMillis() - data.time < 5000;
+                                            Player killer = creditValid ? Bukkit.getPlayer(data.attacker) : null;
+                                            boolean validKillCredit = creditValid && killer != null && !killer.equals(p);
+                                            boolean isKiller = validKillCredit && player.getName().equals(data.attacker);
+
                                             if (!plugin.deadPlayers.contains(player.getName()) && !plugin.getSpectators().contains(player)) {
-                                                if (data != null && System.currentTimeMillis() - data.time < 5000) {
-                                                    Player killer = Bukkit.getPlayer(data.attacker);
-                                                    if (killer != null && !killer.equals(p)) {
+                                                if (validKillCredit) {
+                                                    if (isKiller) {
+                                                        plugin.messagePlayer(player, "§e\uD83D\uDCB016 §7| " + plugin.formatKillMessage(data.attacker, p.getName()));
+                                                        plugin.earnPoints(player.getName(), 16, true);
+                                                    } else {
                                                         plugin.messagePlayer(player, "§e\uD83D\uDCB03 §7| " + plugin.formatKillMessage(data.attacker, p.getName()));
+                                                        plugin.earnPoints(player.getName(), 3, true);
                                                     }
                                                 } else {
                                                     plugin.messagePlayer(player, "§e\uD83D\uDCB03 §7| " + plugin.formatDeathMessage(p.getName()));
+                                                    plugin.earnPoints(player.getName(), 3, true);
                                                 }
-                                                plugin.earnPoints(player.getName(), 3, true);
-                                            }
-                                            if (plugin.deadPlayers.contains(player.getName()) || plugin.getSpectators().contains(player)) {
-                                                if (data != null && System.currentTimeMillis() - data.time < 5000) {
-                                                    Player killer = Bukkit.getPlayer(data.attacker);
-                                                    if (killer != null && !killer.equals(p)) {
-                                                        plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(data.attacker, p.getName()));
-                                                    }
+                                            } else {
+                                                if (validKillCredit) {
+                                                    plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatKillMessage(data.attacker, p.getName()));
                                                 } else {
                                                     plugin.messagePlayer(player, "§c\uD83D\uDC80 §7| " + plugin.formatDeathMessage(p.getName()));
                                                 }
@@ -1541,16 +1561,6 @@ public class MainCommand implements CommandExecutor {
                     TeamsConfig.get().set("teams.RubyRaiders.players", rubyTeam);
                     break;
                 case "modeindiv":
-                    List<String> modeLeaderName = new ArrayList<>(plugin.sortMap(plugin.modeFullPoints).keySet());
-                    List<Integer> modeLeaderPoints = new ArrayList<>(plugin.sortMap(plugin.modeFullPoints).values());
-                    plugin.messagePlayer(p, "§6§lᴘʀᴇᴠɪᴏᴜs ᴍᴏᴅᴇ ʟᴇᴀᴅᴇʀʙᴏᴀʀᴅ");
-                    int placement;
-                    for(int i = 0; i < modeLeaderName.size(); i++){
-                        placement = i + 1;
-                        plugin.messagePlayer(p, "§7" + placement + ". " + plugin.getPlayerDisplayName(modeLeaderName.get(i)) + " §7| §e§l💰" + modeLeaderPoints.get(i));
-                    }
-                    break;
-                case "indiv":
                     boolean shown = true;
                     for(int i = 0; i <= 7; i++){
                         if(!plugin.teamShown[i]){
@@ -1558,7 +1568,28 @@ public class MainCommand implements CommandExecutor {
                             break;
                         }
                     }
-                    if(shown){
+                    if(shown) {
+                        List<String> modeLeaderName = new ArrayList<>(plugin.sortMap(plugin.modeFullPoints).keySet());
+                        List<Integer> modeLeaderPoints = new ArrayList<>(plugin.sortMap(plugin.modeFullPoints).values());
+                        plugin.messagePlayer(p, "§6§lᴘʀᴇᴠɪᴏᴜs ᴍᴏᴅᴇ ʟᴇᴀᴅᴇʀʙᴏᴀʀᴅ");
+                        int placement;
+                        for (int i = 0; i < modeLeaderName.size(); i++) {
+                            placement = i + 1;
+                            plugin.messagePlayer(p, "§7" + placement + ". " + plugin.getPlayerDisplayName(modeLeaderName.get(i)) + " §7| §e§l💰" + modeLeaderPoints.get(i));
+                        }
+                    } else {
+                        plugin.messagePlayer(p, "§6§lPrevious mode leaderboard is hidden during this segment of the event.");
+                    }
+                    break;
+                case "indiv":
+                    boolean shown2 = true;
+                    for(int i = 0; i <= 7; i++){
+                        if(!plugin.teamShown[i]){
+                            shown2 = false;
+                            break;
+                        }
+                    }
+                    if(shown2){
                         List<String> indivNames = new ArrayList<>(plugin.getSortedIndivs().keySet());
                         List<Integer> indivPoints = new ArrayList<>(plugin.getSortedIndivs().values());
                         plugin.messagePlayer(p, "§6§lɪɴᴅɪᴠɪᴅᴜᴀʟ ʟᴇᴀᴅᴇʀʙᴏᴀʀᴅ");
@@ -2104,6 +2135,15 @@ public class MainCommand implements CommandExecutor {
                 case "slimefinishers":
                     plugin.slimeGolfTimes();
                     break;
+                case "fixsg":
+                    plugin.replaceSlimeCommands(plugin.slimeCmdCoords, plugin.slimeCmdCoords2, "minecraft:sulfur_golf", "minecraft:sulfur_cube");
+                    break;
+                case "sulfurgolf":
+                    plugin.replaceSlimeCommands(plugin.slimeCmdCoords, plugin.slimeCmdCoords2, "minecraft:slime", "minecraft:sulfur_cube");
+                    break;
+                case "slimegolf":
+                    plugin.replaceSlimeCommands(plugin.slimeCmdCoords, plugin.slimeCmdCoords2, "minecraft:sulfur_cube", "minecraft:slime");
+                    break;
                 case "startslimegolf":
                     plugin.currentRound = 1;
                     plugin.startSlimeGolf();
@@ -2297,26 +2337,26 @@ public class MainCommand implements CommandExecutor {
                                 plugin.messagePlayer(p, "§8| §a§l⏱ §8| " + plugin.getTeamDisplayName(args[2]) + "§7 has reached §a\uD83D\uDDFB-" + args[1] + "§7!");
                             }
 
-                            int pointsEarned = 0;
-                            int dividedPointsEarned = 0;
-                            switch(Integer.parseInt(args[1])) {
-                                case 2:
-                                    pointsEarned = 148 - (placement * 8);
-                                    dividedPointsEarned = pointsEarned / 4;
-                                    for (String player : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
-                                        plugin.earnPoints(player, dividedPointsEarned, true);
-                                    }
-                                    break;
-                                case 4:
-                                    pointsEarned = 216 - (placement * 16);
-                                    dividedPointsEarned = pointsEarned / 4;
-                                    for (String player : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
-                                        plugin.earnPoints(player, dividedPointsEarned, true);
-                                    }
-                                    break;
-                                default:
-                                    break;
-                            }
+//                            int pointsEarned = 0;
+//                            int dividedPointsEarned = 0;
+//                            switch(Integer.parseInt(args[1])) {
+//                                case 2:
+//                                    pointsEarned = 148 - (placement * 8);
+//                                    dividedPointsEarned = pointsEarned / 4;
+//                                    for (String player : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
+//                                        plugin.earnPoints(player, dividedPointsEarned, true);
+//                                    }
+//                                    break;
+//                                case 4:
+//                                    pointsEarned = 216 - (placement * 16);
+//                                    dividedPointsEarned = pointsEarned / 4;
+//                                    for (String player : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
+//                                        plugin.earnPoints(player, dividedPointsEarned, true);
+//                                    }
+//                                    break;
+//                                default:
+//                                    break;
+//                            }
                             plugin.teamCheckpoints.put(args[2], Integer.parseInt(args[1]));
 
                             for (String player : TeamsConfig.get().getStringList("teams." + args[2] + ".players")) {
@@ -2381,7 +2421,7 @@ public class MainCommand implements CommandExecutor {
                                     break;
                             }
 
-                            int pointsEarned = 284 - (24 * placement);
+                            int pointsEarned = plugin.slimePoints().get(placement - 1);
                             int dividedPointsEarned = pointsEarned / 4;
                             plugin.teamCheckpoints.put(args[1], 6);
                             plugin.slimeFinishers.put(args[1], plugin.runningTimers.get("slimegolf").getValue());

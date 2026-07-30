@@ -1,5 +1,5 @@
 name: Showdown2
-version: 'S3.0.0'
+version: 'S4.0.0'
 main: me.chazzagram.showdown2.Showdown2
 api-version: '1.21'
 depend: [PlaceholderAPI]

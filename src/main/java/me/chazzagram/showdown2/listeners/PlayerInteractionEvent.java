@@ -303,46 +303,98 @@ public class PlayerInteractionEvent implements Listener {
     @EventHandler
     public void onShoot(EntityShootBowEvent event) {
 
-        if(!plugin.currentMode.equals("Voting")) return;
+        if(plugin.currentMode.equals("Slime Golf")) {
 
-        event.setCancelled(true);
+            event.setCancelled(true);
 
-        if(!plugin.votingEnabled || !plugin.votingMode.equals("guns")) return;
+            if (!(event.getEntity() instanceof Player player)) return;
 
-        if (!(event.getEntity() instanceof Player player)) return;
+            if (plugin.ghostManager.getGhostPlayers().contains(player.getName())) return;
 
-        if(plugin.voteFrozenManager.getFrozenPlayers().contains(player.getName())) return;
+            float force = event.getForce();
 
-        if (plugin.ghostManager.getGhostPlayers().contains(player.getName())) return;
+            String team = PlayerConfig.get().getString("players." + player.getName() + ".team");
 
-        if(plugin.playerVote.get(player) == null || !getWoolColors().contains(plugin.playerVote.get(player))) return;
+            SulfurCube cube = plugin.golfTeamCubes.get(team);
 
-        if(!plugin.playerVote.containsKey(player)) return;
+            Vector direction = player.getLocation().getDirection();
 
-        float force = event.getForce();
+            float amplify = force * 1f;
 
-        Vector direction = player.getLocation().getDirection().normalize();
+            Vector launch = direction.clone().add(new Vector(0, 0.25, 0)).normalize();
 
-        Location spawnLoc = player.getEyeLocation().add(direction.multiply(0.5));
+            cube.setVelocity(launch.multiply(amplify));
+        }
 
-        String colour = plugin.playerVote.get(player).name().replace("_WOOL", "").toLowerCase();
 
-        ItemStack stack = new ItemStack(Material.PAPER);
-        ItemMeta meta = stack.getItemMeta();
-        meta.setItemModel(new NamespacedKey("amongus", "ball" + colour));
-        stack.setItemMeta(meta);
 
-        Item item = Bukkit.getWorld("build").dropItemNaturally(spawnLoc, stack);
+        if(plugin.currentMode.equals("Voting")) {
 
-        player.playSound(player.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1F, 1F);
+            event.setCancelled(true);
 
-        item.setPickupDelay(Integer.MAX_VALUE);
-        item.setGravity(true);
+            if (plugin.votingMode.equals("guns")) {
 
-        double baseSpeed = 7.0;
-        item.setVelocity(direction.multiply(force * baseSpeed));
+                if (!plugin.votingEnabled) return;
 
-        plugin.voteBlasterBlasts.put(item, player);
+                if (!(event.getEntity() instanceof Player player)) return;
+
+                if (plugin.voteFrozenManager.getFrozenPlayers().contains(player.getName())) return;
+
+                if (plugin.ghostManager.getGhostPlayers().contains(player.getName())) return;
+
+                if (plugin.playerVote.get(player) == null || !getWoolColors().contains(plugin.playerVote.get(player)))
+                    return;
+
+                if (!plugin.playerVote.containsKey(player)) return;
+
+                float force = event.getForce();
+
+                Vector direction = player.getLocation().getDirection().normalize();
+
+                Location spawnLoc = player.getEyeLocation().add(direction.multiply(0.5));
+
+                String colour = plugin.playerVote.get(player).name().replace("_WOOL", "").toLowerCase();
+
+                ItemStack stack = new ItemStack(Material.PAPER);
+                ItemMeta meta = stack.getItemMeta();
+                meta.setItemModel(new NamespacedKey("amongus", "ball" + colour));
+                stack.setItemMeta(meta);
+
+                Item item = Bukkit.getWorld("build").dropItemNaturally(spawnLoc, stack);
+
+                player.playSound(player.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1F, 1F);
+
+                item.setPickupDelay(Integer.MAX_VALUE);
+                item.setGravity(true);
+
+                double baseSpeed = 7.0;
+                item.setVelocity(direction.multiply(force * baseSpeed));
+
+                plugin.voteBlasterBlasts.put(item, player);
+            }
+            if (plugin.votingMode.equals("bounce")) {
+                if (!(event.getEntity() instanceof Player player)) return;
+
+                if (plugin.voteFrozenManager.getFrozenPlayers().contains(player.getName())) return;
+
+                if (plugin.ghostManager.getGhostPlayers().contains(player.getName())) return;
+
+                float force = event.getForce();
+
+                Entity vehicle = player.getVehicle();
+                if (vehicle == null) {
+                    return;
+                }
+
+                Vector direction = player.getLocation().getDirection();
+
+                float amplify = force * 1.5f;
+
+                Vector launch = direction.clone().add(new Vector(0, 0.25, 0)).normalize();
+
+                vehicle.setVelocity(launch.multiply(amplify));
+            }
+        }
     }
 
     @EventHandler

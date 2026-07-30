@@ -1057,6 +1057,10 @@ public class InventoryEvent implements Listener {
     public void onSwap(PlayerSwapHandItemsEvent e) {
         Player player = e.getPlayer();
 
+        if (player.getOpenInventory().getTopInventory().getType() != InventoryType.CRAFTING) {
+            return;
+        }
+
         if(plugin.runningTimers.containsKey("pushpointstart")){
             String team = PlayerConfig.get().getString("players." + player.getName() + ".team");
             player.openInventory(plugin.ppTeamKitInventories.get(team));

@@ -167,6 +167,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
         switch (params) {
             case "player":
                 return p.getName();
+            case "multiplier":
+                return String.valueOf(plugin.multiplier);
             case "bestgame":
                 if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
                     return PlayerInfoConfig.get().getString("players." + p.getName() + ".bestgame");
@@ -188,19 +190,41 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "N/A";
                 }
             case "highestplacement":
-                if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
-                    return PlayerInfoConfig.get().getString("players." + p.getName() + ".highestplacement");
+                boolean shown = true;
+                for(int i = 0; i <= 7; i++){
+                    if(!plugin.teamShown[i]){
+                        shown = false;
+                        break;
+                    }
+                }
+                if(shown) {
+                    if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
+                        return PlayerInfoConfig.get().getString("players." + p.getName() + ".highestplacement");
+                    } else {
+                        return "N/A";
+                    }
                 } else {
                     return "N/A";
                 }
             case "eventplacement":
-                if (PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
-                    for (int i = 0; i < indivNames.size(); i++) {
-                        if (p.getName().equals(indivNames.get(i))) {
-                            return Integer.toString(i + 1);
-                        }
+                boolean shown2 = true;
+                for(int i = 0; i <= 7; i++){
+                    if(!plugin.teamShown[i]){
+                        shown2 = false;
+                        break;
                     }
-                    return "N/A";
+                }
+                if(shown2) {
+                    if (PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())) {
+                        for (int i = 0; i < indivNames.size(); i++) {
+                            if (p.getName().equals(indivNames.get(i))) {
+                                return Integer.toString(i + 1);
+                            }
+                        }
+                        return "N/A";
+                    } else {
+                        return "N/A";
+                    }
                 } else {
                     return "N/A";
                 }
@@ -510,18 +534,23 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "pp_opponent_standings":
                 if (plugin.ppTeamMatchups.isEmpty()) {
                     return "§6§lᴡɪɴ§a§l 0§f§l |§c§l 0§6§l ʟᴏss";
+                }
+
+                String playerTeam = PlayerConfig.get().getString("players." + p.getName() + ".team");
+
+                if (plugin.ppTeamMatchups.containsKey(playerTeam)) {
+                    String opponent = plugin.ppTeamMatchups.get(playerTeam);
+                    List<Integer> standings = plugin.ppTeamStandings.get(opponent);
+                    return "§6§lᴡɪɴ§a§l " + standings.getFirst() + "§f§l |§c§l " + standings.get(1) + "§6§l ʟᴏss";
                 } else {
-                    if (plugin.ppTeamMatchups.containsKey(PlayerConfig.get().getString("players." + p.getName() + ".team"))) {
-                        String opponent = plugin.ppTeamMatchups.get(PlayerConfig.get().getString("players." + p.getName() + ".team"));
-                        return "§6§lᴡɪɴ§a§l " + plugin.ppTeamStandings.get(opponent).getFirst() + "§f§l |§c§l " + plugin.ppTeamStandings.get(opponent).get(1) + "§6§l ʟᴏss";
-                    } else {
-                        for (Map.Entry<String, String> entry : plugin.ppTeamMatchups.entrySet()) {
-                            if (entry.getValue().equals(PlayerConfig.get().getString("players." + p.getName() + ".team"))) {
-                                return "§6§lᴡɪɴ§a§l " + plugin.ppTeamStandings.get(PlayerConfig.get().getString("players." + p.getName() + ".team")).getFirst() + "§f§l |§c§l " + plugin.ppTeamStandings.get(PlayerConfig.get().getString("players." + p.getName() + ".team")).get(1) + "§6§l ʟᴏss";
-                            }
+                    for (Map.Entry<String, String> entry : plugin.ppTeamMatchups.entrySet()) {
+                        if (entry.getValue().equals(playerTeam)) {
+                            String opponent = entry.getKey();
+                            List<Integer> standings = plugin.ppTeamStandings.get(opponent);
+                            return "§6§lᴡɪɴ§a§l " + standings.getFirst() + "§f§l |§c§l " + standings.get(1) + "§6§l ʟᴏss";
                         }
-                        return "Waiting..";
                     }
+                    return "Waiting..";
                 }
             case "pp_team_standings":
                 if (plugin.ppTeamMatchups.isEmpty()) {

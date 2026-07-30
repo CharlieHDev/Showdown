@@ -740,6 +740,9 @@ public class LastHitEvent implements Listener {
                     victim.setHealth(20);
                     victim.setFoodLevel(20);
                     victim.setSaturation(20f);
+                    for (PotionEffect effect : victim.getActivePotionEffects()) {
+                        victim.removePotionEffect(effect.getType());
+                    }
                     killer.sendTitle("", "§c\uD83D\uDC80 " + plugin.getPlayerDisplayName(victim.getName()), 0, 20, 0);
                     BukkitTask task = new BukkitRunnable() {
                         int timeLeft = plugin.finalPush ? 4 : 6;;
