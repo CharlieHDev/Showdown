@@ -14,6 +14,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -28,11 +29,6 @@ import java.util.*;
 public class ProjectileEvent implements Listener {
 
     private static Showdown2 plugin;
-
-    // Crumble Clash Border
-    private static final int MIN_X = 21,  MAX_X = 112;
-    private static final int MIN_Y = 175, MAX_Y = 230;
-    private static final int MIN_Z = 455, MAX_Z = 546;
 
     public ProjectileEvent(Showdown2 plugin) {
         this.plugin = plugin;
@@ -134,53 +130,27 @@ public class ProjectileEvent implements Listener {
     Random rand = new Random();
     String[] congratsMessages = { "Good Job!", "Amazing!", "Class!", "Thanks!", "Smashing!", "Sneaky!", "Bravo!", "Legendary!", "Proper Job!", "Massive!", "GGs!" };
 
-    @EventHandler
-    public void onPearlTeleport(PlayerTeleportEvent event) {
-
-        if (!plugin.currentMode.equals("Crumble Clash")) return;
-        if (event.getCause() != PlayerTeleportEvent.TeleportCause.ENDER_PEARL) return;
-
-        Location dest = event.getTo();
-
-        boolean outOfBounds = dest.getX() < MIN_X || dest.getX() > MAX_X
-                || dest.getY() < MIN_Y || dest.getY() > MAX_Y
-                || dest.getZ() < MIN_Z || dest.getZ() > MAX_Z;
-
-
-        if (outOfBounds) {
-            event.setCancelled(true);
-
-            Player player = event.getPlayer();
-            player.sendMessage("§cYour ender pearl did not land safely.");
-            returnPearl(player);
-        }
-    }
-
-    private void returnPearl(Player player) {
-        int pearlCount = 0;
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.ENDER_PEARL) {
-                pearlCount += item.getAmount();
-            }
-        }
-
-        if (pearlCount < 3) {
-            ItemStack pearl = new ItemStack(Material.ENDER_PEARL);
-            ItemMeta meta = pearl.getItemMeta();
-            meta.setDisplayName("§aEnder Pearl");
-            pearl.setItemMeta(meta);
-            player.getInventory().addItem(pearl);
-
-            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1F, 1F);
-            player.spigot().sendMessage(
-                    ChatMessageType.ACTION_BAR,
-                    TextComponent.fromLegacyText("§7[§a+§7] §r" + pearl.getItemMeta().getDisplayName())
-            );
-            player.sendMessage("§aA pearl has been returned to your inventory.");
-        } else {
-            player.sendMessage("§cYou have reached the maximum pearl capacity.");
-        }
-    }
+//    @EventHandler
+//    public void onPearlTeleport(PlayerTeleportEvent event) {
+//
+//        if (!plugin.currentMode.equals("Crumble Clash")) return;
+//        if (event.getCause() != PlayerTeleportEvent.TeleportCause.ENDER_PEARL) return;
+//
+//        Location dest = event.getTo();
+//
+//        boolean outOfBounds = dest.getX() < MIN_X || dest.getX() > MAX_X
+//                || dest.getY() < MIN_Y || dest.getY() > MAX_Y
+//                || dest.getZ() < MIN_Z || dest.getZ() > MAX_Z;
+//
+//
+//        if (outOfBounds) {
+//            event.setCancelled(true);
+//
+//            Player player = event.getPlayer();
+//            player.sendMessage("§cYour ender pearl did not land safely.");
+//            returnPearl(player);
+//        }
+//    }
 
     @EventHandler
     public void onProjectileHit(ProjectileHitEvent event) {
@@ -253,6 +223,9 @@ public class ProjectileEvent implements Listener {
 
         if (event.getEntity() instanceof Fireball fireball && event.getHitEntity() instanceof Player victim && fireball.getShooter() instanceof Player shooter) {
             event.setCancelled(false);
+
+            if (Objects.equals(PlayerConfig.get().getString("players." + victim.getName() + ".team"), PlayerConfig.get().getString("players." + plugin.fireballSenders.get(fireball).getName() + ".team"))) return;
+
             plugin.crumbleKillTracker.put(
                     victim.getName(),
                     new CrumbleKillData(shooter.getName(), System.currentTimeMillis())
@@ -264,17 +237,55 @@ public class ProjectileEvent implements Listener {
             if (hitBlock != null) {
                 if (hitBlock.getType() == Material.SNOW_BLOCK) {
                     hitBlock.setType(Material.AIR);
-                    for (Player target : Bukkit.getWorld("build").getPlayers()) {
-                        if (target.equals(shooter)) continue;
 
-                        Location feet = target.getLocation();
-                        if (feet.getBlock().getRelative(BlockFace.DOWN).equals(hitBlock)) {
-                            plugin.crumbleKillTracker.put(
-                                    target.getName(),
-                                    new CrumbleKillData(shooter.getName(), System.currentTimeMillis())
-                            );
-                        }
+                    String layer = "";
+
+                    int blockX = hitBlock.getLocation().getBlockX();
+                    int blockY = hitBlock.getLocation().getBlockY();
+                    int blockZ = hitBlock.getLocation().getBlockZ();
+
+                    CrumbleBlockRecord record = new CrumbleBlockRecord(shooter.getName(), System.currentTimeMillis(), blockX, blockY, blockZ);
+
+                    switch(blockY){
+                        case 194 -> layer = "layer1";
+                        case 187 -> layer = "layer2";
+                        case 179 -> layer = "layer3";
                     }
+
+                    plugin.crumbleBlockRecords.computeIfAbsent(layer, k -> new ArrayList<>()).add(record);
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onEntityExplode(EntityExplodeEvent event) {
+        Entity entity = event.getEntity();
+
+        if(plugin.currentMode.equals("Crumble Clash")) {
+
+            if (!(entity instanceof Fireball fireball)) {
+                return;
+            }
+
+            if (plugin.fireballSenders.containsKey(fireball)) {
+                String layer = "";
+                List<Block> blocks = event.blockList();
+
+                for (Block block : blocks) {
+
+                    int blockX = block.getLocation().getBlockX();
+                    int blockY = block.getLocation().getBlockY();
+                    int blockZ = block.getLocation().getBlockZ();
+
+                    switch (blockY) {
+                        case 194 -> layer = "layer1";
+                        case 187 -> layer = "layer2";
+                        case 179 -> layer = "layer3";
+                    }
+
+                    CrumbleBlockRecord record = new CrumbleBlockRecord(plugin.fireballSenders.get(fireball).getName(), System.currentTimeMillis(), blockX, blockY, blockZ);
+                    plugin.crumbleBlockRecords.computeIfAbsent(layer, k -> new ArrayList<>()).add(record);
                 }
             }
         }

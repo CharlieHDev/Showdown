@@ -137,6 +137,8 @@ public class LastHitEvent implements Listener {
             e.setCancelled(true);
             if (e.getDamager() instanceof Fireball fireball && e.getEntity() instanceof Player victim){
                 if(plugin.fireballSenders.containsKey(fireball)){
+                    if (Objects.equals(PlayerConfig.get().getString("players." + victim.getName() + ".team"), PlayerConfig.get().getString("players." + plugin.fireballSenders.get(fireball).getName() + ".team"))) return;
+
                     plugin.crumbleKillTracker.put(
                             victim.getName(),
                             new CrumbleKillData(plugin.fireballSenders.get(fireball).getName(), System.currentTimeMillis())
@@ -728,6 +730,7 @@ public class LastHitEvent implements Listener {
                     }
 
                     plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died to " + plugin.getPlayerDisplayName(killer.getName()));
+                    victim.playSound(victim.getLocation(), Sound.ENTITY_ARMADILLO_UNROLL_START, 1F, 1F);
                     plugin.playerKillCount.put(killer.getName(), plugin.playerKillCount.get(killer.getName()) + 1);
                     if(PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(killer.getName())) {
                         PlayerInfoConfig.get().set("players." + killer.getName() + ".kills", PlayerInfoConfig.get().getInt("players." + killer.getName() + ".kills") + 1);

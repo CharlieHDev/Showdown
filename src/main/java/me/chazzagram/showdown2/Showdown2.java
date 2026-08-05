@@ -41,6 +41,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
+import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.Scoreboard;
@@ -64,6 +65,17 @@ import java.util.stream.Collectors;
 import static org.bukkit.util.NumberConversions.round;
 
 public final class Showdown2 extends JavaPlugin implements Listener {
+
+    public HashMap<String, SulfurGolfQueue> golfQueues = new HashMap<>();
+
+    BukkitTask crumblePearlTask;
+
+    public LobbyPvPManager pvpArenaManager;
+
+    // Crumble Clash Border
+    public final int ccMIN_X = 21,  ccMAX_X = 112;
+    public final int ccMIN_Y = 175, ccMAX_Y = 230;
+    public final int ccMIN_Z = 455, ccMAX_Z = 546;
 
     List<SulfurCube> votingCubes = new ArrayList<>();
 
@@ -504,6 +516,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
         mongoManager = new MongoManager();
 
+        pvpArenaManager = new LobbyPvPManager(plugin);
+
 
         for(int i = 0; i <= 3; i++){
             Block[] blocks = new Block[2];
@@ -902,6 +916,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                     lastMounted = p;
                 }
             }
+
+            String leavingPlayerTeam = PlayerConfig.get().getString("players." + leavingPlayerName + ".team");
+
+            if(golfQueues.get(leavingPlayerTeam).getCurrentPlayerName().equals(leavingPlayerName)){
+                golfQueues.get(leavingPlayerTeam).updateQueuePosition();
+            }
+
         }
     }
 
@@ -1178,6 +1199,13 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                         timeLeft--;
                         runningTimers.get(name).setValue(timeLeft);
                         bossBarBgTest();
+
+                        if(name.equals("slimegolftimer")){
+                            for(SulfurGolfQueue golfQueue : golfQueues.values()){
+                                golfQueue.displayQueue();
+                            }
+                        }
+
                         if((name.equals("craftalot") || name.equals("finale")) && currentMode.equals("Craftalot")){
                             for(Player p : getPlayers()){
                                 p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(getPlayerCraftlist(p.getName())));
@@ -2052,7 +2080,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 messagePlayer(player, """
                                         §8
                                         §8
-                                        §r⏳ §eWelcome to §a§lSlime Golf§e! The aim of the game is to hit your slimey ball into the hole at the end of the course as quickly as possible!
+                                        §r⏳ §eWelcome to §7§lSulfur Golf§e! The aim of the game is to hit your bouncy ball into the hole at the end of the course as quickly as possible!
                                         §8
                                         """);
                             }
@@ -2068,9 +2096,10 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 messagePlayer(player, """
                                         §8
                                         §8
-                                        §r⏳ §eUse your §aknockback stick §eand work as a team, jump ahead and plan out your strategy, player-sized shortcuts will help you get ahead of the slime for strategic putting strategies!
+                                        §r⏳ §eUse your §aPutter §eto bounce your sulfur cube across the course! Each of your team will be given the putter §bone at a time§e! Hold §cright-click §eto charge your putter, the longer you hold the farther you go!
                                         §8
                                         """);
+//                                                                        §r⏳ §eUse your §aknockback stick §eand work as a team, jump ahead and plan out your strategy, player-sized shortcuts will help you get ahead of the slime for strategic putting strategies!
                             }
                             break;
                         case 27:
@@ -2096,7 +2125,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                     messagePlayer(player, """
                                             §8
                                             §8
-                                            §r⏳ §a§lSlime Golf§e! This is the §b§lMODIFIER ROUND§e, so watch out because anything can happen! Get your slime in the hole as fast as you can...
+                                            §r⏳ §a§lSlime Golf§e! This is the §b§lMODIFIER ROUND§e, so watch out because anything can happen! Get your sulfur cube in the hole as fast as you can...
                                             §8
                                             """);
                                 }
@@ -2124,19 +2153,18 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 //                                player.getInventory().addItem(knockbackStick);
 //                                player.getInventory().addItem(fishingRod);
 //                            }
-                            ItemStack stack = new ItemStack(Material.BOW);
-                            ItemMeta meta = stack.getItemMeta();
-                            meta.setItemModel(new NamespacedKey("amongus", "voteblaster"));
-                            meta.setDisplayName("§a§lPutter!");
-                            meta.addEnchant(Enchantment.INFINITY, 1, true);
-                            stack.setItemMeta(meta);
+//                            ItemStack stack = new ItemStack(Material.BOW);
+//                            ItemMeta meta = stack.getItemMeta();
+//                            meta.setItemModel(new NamespacedKey("amongus", "slingshot"));
+//                            meta.setDisplayName("§a§lPutter!");
+//                            meta.addEnchant(Enchantment.INFINITY, 1, true);
+//                            stack.setItemMeta(meta);
 
                             ItemStack arrow = new ItemStack(Material.ARROW);
-                            ItemMeta arrowmeta = stack.getItemMeta();
+                            ItemMeta arrowmeta = arrow.getItemMeta();
                             arrowmeta.setDisplayName("§f§lARROW!");
-                            stack.setItemMeta(arrowmeta);
+                            arrow.setItemMeta(arrowmeta);
                             for (Player player : Bukkit.getOnlinePlayers()) {
-                                player.getInventory().addItem(stack);
                                 player.getInventory().setItem(35, arrow);
                             }
                             break;
@@ -2154,6 +2182,15 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                         §8
                                         """);
                             }
+                            for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)) {
+                                SulfurGolfQueue golfQueue = new SulfurGolfQueue(plugin, team);
+                                if (!TeamsConfig.get().getStringList("teams." + team + ".players").isEmpty()){
+                                    for (String teamPlayer : TeamsConfig.get().getStringList("teams." + team + ".players")) {
+                                        golfQueue.addPlayer(teamPlayer);
+                                    }
+                                    golfQueues.put(team, golfQueue);
+                                }
+                            }
                             break;
                         case 5, 4, 3, 2, 1:
                             playSoundAll(Sound.BLOCK_NOTE_BLOCK_BIT, 0.3F*(6-timeLeft));
@@ -2162,6 +2199,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                             }
                             break;
                         case 0:
+                            for(SulfurGolfQueue golfQueue : golfQueues.values()){
+                                golfQueue.startQueue();
+                            }
                             if(currentRound == 1) {
                                 for (int[] slimeCmdCoord : slimeCmdCoords) {
                                     for (int i = 0; i <= 1540; i += 220) {
@@ -2271,8 +2311,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
                             startTimer(300, "slimegolftimer");
                             startStopwatch(300, "slimegolf");
-                            pvpEnabled = true;
-                            doubleJumpEnabled = true;
+//                            pvpEnabled = true;
+//                            doubleJumpEnabled = true;
                             runningTimers.remove("slimegolfstart");
                             cancel();
                             break;
@@ -2556,7 +2596,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public void resetSlimeGolf() {
         slimeCheckpoints.clear();
+        slimeGolfSlime.clear();
         golfTeamCubes.clear();
+        golfQueues.clear();
         for (int i = 1; i <= 6; i++) {
             slimeCheckpoints.put(i, 1);
         }
@@ -2746,7 +2788,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
     public List<Integer> slimePoints() {
         return Arrays.asList(
-                448, 404, 376, 344, 316, 296, 276, 256
+                568, 472, 400, 352, 328, 304, 280, 256
         );
     }
 
@@ -6412,6 +6454,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         currentSpleef = "&fWaiting..";
         deadPlayers.clear();
         deadTeams.clear();
+        crumbleBlockRecords.clear();
         if(currentRound == 1) {
             playerKillCount.clear();
             for (Player player : getPlayers()) {
@@ -6848,6 +6891,61 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         itemBoxes.add(itembox);
     }
 
+    public void runPearlCheck() {
+        crumblePearlTask = new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!plugin.currentMode.equals("Crumble Clash")) return;
+
+                for (Entity entity : Bukkit.getWorld("build").getEntities()) {
+                    if (!(entity instanceof EnderPearl pearl)) continue;
+
+                    Location loc = pearl.getLocation();
+
+                    boolean outOfBounds = loc.getX() < ccMIN_X || loc.getX() > ccMAX_X
+                            || loc.getY() < ccMIN_Y || loc.getY() > ccMAX_Y
+                            || loc.getZ() < ccMIN_Z || loc.getZ() > ccMAX_Z;
+
+                    if (outOfBounds) {
+                        ProjectileSource shooter = pearl.getShooter();
+                        pearl.remove();
+
+                        if (shooter instanceof Player player) {
+                            player.sendMessage("§cYour ender pearl did not land safely.");
+                            returnPearl(player);
+                        }
+                    }
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 1L);
+    }
+
+    private void returnPearl(Player player) {
+        int pearlCount = 0;
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && item.getType() == Material.ENDER_PEARL) {
+                pearlCount += item.getAmount();
+            }
+        }
+
+        if (pearlCount < 3) {
+            ItemStack pearl = new ItemStack(Material.ENDER_PEARL);
+            ItemMeta meta = pearl.getItemMeta();
+            meta.setDisplayName("§aEnder Pearl");
+            pearl.setItemMeta(meta);
+            player.getInventory().addItem(pearl);
+
+            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1F, 1F);
+            player.spigot().sendMessage(
+                    ChatMessageType.ACTION_BAR,
+                    TextComponent.fromLegacyText("§7[§a+§7] §r" + pearl.getItemMeta().getDisplayName())
+            );
+            player.sendMessage("§aA pearl has been returned to your inventory.");
+        } else {
+            player.sendMessage("§cYou have reached the maximum pearl capacity.");
+        }
+    }
+
 
     public void startCrumbleClash(){
         ccRoundStarted = false;
@@ -7052,6 +7150,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
         if (closest == null) return;
 
         CrumbleKillData existing = crumbleKillTracker.get(player.getName());
+
+        if (Objects.equals(PlayerConfig.get().getString("players." + player.getName() + ".team"), PlayerConfig.get().getString("players." + closest.attacker + ".team"))) return;
 
         if (existing == null || closest.time > existing.time) {
             crumbleKillTracker.put(player.getName(), new CrumbleKillData(closest.attacker, closest.time));
@@ -7562,6 +7662,9 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 }
                                 if(Objects.equals(currentSpleef, "§6§lCopper Spleef")){
                                     copperDecay = true;
+                                }
+                                if(Objects.equals(currentSpleef, "§a§lEnder Spleef")){
+                                    runPearlCheck();
                                 }
                                 if(copperDecay){
                                     startCopperDecay();
@@ -9949,7 +10052,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             int placement = 0;
             for (String key : sortMap(modeTeamPoints).keySet()) {
                 placement++;
-                messagePlayer(player, String.format("%-15s%15s", placement + ". " + getTeamDisplayName(key), "§e§l\uD83D\uDCB0" + sortMap(modeTeamPoints).get(key) + " §7(\uD83D\uDCB0" + Math.floor(sortMap(modeTeamPoints).get(key) / multiplier)) + " §7§ox" + String.format("%.2f", multiplier) + ")");
+//                messagePlayer(player, String.format("%-15s%15s", placement + ". " + getTeamDisplayName(key), "§e§l\uD83D\uDCB0" + sortMap(modeTeamPoints).get(key) + " §7(\uD83D\uDCB0" + Math.floor(sortMap(modeTeamPoints).get(key) / multiplier)) + " §7§ox" + String.format("%.2f", multiplier) + ")");
+                messagePlayer(player, formatLine(placement + ". " + getTeamDisplayName(key), "§e§l\uD83D\uDCB0" + sortMap(modeTeamPoints).get(key) + " §7(\uD83D\uDCB0" + Math.floor(sortMap(modeTeamPoints).get(key) / multiplier) + " §7§ox" + String.format("%.2f", multiplier) + ")", 250));
             }
             messagePlayer(player, "§f--------------------------");
         }
@@ -9961,7 +10065,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             int placement = 0;
             for (String key : sortMap(modeTeamFullPoints).keySet()) {
                 placement++;
-                messagePlayer(player, String.format("%-15s%15s", placement + ". " + getTeamDisplayName(key), "§e§l\uD83D\uDCB0" + sortMap(modeTeamPoints).get(key) + " §7(\uD83D\uDCB0" + Math.floor(sortMap(modeTeamPoints).get(key) / multiplier)) + " §7§ox" + String.format("%.2f", multiplier) + ")");
+//                messagePlayer(player, String.format("%-15s%15s", placement + ". " + getTeamDisplayName(key), "§e§l\uD83D\uDCB0" + sortMap(modeTeamPoints).get(key) + " §7(\uD83D\uDCB0" + Math.floor(sortMap(modeTeamPoints).get(key) / multiplier)) + " §7§ox" + String.format("%.2f", multiplier) + ")");
+                messagePlayer(player, formatLine(placement + ". " + getTeamDisplayName(key), "§e§l\uD83D\uDCB0" + sortMap(modeTeamPoints).get(key) + " §7(\uD83D\uDCB0" + Math.floor(sortMap(modeTeamPoints).get(key) / multiplier) + " §7§ox" + String.format("%.2f", multiplier) + ")", 250));
             }
             messagePlayer(player, "§f--------------------------");
         }
@@ -9976,7 +10081,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             for (int i = 0; i <= 7; i++) {
                 if(players.size() >= i+1) {
                     if (players.get(i) != null && points.get(i) != null) {
-                        messagePlayer(player, String.format("%-15s%15s", i+1 + ". " + getPlayerDisplayName(players.get(i)), "§e§l\uD83D\uDCB0" + points.get(i)));
+//                        messagePlayer(player, String.format("%-15s%15s", i+1 + ". " + getPlayerDisplayName(players.get(i)), "§e§l\uD83D\uDCB0" + points.get(i)));
+                        messagePlayer(player, formatLine(i+1 + ". " + getPlayerDisplayName(players.get(i)), "§e§l\uD83D\uDCB0" + points.get(i), 210));
                     }
                 }
             }
@@ -9986,7 +10092,8 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             index = 1;
             for (String player2 : players) {
                 if (p.getName().equals(player2)){
-                    messagePlayer(p, String.format("%-15s%15s", index + ". " + getPlayerDisplayName(players.get(index-1)), "§e§l\uD83D\uDCB0" + points.get(index-1)));
+//                    messagePlayer(p, String.format("%-15s%15s", index + ". " + getPlayerDisplayName(players.get(index-1)), "§e§l\uD83D\uDCB0" + points.get(index-1)));
+                    messagePlayer(p, formatLine(index + ". " + getPlayerDisplayName(players.get(index-1)), "§e§l\uD83D\uDCB0" + points.get(index-1), 210));
                     break;
                 }
                 index++;
@@ -10089,7 +10196,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             for (String key : leaderMode) {
                 placement++;
                 double percentage = roundToTwoDecimalPlaces(((double) leaderModeVotes.get(placement - 1) /totalvotes)*100);
-                messagePlayer(player, placement + ". " + plugin.modeColors.get(key) + key + "§7: §e§l" + leaderModeVotes.get(placement-1) + " spaces §e§o(" + percentage + "%)");
+                messagePlayer(player, formatLine(placement + ". " + plugin.modeColors.get(key) + key, "§e§l" + leaderModeVotes.get(placement-1) + " spaces §e§o(" + percentage + "%)", 210));
             }
             messagePlayer(player, "§f--------------------");
         }
@@ -10304,7 +10411,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                     ItemStack arrow = new ItemStack(Material.ARROW);
                                     ItemMeta arrowmeta = stack.getItemMeta();
                                     arrowmeta.setDisplayName("§f§lARROW!");
-                                    stack.setItemMeta(arrowmeta);
+                                    arrow.setItemMeta(arrowmeta);
                                     for (Player player : Bukkit.getOnlinePlayers()) {
                                         player.sendTitle("§f§lᴠᴏᴛᴇ ᴍᴏᴅᴇ", "§a§lBlasters", 0, 40, 20);
                                         messagePlayer(player, """
@@ -10321,7 +10428,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                 if(Objects.equals(votingMode, "bounce")){
                                     ItemStack stack = new ItemStack(Material.BOW);
                                     ItemMeta meta = stack.getItemMeta();
-                                    meta.setItemModel(new NamespacedKey("amongus", "voteblaster"));
+                                    meta.setItemModel(new NamespacedKey("amongus", "slingshot"));
                                     meta.setDisplayName("§a§lSling Shot!");
                                     meta.addEnchant(Enchantment.INFINITY, 1, true);
                                     stack.setItemMeta(meta);
@@ -10329,7 +10436,7 @@ public final class Showdown2 extends JavaPlugin implements Listener {
                                     ItemStack arrow = new ItemStack(Material.ARROW);
                                     ItemMeta arrowmeta = stack.getItemMeta();
                                     arrowmeta.setDisplayName("§f§lARROW!");
-                                    stack.setItemMeta(arrowmeta);
+                                    arrow.setItemMeta(arrowmeta);
 
                                     for(Player p : getPlayers()){
                                         SulfurCube cube = (SulfurCube) p.getWorld().spawnEntity(p.getLocation(), EntityType.SULFUR_CUBE);
@@ -11070,6 +11177,11 @@ public final class Showdown2 extends JavaPlugin implements Listener {
             player.stopAllSounds();
         }
 
+        if(crumblePearlTask != null) {
+            crumblePearlTask.cancel();
+            crumblePearlTask = null;
+        }
+
         if(currentMode.equals("Dimension Dash")) {
             ddTimer.cancel();
             for(TextDisplay td : ddMapTiles){
@@ -11722,11 +11834,12 @@ public final class Showdown2 extends JavaPlugin implements Listener {
     public void slimeGolfTimes(){
         for(Player p : Bukkit.getOnlinePlayers()) {
             messagePlayer(p, " §f-  §e§lʜᴏʟᴇ ᴛɪᴍᴇs  §f-");
-            for (String team : slimeFinishers.keySet()) {
-                messagePlayer(p, "§e§l⏱§e" + getTimerValue(slimeFinishers.get(team)) + " §f- " + getTeamDisplayName(team));
+            SequencedMap<String, Integer> orderedSlimeFinishes = sortMap(slimeFinishers).reversed();
+            for (String team : orderedSlimeFinishes.keySet()) {
+                messagePlayer(p, formatLine(getTeamDisplayName(team), "§e§l⏱§e" + getTimerValue(orderedSlimeFinishes.get(team)), 150));
             }
             for(String team : TeamsConfig.get().getConfigurationSection("teams").getKeys(false)) {
-                if(!slimeFinishers.containsKey(team)) {
+                if(!orderedSlimeFinishes.containsKey(team)) {
                     messagePlayer(p, "DNF. " + getTeamDisplayName(team));
                 }
             }
@@ -15759,6 +15872,32 @@ public final class Showdown2 extends JavaPlugin implements Listener {
 
             plugin.runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, 51));
         }
+    }
+
+    public String formatLine(String leftText, String rightText, int targetWidth) {
+        // Regex for emojis and circled numbers
+        String regex = "\uD83D\uDCB0|[❶-❽]";
+
+        // Strip formatting and special characters for width calculation
+        String strippedLeft = leftText.replaceAll(regex, "");
+        String strippedRight = rightText.replaceAll(regex, "");
+
+        // Measure widths using your font utility
+        int leftWidth = FontUtils.getStringWidth(strippedLeft);
+        int rightWidth = FontUtils.getStringWidth(strippedRight);
+
+        // Remaining width to fill
+        int remainingWidth = targetWidth - leftWidth - rightWidth;
+
+        // If no space remains, just concatenate
+        if (remainingWidth <= 0) {
+            return leftText + rightText;
+        }
+
+        // Generate the exact-width space character(s)
+        String space = getExactSpace(remainingWidth);
+
+        return leftText + space + rightText;
     }
 }
 

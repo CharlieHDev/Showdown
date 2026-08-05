@@ -324,6 +324,10 @@ public class PlayerInteractionEvent implements Listener {
             Vector launch = direction.clone().add(new Vector(0, 0.25, 0)).normalize();
 
             cube.setVelocity(launch.multiply(amplify));
+
+            String leavingPlayerTeam = PlayerConfig.get().getString("players." + player.getName() + ".team");
+
+            plugin.golfQueues.get(leavingPlayerTeam).updateQueuePosition();
         }
 
 

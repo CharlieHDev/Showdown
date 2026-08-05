@@ -37,6 +37,8 @@ public class MainCommand implements CommandExecutor {
         this.plugin = plugin;
     }
 
+    Location pvpArenaLocation = new Location(Bukkit.getServer().getWorld("build"), 168.5, 141, 682.5, -90, 0);
+
     Location safeSpace = new Location(Bukkit.getServer().getWorld("build"), -71, 159, 581);
 
     Location safeSpace2 = new Location(Bukkit.getServer().getWorld("build"), -166, 161, 697);
@@ -146,6 +148,30 @@ public class MainCommand implements CommandExecutor {
                                     trident.setItemMeta(meta);
                                     p.getInventory().addItem(trident);
                                     p.sendTitle("", "§b§l+ ᴛʀɪᴅᴇɴᴛ", 0, 40, 0);
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case "enterpvparena":
+                    if(args.length > 1){
+                        if (Bukkit.getPlayer(args[1]) != null) {
+                            Player p = Bukkit.getPlayer(args[1]);
+                            if(p != null) {
+                                if (plugin.pvpArenaManager.getArenaEnabled() && !plugin.pvpArenaManager.getArenaPlayers().contains(p.getName())) {
+                                    plugin.pvpArenaManager.joinPvPArena(p);
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case "leavepvparena":
+                    if(args.length > 1){
+                        if (Bukkit.getPlayer(args[1]) != null) {
+                            Player p = Bukkit.getPlayer(args[1]);
+                            if(p != null) {
+                                if (plugin.pvpArenaManager.getArenaEnabled()) {
+                                    plugin.pvpArenaManager.leavePvPArena(p);
                                 }
                             }
                         }
@@ -784,6 +810,7 @@ public class MainCommand implements CommandExecutor {
                                         plugin.deadPlayers.add(args[1]);
                                         plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| You died.");
                                         p.sendTitle("§c§lYou died.", "", 0, 20, 20);
+                                        p.playSound(p.getLocation(), Sound.ENTITY_ARMADILLO_UNROLL_START, 1F, 1F);
                                         plugin.ghostManager.addGhostPlayer(p.getName());
                                         Bukkit.getScheduler().runTaskLater(plugin, () -> {
                                             p.setAllowFlight(true);
@@ -830,6 +857,7 @@ public class MainCommand implements CommandExecutor {
                                         if (teamDead) {
                                             for (Player player2 : Bukkit.getOnlinePlayers()) {
                                                 plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + " §chave been eliminated.\n§f");
+                                                player2.playSound(player2.getLocation(), Sound.ENTITY_ARMADILLO_PEEK, 1F, 1F);
                                             }
                                             plugin.deadTeams.add(PlayerConfig.get().getString("players." + args[1] + ".team"));
                                         }
@@ -946,6 +974,7 @@ public class MainCommand implements CommandExecutor {
                                             plugin.deadPlayers.add(args[1]);
                                             plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| You died.");
                                             p.sendTitle("§c§lYou died.", "", 0, 20, 20);
+                                            p.playSound(p.getLocation(), Sound.ENTITY_ARMADILLO_UNROLL_START, 1F, 1F);
                                             plugin.ghostManager.addGhostPlayer(p.getName());
                                             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                                                 p.setAllowFlight(true);
@@ -999,6 +1028,7 @@ public class MainCommand implements CommandExecutor {
                                             if (teamDead) {
                                                 for (Player player2 : Bukkit.getOnlinePlayers()) {
                                                     plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + " §chave been eliminated.\n§f");
+                                                    player2.playSound(player2.getLocation(), Sound.ENTITY_ARMADILLO_PEEK, 1F, 1F);
                                                 }
                                                 plugin.deadTeams.add(PlayerConfig.get().getString("players." + args[1] + ".team"));
                                             }
@@ -1315,6 +1345,7 @@ public class MainCommand implements CommandExecutor {
                                         plugin.deadPlayers.add(args[1]);
                                         plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| You died.");
                                         p.sendTitle("§c§lYou died.", "", 0, 20, 20);
+                                        p.playSound(p.getLocation(), Sound.ENTITY_ARMADILLO_UNROLL_START, 1F, 1F);
                                         plugin.ghostManager.addGhostPlayer(p.getName());
                                         Bukkit.getScheduler().runTaskLater(plugin, () -> {
                                             p.setAllowFlight(true);
@@ -1374,6 +1405,7 @@ public class MainCommand implements CommandExecutor {
                                         if (teamDead) {
                                             for (Player player2 : Bukkit.getOnlinePlayers()) {
                                                 plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + " §chave been eliminated.\n§f");
+                                                player2.playSound(player2.getLocation(), Sound.ENTITY_ARMADILLO_PEEK, 1F, 1F);
                                             }
                                             plugin.deadTeams.add(PlayerConfig.get().getString("players." + args[1] + ".team"));
                                         }
@@ -1403,6 +1435,7 @@ public class MainCommand implements CommandExecutor {
                                         plugin.deadPlayers.add(args[1]);
                                         plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| You died.");
                                         p.sendTitle("§c§lYou died.", "", 0, 20, 20);
+                                        p.playSound(p.getLocation(), Sound.ENTITY_ARMADILLO_UNROLL_START, 1F, 1F);
                                         plugin.ghostManager.addGhostPlayer(p.getName());
                                         Bukkit.getScheduler().runTaskLater(plugin, () -> {
                                             p.setAllowFlight(true);
@@ -1467,6 +1500,7 @@ public class MainCommand implements CommandExecutor {
                                         if (teamDead) {
                                             for (Player player2 : Bukkit.getOnlinePlayers()) {
                                                 plugin.messagePlayer(player2, "\n§c§l\uD83D\uDC80 §7| " + plugin.getTeamDisplayName(PlayerConfig.get().getString("players." + args[1] + ".team")) + " §chave been eliminated.\n§f");
+                                                player2.playSound(player2.getLocation(), Sound.ENTITY_ARMADILLO_PEEK, 1F, 1F);
                                             }
                                             plugin.deadTeams.add(PlayerConfig.get().getString("players." + args[1] + ".team"));
                                         }
@@ -1559,6 +1593,15 @@ public class MainCommand implements CommandExecutor {
                         rubyTeam.add(player.getName());
                     }
                     TeamsConfig.get().set("teams.RubyRaiders.players", rubyTeam);
+                    break;
+                case "pvparena":
+                    if(plugin.pvpArenaManager.getArenaEnabled()){
+                        p.teleport(pvpArenaLocation);
+                        p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1F, 1F);
+                        plugin.messagePlayer(p, "§6[§e!§6] §eTeleported to §cPvP Practice Arena§e.");
+                    } else {
+                        plugin.messagePlayer(p, "§6[§e!§6] §e§cPvP Practice Arena §eis currently not open.");
+                    }
                     break;
                 case "modeindiv":
                     boolean shown = true;

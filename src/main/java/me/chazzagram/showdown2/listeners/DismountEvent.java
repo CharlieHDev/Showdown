@@ -21,7 +21,7 @@ public class DismountEvent implements Listener {
     @EventHandler
     public void onDismount(EntityDismountEvent event) {
         if (event.getEntity() instanceof Player p) {
-            if(plugin.currentMode.equals("Slime Golf")) {
+            if(plugin.currentMode.equals("Slime Golf") || plugin.currentMode.equals("Voting")) {
                 if (event.getDismounted() instanceof SulfurCube || event.getDismounted() instanceof Player) {
                     event.setCancelled(true);
                 }

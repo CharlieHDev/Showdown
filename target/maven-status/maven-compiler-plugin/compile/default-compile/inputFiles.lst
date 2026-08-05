@@ -37,6 +37,7 @@ C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\li
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\ItemBox.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\LastHitEvent.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\LobbyMusicManager.java
+C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\LobbyPvPManager.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\PickupItemEvent.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\PlayerChatEvent.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\PlayerInteractionEvent.java
@@ -44,6 +45,7 @@ C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\li
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\ReadyEvent.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\RiptideEvent.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\SlimeSplittingEvent.java
+C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\SulfurGolfQueue.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\VoteFrozenManager.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\VoteSneakBombEvent.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\VoteWalkEvent.java

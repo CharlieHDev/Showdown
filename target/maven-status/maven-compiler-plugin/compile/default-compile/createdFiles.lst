@@ -1,6 +1,7 @@
 me\chazzagram\showdown2\files\MapsPlayedConfig.class
 me\chazzagram\showdown2\listeners\PlayerInteractionEvent.class
 me\chazzagram\showdown2\listeners\VoteFrozenManager$2.class
+me\chazzagram\showdown2\listeners\SulfurGolfQueue.class
 me\chazzagram\showdown2\Showdown2$47.class
 me\chazzagram\showdown2\Showdown2$57.class
 me\chazzagram\showdown2\Showdown2$37.class
@@ -19,6 +20,7 @@ me\chazzagram\showdown2\Showdown2$2.class
 me\chazzagram\showdown2\commands\MainCommand$3.class
 me\chazzagram\showdown2\listeners\InventoryEvent$1.class
 me\chazzagram\showdown2\Showdown2$51.class
+me\chazzagram\showdown2\Showdown2$27$3.class
 me\chazzagram\showdown2\listeners\DismountEvent.class
 me\chazzagram\showdown2\listeners\LastHitEvent$2.class
 me\chazzagram\showdown2\Showdown2$31.class
@@ -42,6 +44,7 @@ me\chazzagram\showdown2\Showdown2$19.class
 me\chazzagram\showdown2\listeners\PlayerInteractionEvent$2.class
 me\chazzagram\showdown2\Showdown2$3.class
 me\chazzagram\showdown2\Showdown2$65.class
+me\chazzagram\showdown2\Showdown2$75.class
 me\chazzagram\showdown2\Showdown2$29.class
 me\chazzagram\showdown2\Showdown2$59.class
 me\chazzagram\showdown2\listeners\PlayerChatEvent.class
@@ -89,6 +92,7 @@ me\chazzagram\showdown2\Showdown2$43.class
 me\chazzagram\showdown2\Showdown2$63.class
 me\chazzagram\showdown2\listeners\CraftalotEvent.class
 me\chazzagram\showdown2\files\PlayerInfoConfig.class
+me\chazzagram\showdown2\Showdown2$27$2.class
 me\chazzagram\showdown2\files\GubTPConfig.class
 me\chazzagram\showdown2\Showdown2$28.class
 me\chazzagram\showdown2\expansions\MongoManager.class
@@ -100,7 +104,6 @@ me\chazzagram\showdown2\Showdown2$9.class
 me\chazzagram\showdown2\Showdown2$48.class
 me\chazzagram\showdown2\files\PanConfig.class
 me\chazzagram\showdown2\Showdown2$25.class
-me\chazzagram\showdown2\Showdown2$26$1.class
 me\chazzagram\showdown2\Showdown2$45.class
 me\chazzagram\showdown2\listeners\InventoryEvent$2.class
 me\chazzagram\showdown2\files\FontUtils.class
@@ -119,7 +122,6 @@ me\chazzagram\showdown2\listeners\DashTimeData.class
 me\chazzagram\showdown2\listeners\DoubleJumpEvent$1.class
 me\chazzagram\showdown2\Showdown2$7.class
 me\chazzagram\showdown2\commands\MainCommand.class
-me\chazzagram\showdown2\Showdown2$26$2.class
 me\chazzagram\showdown2\Showdown2$71.class
 me\chazzagram\showdown2\listeners\InventoryEvent.class
 me\chazzagram\showdown2\Showdown2$56.class
@@ -128,11 +130,11 @@ me\chazzagram\showdown2\Showdown2$16.class
 me\chazzagram\showdown2\Showdown2$26.class
 me\chazzagram\showdown2\files\SpectatorConfig.class
 me\chazzagram\showdown2\Showdown2$66.class
-me\chazzagram\showdown2\Showdown2$26$3.class
 me\chazzagram\showdown2\Showdown2$38.class
 me\chazzagram\showdown2\listeners\BucketListener.class
 me\chazzagram\showdown2\Showdown2$61.class
 me\chazzagram\showdown2\Showdown2$21.class
+me\chazzagram\showdown2\listeners\LobbyPvPManager.class
 me\chazzagram\showdown2\Showdown2$15$1.class
 me\chazzagram\showdown2\Showdown2.class
 me\chazzagram\showdown2\listeners\LastHitEvent$4.class
@@ -147,6 +149,7 @@ me\chazzagram\showdown2\Showdown2$15.class
 me\chazzagram\showdown2\Showdown2$55.class
 me\chazzagram\showdown2\listeners\RiptideEvent.class
 me\chazzagram\showdown2\Showdown2$27.class
+me\chazzagram\showdown2\Showdown2$27$1.class
 me\chazzagram\showdown2\commands\MainCommand$7.class
 me\chazzagram\showdown2\listeners\CustomFurnace.class
 me\chazzagram\showdown2\listeners\SlimeSplittingEvent.class

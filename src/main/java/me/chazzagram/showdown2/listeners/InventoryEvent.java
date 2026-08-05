@@ -626,6 +626,18 @@ public class InventoryEvent implements Listener {
                                 plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic equipped.");
                             }
                             break;
+                        case 9:
+                            if(e.getWhoClicked().getInventory().contains(PhilipConfig.get().getItemStack("cosmetics.10.item"))){
+                                e.getWhoClicked().getInventory().remove(PhilipConfig.get().getItemStack("cosmetics.10.item"));
+                                plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic unequipped.");
+                            } else if (e.getWhoClicked().getInventory().getItemInOffHand().equals(PhilipConfig.get().getItemStack("cosmetics.10.item"))) {
+                                e.getWhoClicked().getInventory().setItemInOffHand(new ItemStack(Material.AIR));
+                                plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic unequipped.");
+                            } else {
+                                e.getWhoClicked().getInventory().setItemInOffHand(PhilipConfig.get().getItemStack("cosmetics.10.item"));
+                                plugin.messagePlayer((Player) e.getWhoClicked(), "§eCosmetic equipped.");
+                            }
+                            break;
                     }
                 } else {
                     plugin.messagePlayer((Player) e.getWhoClicked(), "You cannot afford this cosmetic.");
