@@ -27,6 +27,7 @@ me\chazzagram\showdown2\Showdown2$31.class
 me\chazzagram\showdown2\listeners\FireballEvent.class
 me\chazzagram\showdown2\commands\MainCommand$6.class
 me\chazzagram\showdown2\listeners\CrumbleBlockRecord.class
+me\chazzagram\showdown2\commands\EmoteCommand.class
 me\chazzagram\showdown2\Showdown2$74.class
 me\chazzagram\showdown2\files\PresentsConfig.class
 me\chazzagram\showdown2\Showdown2$54.class
@@ -38,6 +39,7 @@ me\chazzagram\showdown2\Showdown2$42.class
 me\chazzagram\showdown2\listeners\LastHitEvent$5.class
 me\chazzagram\showdown2\files\GameOrderConfig.class
 me\chazzagram\showdown2\Showdown2$22.class
+me\chazzagram\showdown2\commands\LobbyMusicCommand.class
 me\chazzagram\showdown2\expansions\SpigotExpansion.class
 me\chazzagram\showdown2\files\PlayerConfig.class
 me\chazzagram\showdown2\Showdown2$19.class
@@ -56,6 +58,7 @@ me\chazzagram\showdown2\Showdown2$36.class
 me\chazzagram\showdown2\Showdown2$46.class
 me\chazzagram\showdown2\listeners\LastHitEvent$1.class
 me\chazzagram\showdown2\listeners\VoteSneakBombEvent$2.class
+me\chazzagram\showdown2\commands\TeamLeaderCommand.class
 me\chazzagram\showdown2\Showdown2$41.class
 me\chazzagram\showdown2\listeners\PlayerInteractionEvent$1.class
 me\chazzagram\showdown2\Showdown2$18.class
@@ -71,6 +74,7 @@ me\chazzagram\showdown2\commands\MainCommand$4.class
 me\chazzagram\showdown2\Showdown2$35.class
 me\chazzagram\showdown2\listeners\BreakBlockEvent.class
 me\chazzagram\showdown2\Showdown2$52.class
+me\chazzagram\showdown2\commands\IndivLeaderCommand.class
 me\chazzagram\showdown2\Showdown2$12.class
 me\chazzagram\showdown2\listeners\LastHitEvent$3.class
 me\chazzagram\showdown2\listeners\LastHitEvent.class
@@ -93,6 +97,7 @@ me\chazzagram\showdown2\Showdown2$63.class
 me\chazzagram\showdown2\listeners\CraftalotEvent.class
 me\chazzagram\showdown2\files\PlayerInfoConfig.class
 me\chazzagram\showdown2\Showdown2$27$2.class
+me\chazzagram\showdown2\commands\PvPArenaCommand.class
 me\chazzagram\showdown2\files\GubTPConfig.class
 me\chazzagram\showdown2\Showdown2$28.class
 me\chazzagram\showdown2\expansions\MongoManager.class
@@ -155,4 +160,5 @@ me\chazzagram\showdown2\listeners\CustomFurnace.class
 me\chazzagram\showdown2\listeners\SlimeSplittingEvent.class
 me\chazzagram\showdown2\Showdown2$72.class
 me\chazzagram\showdown2\Showdown2$32.class
+me\chazzagram\showdown2\commands\ModeIndivCommand.class
 me\chazzagram\showdown2\files\DeathMessagesConfig.class

@@ -41,7 +41,7 @@ public class LobbyPvPManager {
         this.arenaEnabled = true;
         pvpArenaLocation = new Location(Bukkit.getServer().getWorld("build"), 168.5, 141, 682.5, -90, 0);
 
-        kitSword = new ItemStack(Material.IRON_SWORD, 1);
+        kitSword = new ItemStack(Material.STONE_SWORD, 1);
         kitChestplate = new ItemStack(Material.IRON_CHESTPLATE, 1);
         kitLeggings = new ItemStack(Material.CHAINMAIL_LEGGINGS, 1);
         kitBoots = new ItemStack(Material.IRON_BOOTS, 1);
@@ -70,23 +70,27 @@ public class LobbyPvPManager {
     public void joinPvPArena(Player p){
         arenaPlayers.add(p.getName());
         givePvPKit(p);
-        plugin.messagePlayer(p, "§c[⚔] You have entered the PvP practice arena.");
+        plugin.messagePlayer(p, "§7[⚔] You have entered the PvP practice arena.");
         p.playSound(p.getLocation(), Sound.BLOCK_END_PORTAL_FRAME_FILL, 1F, 1F);
 
         TextComponent prefix = new TextComponent("[⚔] " + p.getName() + " has entered the PvP practice arena. ");
-        prefix.setColor(ChatColor.RED);
+        prefix.setColor(ChatColor.GRAY);
 
         TextComponent teleportButton = new TextComponent("(Teleport)");
         teleportButton.setColor(ChatColor.YELLOW);
         teleportButton.setUnderlined(true);
-        teleportButton.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/mce pvparena"));
+        teleportButton.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pvparena"));
         teleportButton.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("Click to teleport.")));
 
         prefix.addExtra(teleportButton);
 
         for(Player player : Bukkit.getOnlinePlayers()){
             if(player.equals(p)) continue;
-            player.spigot().sendMessage(prefix);
+            if(arenaPlayers.contains(player.getName())){
+                plugin.messagePlayer(player, "§c[⚔] " + p.getName() + " has entered the PvP practice arena.");
+            } else {
+                player.spigot().sendMessage(prefix);
+            }
         }
     }
 
@@ -94,11 +98,12 @@ public class LobbyPvPManager {
         arenaPlayers.remove(p.getName());
         p.getInventory().clear();
         p.teleport(pvpArenaLocation);
+        p.setHealth(20f);
         p.playSound(p.getLocation(), Sound.BLOCK_END_PORTAL_FRAME_FILL, 1F, 0.5F);
-        plugin.messagePlayer(p, "§c[⚔] You have left the PvP practice arena.");
+        plugin.messagePlayer(p, "§7[⚔] You have left the PvP practice arena.");
         for(Player player : Bukkit.getOnlinePlayers()){
             if(player.equals(p)) continue;
-            plugin.messagePlayer(player, "§c[⚔] " + p.getName() + " has left the PvP practice arena.");
+            plugin.messagePlayer(player, "§7[⚔] " + p.getName() + " has left the PvP practice arena.");
         }
     }
 
@@ -128,6 +133,7 @@ public class LobbyPvPManager {
                 p.getInventory().clear();
 
             }
+            arenaPlayers.clear();
         }
     }
 

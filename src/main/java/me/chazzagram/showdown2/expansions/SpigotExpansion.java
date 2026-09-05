@@ -853,7 +853,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
                     return "§8N/A";
                 }
             case "playersalive":
-                if (plugin.currentMode.equals("Zoomo Go") || plugin.currentMode.equals("Survival Games")) {
+                if (plugin.currentMode.equals("Zoomo Go") || plugin.currentMode.equals("Survival Games") || plugin.currentMode.equals("Crumble Clash")) {
                     return String.valueOf(PlayerConfig.get().getConfigurationSection("players").getKeys(false).size() - plugin.deadPlayers.size());
                 } else {
                     return "§8N/A";
@@ -1350,6 +1350,8 @@ public class SpigotExpansion extends PlaceholderExpansion {
             case "currentmode":
                 if (plugin.finaleActive) {
                     return "Finale";
+                } else if (plugin.eventOver){
+                    return "End";
                 } else {
                     return plugin.currentMode;
                 }
@@ -1407,36 +1409,39 @@ public class SpigotExpansion extends PlaceholderExpansion {
         String positionText;
         String hexString;
 
-        switch(position){
-            case 1:
-                positionText = "1sᴛ";
-                hexString = "#ffe045";
-                break;
+        if(plugin.teamShown[position-1]) {
+            switch (position) {
+                case 1:
+                    positionText = "1sᴛ";
+                    hexString = "#ffe045";
+                    break;
 
-            case 2:
-                positionText = "2ɴᴅ";
-                hexString = "#b6b6b6";
-                break;
+                case 2:
+                    positionText = "2ɴᴅ";
+                    hexString = "#b6b6b6";
+                    break;
 
-            case 3:
-                positionText = "3ʀᴅ";
-                hexString = "#e4b338";
-                break;
+                case 3:
+                    positionText = "3ʀᴅ";
+                    hexString = "#e4b338";
+                    break;
 
 
-            default:
-                positionText = position + "ᴛʜ";
-                hexString = "#FFFFFF";
-                break;
+                default:
+                    positionText = position + "ᴛʜ";
+                    hexString = "#FFFFFF";
+                    break;
+            }
+            TextColor color = TextColor.fromHexString(hexString);
+
+            Component message = Component.text(positionText)
+                    .color(color)
+                    .decorate(TextDecoration.BOLD);
+
+            return LegacyComponentSerializer.legacySection().serialize(message);
+        } else {
+            return "§8---";
         }
-
-        TextColor color = TextColor.fromHexString(hexString);
-
-        Component message = Component.text(positionText)
-                .color(color)
-                .decorate(TextDecoration.BOLD);
-
-        return LegacyComponentSerializer.legacySection().serialize(message);
     }
 
 

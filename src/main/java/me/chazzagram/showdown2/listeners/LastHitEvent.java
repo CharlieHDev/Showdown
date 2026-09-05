@@ -12,6 +12,7 @@ import org.bukkit.damage.DamageType;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -50,7 +51,7 @@ public class LastHitEvent implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerHit(EntityDamageByEntityEvent e) {
 
         if(e.getDamager() instanceof Player p) {
@@ -378,7 +379,26 @@ public class LastHitEvent implements Listener {
                 }
             }
         } else if (plugin.currentMode.equals("Lobby")) {
-            e.setCancelled(true);
+            if(e.getDamager() instanceof Player attacker && e.getEntity() instanceof Player victim) {
+                if (plugin.pvpArenaManager.getArenaPlayers().contains(attacker.getName()) && plugin.pvpArenaManager.getArenaPlayers().contains(victim.getName())) {
+                    if (victim.getHealth() - e.getFinalDamage() <= 0) {
+                        Bukkit.getWorld("build").spawnParticle(Particle.RAID_OMEN, victim.getLocation().clone().add(0, 1, 0), 20, 0.2, 0.5, 0.2, 0);
+                        attacker.playSound(attacker.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 10, 2);
+                        Bukkit.getScheduler().runTaskLater(plugin, () -> attacker.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(plugin.getPlayerDisplayName(victim.getName()) + " §7| §c♥§c§l0.0")), 1L);
+                        for (Player p : Bukkit.getOnlinePlayers()) {
+                            plugin.messagePlayer(p, "§c\uD83D\uDC80 §7| " + plugin.getPlayerDisplayName(victim.getName()) + " §7was slain by " + plugin.getPlayerDisplayName(attacker.getName()));
+                        }
+                        plugin.messagePlayer(victim, "§c\uD83D\uDC80 §7| §cYou died to " + plugin.getPlayerDisplayName(attacker.getName()));
+                        e.setDamage(0);
+                        victim.setHealth(20f);
+                        plugin.pvpArenaManager.leavePvPArena(victim);
+                    }
+                } else {
+                    e.setCancelled(true);
+                }
+            } else {
+                e.setCancelled(true);
+            }
         } else {
             if(plugin.pvpEnabled) {
                 if (e.getDamager() instanceof Player killer && e.getEntity() instanceof Player victim) {
@@ -510,7 +530,7 @@ public class LastHitEvent implements Listener {
                         PlayerInfoConfig.get().set("players." + killer.getName() + ".kills", PlayerInfoConfig.get().getInt("players." + killer.getName() + ".kills") + 1);
                         PlayerInfoConfig.save();
                     }
-                    e.setCancelled(true);
+                    e.setDamage(0);
                     victim.setGameMode(GameMode.SPECTATOR);
                     victim.getInventory().clear();
                     for (ItemStack item : getGubKits().get(plugin.gubGameKills.get(victim.getName()))) {
@@ -599,7 +619,7 @@ public class LastHitEvent implements Listener {
                     victim.getInventory().setArmorContents(null);
                     victim.getInventory().setItemInOffHand(null);
 
-                    e.setCancelled(true);
+                    e.setDamage(0);
                     victim.setGameMode(GameMode.SPECTATOR);
                     plugin.deadPlayers.add(victim.getName());
                     plugin.earnPoints(killer.getName(), 40, true);
@@ -736,7 +756,7 @@ public class LastHitEvent implements Listener {
                         PlayerInfoConfig.get().set("players." + killer.getName() + ".kills", PlayerInfoConfig.get().getInt("players." + killer.getName() + ".kills") + 1);
                         PlayerInfoConfig.save();
                     }
-                    e.setCancelled(true);
+                    e.setDamage(0);
                     victim.setGameMode(GameMode.SPECTATOR);
                     victim.getInventory().clear();
                     givePPKits(victim);
@@ -1091,8 +1111,17 @@ public class LastHitEvent implements Listener {
             || plugin.currentMode.equals("Bridge Builders")
             || plugin.currentMode.equals("Slime Golf")
             || plugin.currentMode.equals("Craftalot")
+            || plugin.currentMode.equals("Voting")
+            || plugin.currentMode.equals("End")
             || plugin.currentMode.equals("Lobby")) {
-            if (e.getEntity() instanceof Player) {
+            if (e.getEntity() instanceof Player victim) {
+                if (plugin.currentMode.equals("Lobby")
+                        && e instanceof EntityDamageByEntityEvent byEntity
+                        && byEntity.getDamager() instanceof Player attacker
+                        && plugin.pvpArenaManager.getArenaPlayers().contains(attacker.getName())
+                        && plugin.pvpArenaManager.getArenaPlayers().contains(victim.getName())) {
+                    return;
+                }
                 e.setCancelled(true);
             }
         }

@@ -97,8 +97,9 @@ public class VoteWalkEvent implements Listener {
                             }
                         }
                     }
-                } else if ((plugin.currentMode.equals("Zoomo Go")) && plugin.doubleJumpEnabled && (event.getPlayer().getGameMode().equals(GameMode.ADVENTURE) || event.getPlayer().getGameMode().equals(GameMode.SURVIVAL))) {
+                } else if ((plugin.currentMode.equals("Zoomo Go") || plugin.currentMode.equals("Slime Golf")) && plugin.doubleJumpEnabled && (event.getPlayer().getGameMode().equals(GameMode.ADVENTURE) || event.getPlayer().getGameMode().equals(GameMode.SURVIVAL))) {
                     Block block = event.getPlayer().getLocation().subtract(0, 0.1, 0).getBlock();
+                    if(!event.getPlayer().getPassengers().isEmpty()) { event.getPlayer().setAllowFlight(false); return; }
                     if (block.getType() != Material.AIR && !plugin.runningTimers.containsKey(event.getPlayer().getName() + "dj")) {
                         event.getPlayer().setAllowFlight(true);
                         event.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§eDOUBLE JUMP READY!"));

@@ -273,6 +273,7 @@ public class MainCommand implements CommandExecutor {
                                         Player p = Bukkit.getServer().getPlayer(args[1]);
                                         String team = PlayerConfig.get().getString("players." + args[1] + ".team");
                                         plugin.ddFinaleTeamCompletions.put(team, (plugin.ddFinaleTeamCompletions.get(team) + 1));
+                                        plugin.ddFinishers.add(args[1]);
                                         p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.getTimer("dimensiondashwatch"), 0, 100, 5);
                                         plugin.messagePlayer(p, "\n§a§lCourse Completed!");
                                         plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.getTimer("dimensiondashwatch") + "\n");
@@ -280,17 +281,49 @@ public class MainCommand implements CommandExecutor {
                                         for (Player player : Bukkit.getOnlinePlayers()) {
                                             plugin.messagePlayer(player, "§f\uD83D\uDC51 §8| " + plugin.getPlayerDisplayName(args[1]) + "§e was §f§l#" + plugin.cdCompletions + " §eto cross all dimensions!");
                                         }
-                                        int teamSize = TeamsConfig.get().getStringList("teams." + team + ".players").size();
-                                        int completions = plugin.ddFinaleTeamCompletions.get(team);
+//                                        int teamSize = TeamsConfig.get().getStringList("teams." + team + ".players").size();
+//                                        int completions = plugin.ddFinaleTeamCompletions.get(team);
 
 
                                         // CRASHED OUT AT THIS. I put "team" instead of "teams".
 //                                        plugin.messageConsole("DDF: " + completions + "/" + teamSize + " have completed the race on team: " + team);
 
 
-                                        if (completions >= teamSize) {
+                                        if (plugin.ddFinishers.size() == 8) {
+                                            List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
+                                            String firstTeam = leaderteams.getFirst();
+                                            String secondTeam = leaderteams.get(1);
+
                                             plugin.runningTimers.remove("dimensiondashwatch");
-                                            plugin.finaleRoundOver(team);
+                                            HashMap<String, Integer> teamScores = new HashMap<>();
+                                            teamScores.put(firstTeam, 0);
+                                            teamScores.put(secondTeam, 0);
+                                            for (int i = 0; i < plugin.ddFinishers.size(); i++) {
+                                                String playerName = plugin.ddFinishers.get(i);
+                                                String playerTeam = PlayerConfig.get().getString("players." + playerName + ".team");
+                                                teamScores.merge(playerTeam, (8-i), Integer::sum);
+                                            }
+
+                                            for(Player player : Bukkit.getOnlinePlayers()) {
+                                                plugin.messagePlayer(player, " §f-  §e§l   ʀᴀᴄᴇ ʀᴇsᴜʟᴛs  §f-");
+                                                for (int i = 0; i < plugin.ddFinishers.size(); i++) {
+                                                    String playerName = plugin.ddFinishers.get(i);
+                                                    plugin.messagePlayer(player, plugin.formatLine((i+1) + ". " + plugin.getPlayerDisplayName(playerName), "§b§l\uD83D\uDCB0" + (8 - i), 170));
+                                                }
+                                                plugin.messagePlayer(player, "§f--------------------------");
+
+                                                plugin.messagePlayer(player, plugin.getTeamDisplayName(firstTeam) + "§7 | §f" + teamScores.get(firstTeam) + "§7 - §f" + teamScores.get(secondTeam) + "§7 | " + plugin.getTeamDisplayName(secondTeam));
+
+                                                plugin.messagePlayer(player, "§f--------------------------");
+                                            }
+
+                                            if(Objects.equals(teamScores.get(firstTeam), teamScores.get(secondTeam))) {
+                                                plugin.finaleRoundOver(PlayerConfig.get().getString("players." + plugin.ddFinishers.getFirst() + ".team"));
+                                            } else if (teamScores.get(firstTeam) > teamScores.get(secondTeam)) {
+                                                plugin.finaleRoundOver(firstTeam);
+                                            } else {
+                                                plugin.finaleRoundOver(secondTeam);
+                                            }
                                         }
 
                                         plugin.ghostManager.addGhostPlayer(p.getName());
@@ -889,7 +922,6 @@ public class MainCommand implements CommandExecutor {
                                             if (plugin.lastHitPlayer.containsKey(args[1])) {
                                                 if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
                                                     plugin.killRecord.add(plugin.getPlayerDisplayName(plugin.lastHitPlayer.get(args[1])) + " §f⚔ " + plugin.getPlayerDisplayName(args[1]));
-                                                    plugin.playerKillCount.merge(plugin.lastHitPlayer.get(args[1]), 1, Integer::sum);
                                                     plugin.earnPoints(plugin.lastHitPlayer.get(args[1]), 4, true);
                                                 }
                                             }
@@ -983,6 +1015,7 @@ public class MainCommand implements CommandExecutor {
                                             if (plugin.lastHitPlayer.containsKey(args[1])) {
                                                 if (!plugin.lastHitPlayer.get(args[1]).isEmpty()) {
                                                     plugin.killRecord.add(plugin.getPlayerDisplayName(plugin.lastHitPlayer.get(args[1])) + " §c⚔ " + plugin.getPlayerDisplayName(args[1]));
+                                                    plugin.playerKillCount.merge(plugin.lastHitPlayer.get(args[1]), 1, Integer::sum);
                                                     if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(plugin.lastHitPlayer.get(args[1]))) {
                                                         PlayerInfoConfig.get().set("players." + plugin.lastHitPlayer.get(args[1]) + ".kills", PlayerInfoConfig.get().getInt("players." + plugin.lastHitPlayer.get(args[1]) + ".kills") + 1);
                                                         PlayerInfoConfig.save();
@@ -1049,7 +1082,6 @@ public class MainCommand implements CommandExecutor {
                                                 if (Objects.equals(plugin.winningTeam, "")) {
                                                     plugin.winningTeam = "NO TEAM";
                                                 }
-                                                plugin.deadTeams.clear();
                                                 plugin.runningTimers.remove("zoomogo");
                                                 plugin.gameEnd();
                                             }
@@ -1356,12 +1388,12 @@ public class MainCommand implements CommandExecutor {
                                         if (data != null && System.currentTimeMillis() - data.time < 5000) {
                                             Player killer = Bukkit.getPlayer(data.attacker);
                                             if (killer != null && !killer.equals(p)) {
-                                                String killerTeam = PlayerConfig.get().getString("player." + killer.getName() + ".team");
-                                                String victimTeam = PlayerConfig.get().getString("player." + args[1] + ".team");
+                                                String killerTeam = PlayerConfig.get().getString("players." + killer.getName() + ".team");
+                                                String victimTeam = PlayerConfig.get().getString("players." + args[1] + ".team");
                                                 if(!Objects.equals(killerTeam, victimTeam)) {
                                                     // Credit kill
-                                                    plugin.killRecord.add(plugin.getPlayerDisplayName(data.attacker) + " §c⚔ " + plugin.getPlayerDisplayName(args[1]));
-                                                    plugin.playerKillCount.putIfAbsent(data.attacker, plugin.playerKillCount.get(data.attacker) + 1);
+                                                    plugin.killRecord.add(plugin.getPlayerDisplayName(killer.getName()) + " §c⚔ " + plugin.getPlayerDisplayName(args[1]));
+                                                    plugin.playerKillCount.merge(data.attacker, 1, Integer::sum);
                                                     if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(data.attacker)) {
                                                         PlayerInfoConfig.get().set("players." + data.attacker + ".kills", PlayerInfoConfig.get().getInt("players." + data.attacker + ".kills") + 1);
                                                         PlayerInfoConfig.save();
@@ -1447,11 +1479,13 @@ public class MainCommand implements CommandExecutor {
                                             Player killer = Bukkit.getPlayer(data.attacker);
                                             if (killer != null && !killer.equals(p)) {
                                                 // Credit kill
-                                                String killerTeam = PlayerConfig.get().getString("player." + killer.getName() + ".team");
-                                                String victimTeam = PlayerConfig.get().getString("player." + args[1] + ".team");
+                                                String killerTeam = PlayerConfig.get().getString("players." + killer.getName() + ".team");
+                                                String victimTeam = PlayerConfig.get().getString("players." + args[1] + ".team");
+
                                                 if(!Objects.equals(killerTeam, victimTeam)) {
                                                     plugin.killRecord.add(plugin.getPlayerDisplayName(data.attacker) + " §c⚔ " + plugin.getPlayerDisplayName(args[1]));
-                                                    plugin.playerKillCount.putIfAbsent(data.attacker, plugin.playerKillCount.get(data.attacker) + 1);
+
+                                                    plugin.playerKillCount.merge(data.attacker, 1, Integer::sum);
                                                     if (PlayerInfoConfig.get().getConfigurationSection("players").getKeys(false).contains(data.attacker)) {
                                                         PlayerInfoConfig.get().set("players." + data.attacker + ".kills", PlayerInfoConfig.get().getInt("players." + data.attacker + ".kills") + 1);
                                                         PlayerInfoConfig.save();
@@ -1465,7 +1499,15 @@ public class MainCommand implements CommandExecutor {
                                         for (Player player : Bukkit.getOnlinePlayers()) {
                                             boolean creditValid = data != null && System.currentTimeMillis() - data.time < 5000;
                                             Player killer = creditValid ? Bukkit.getPlayer(data.attacker) : null;
-                                            boolean validKillCredit = creditValid && killer != null && !killer.equals(p);
+
+                                            boolean sameTeam = false;
+                                            if (creditValid && killer != null) {
+                                                String killerTeam = PlayerConfig.get().getString("players." + data.attacker + ".team");
+                                                String victimTeam = PlayerConfig.get().getString("players." + p.getName() + ".team");
+                                                sameTeam = killerTeam != null && killerTeam.equals(victimTeam);
+                                            }
+
+                                            boolean validKillCredit = creditValid && killer != null && !killer.equals(p) && !sameTeam;
                                             boolean isKiller = validKillCredit && player.getName().equals(data.attacker);
 
                                             if (!plugin.deadPlayers.contains(player.getName()) && !plugin.getSpectators().contains(player)) {
@@ -1521,7 +1563,6 @@ public class MainCommand implements CommandExecutor {
                                             if (Objects.equals(plugin.winningTeam, "")) {
                                                 plugin.winningTeam = "NO TEAM";
                                             }
-                                            plugin.deadTeams.clear();
                                             plugin.runningTimers.remove("crumbleclash");
                                             plugin.gameEnd();
                                         }
@@ -2472,6 +2513,12 @@ public class MainCommand implements CommandExecutor {
                             for (String player : TeamsConfig.get().getStringList("teams." + args[1] + ".players")) {
                                 if (Bukkit.getServer().getPlayer(player) != null) {
                                     Player p = Bukkit.getServer().getPlayer(player);
+
+                                    Objects.requireNonNull(p.getAttribute(Attribute.MOVEMENT_SPEED)).setBaseValue(0.1);
+                                    for(Entity passenger : p.getPassengers()){
+                                        p.removePassenger(passenger);
+                                    }
+
                                     p.sendTitle("§aFINISH", "§8[§f§l⏱§8] §e§o" + plugin.formatTime(System.currentTimeMillis() - plugin.slimeGolfStartTime), 0, 100, 5);
                                     plugin.messagePlayer(p, "§e\uD83D\uDCB0" + pointsEarned + " §8| §a§lHole Completed!");
                                     plugin.messagePlayer(p, "§f§l⏱ §8| §fTime Taken: §e" + plugin.formatTime(System.currentTimeMillis() - plugin.slimeGolfStartTime));

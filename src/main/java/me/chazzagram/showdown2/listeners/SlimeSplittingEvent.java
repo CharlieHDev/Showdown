@@ -4,6 +4,7 @@ import me.chazzagram.showdown2.Showdown2;
 import org.bukkit.entity.Slime;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.CubeMobSplitEvent;
 import org.bukkit.event.entity.SlimeSplitEvent;
 
 public class SlimeSplittingEvent implements Listener {
@@ -15,14 +16,7 @@ public class SlimeSplittingEvent implements Listener {
     }
 
     @EventHandler
-    public void onSlimeSplit(SlimeSplitEvent event) {
-        Slime slime = event.getEntity();
-
-        if(plugin.finaleActive) {
-
-            if (plugin.finaleSlimes.containsKey(slime)) {
-                event.setCancelled(true);
-            }
-        }
+    public void onSlimeSplit(CubeMobSplitEvent event) {
+        event.setCancelled(true);
     }
 }

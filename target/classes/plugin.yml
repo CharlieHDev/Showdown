@@ -1,5 +1,5 @@
 name: Showdown2
-version: 'S4.0.0'
+version: 'S5.0.0'
 main: me.chazzagram.showdown2.Showdown2
 api-version: '1.21'
 depend: [PlaceholderAPI]
@@ -13,3 +13,33 @@ commands:
     permission-message: You don't have permission to run this command.
     aliases:
       - mce
+  music:
+    description: Toggle lobby music.
+    usage: /<command>
+    permission: mcevent.player
+  modeindiv:
+    description: Show mode individual leaderboard.
+    usage: /<command>
+    permission: mcevent.player
+  indiv:
+    description: Show overall individual leaderboard.
+    usage: /<command>
+    permission: mcevent.player
+    aliases:
+      - individual
+  leaderboard:
+    description: Show overall team leaderboard.
+    usage: /<command>
+    permission: mcevent.player
+  pvparena:
+    description: Teleport to the lobby PvP arena.
+    usage: /<command>
+    permission: mcevent.player
+  emote:
+    description: Open emotes menu.
+    usage: /<command>
+    permission: mcevent.player
+permissions:
+  mcevent.player:
+    description: Basic commands for players.
+    default: true

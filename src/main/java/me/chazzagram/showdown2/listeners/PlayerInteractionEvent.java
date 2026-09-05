@@ -5,6 +5,7 @@ import me.chazzagram.showdown2.files.PlayerConfig;
 import me.chazzagram.showdown2.files.SpectatorConfig;
 import me.chazzagram.showdown2.files.TeamsConfig;
 import org.bukkit.*;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.*;
@@ -18,6 +19,7 @@ import org.bukkit.event.entity.PotionSplashEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
@@ -239,6 +241,86 @@ public class PlayerInteractionEvent implements Listener {
     }
 
     @EventHandler
+    public void onRightClickCube(PlayerInteractAtEntityEvent e) throws ReflectiveOperationException {
+        if(!plugin.currentMode.equals("Slime Golf")) return;
+        if (!(e.getRightClicked() instanceof SulfurCube cube)) return;
+        if(e.getPlayer().getGameMode().equals(GameMode.SPECTATOR)) return;
+
+        Player player = e.getPlayer();
+
+        Entity currentCarrier = cube.getVehicle();
+        if (currentCarrier != null) {
+            if (currentCarrier != player) {
+                player.sendMessage(ChatColor.RED + "[!] Someone else already has the cube!");
+            }
+            return;
+        }
+
+        if (!cube.getPassengers().isEmpty()) return;
+        if (!player.getPassengers().isEmpty()) return;
+
+        String team = PlayerConfig.get().getString("players." + player.getName() + ".team");
+
+        if(plugin.finaleActive){
+            List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
+            String firstTeam = leaderteams.getFirst();
+            String secondTeam = leaderteams.get(1);
+
+            if(!Objects.equals(team, firstTeam) && !Objects.equals(team, secondTeam)) return;
+        }
+
+        Objects.requireNonNull(player.getAttribute(Attribute.MOVEMENT_SPEED)).setBaseValue(0.0);
+        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2);
+        player.sendMessage(ChatColor.YELLOW + "[!] You have picked up the cube!");
+
+        List<String> teamPlayers = TeamsConfig.get().getStringList("teams." + team + ".players");
+
+        for(String playerName : teamPlayers) {
+            Player p = Bukkit.getPlayer(playerName);
+            if(p != null){
+                plugin.messagePlayer(p, "§e[!] " + plugin.getPlayerDisplayName(player.getName()) + " §ehas the cube!");
+                plugin.glowingEntities.unsetGlowing(cube, p);
+            }
+        }
+
+        player.addPassenger(cube);
+    }
+
+    @EventHandler
+    public void onPlayerMove(PlayerMoveEvent event) {
+        if(!plugin.currentMode.equals("Slime Golf")) return;
+        Player player = event.getPlayer();
+
+        boolean hasCube = player.getPassengers().stream().anyMatch(p -> p instanceof SulfurCube);
+        if (!hasCube) return;
+
+        Location from = event.getFrom();
+        Location to = event.getTo();
+        if (to == null) return;
+
+        if (from.getX() != to.getX() || from.getZ() != to.getZ()) {
+            Location fixed = to.clone();
+            fixed.setX(from.getX());
+            fixed.setZ(from.getZ());
+            event.setTo(fixed);
+        }
+    }
+
+//    @EventHandler
+//    public void onLeftClickCube(EntityDamageByEntityEvent e) {
+//        if(!plugin.currentMode.equals("Slime Golf")) return;
+//        if (!(e.getEntity() instanceof SulfurCube cube)) return;
+//        if (!(e.getDamager() instanceof Player player)) return;
+//
+//        e.setCancelled(true);
+//
+//        if (!cube.getPassengers().isEmpty()) return;
+//        if (!player.getPassengers().isEmpty()) return;
+//
+//        player.addPassenger(cube);
+//    }
+
+    @EventHandler
     public void onItemDrop(ItemSpawnEvent event) {
         Item item = event.getEntity();
 
@@ -301,7 +383,7 @@ public class PlayerInteractionEvent implements Listener {
     }
 
     @EventHandler
-    public void onShoot(EntityShootBowEvent event) {
+    public void onShoot(EntityShootBowEvent event) throws ReflectiveOperationException {
 
         if(plugin.currentMode.equals("Slime Golf")) {
 
@@ -315,19 +397,36 @@ public class PlayerInteractionEvent implements Listener {
 
             String team = PlayerConfig.get().getString("players." + player.getName() + ".team");
 
-            SulfurCube cube = plugin.golfTeamCubes.get(team);
+            List<Entity> passengers = new ArrayList<>(player.getPassengers()); // copy, safe to mutate under
 
-            Vector direction = player.getLocation().getDirection();
+            for (Entity passenger : passengers) {
+                if (passenger instanceof SulfurCube cube) {
 
-            float amplify = force * 1f;
+                    player.removePassenger(cube);
 
-            Vector launch = direction.clone().add(new Vector(0, 0.25, 0)).normalize();
+                    Vector direction = player.getLocation().getDirection();
+                    float amplify = force * 1.1f;
+                    Vector launch = direction.clone().add(new Vector(0, 0.25, 0)).normalize().multiply(amplify);
 
-            cube.setVelocity(launch.multiply(amplify));
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> cube.setVelocity(launch), 1L);
 
-            String leavingPlayerTeam = PlayerConfig.get().getString("players." + player.getName() + ".team");
+                    Objects.requireNonNull(player.getAttribute(Attribute.MOVEMENT_SPEED)).setBaseValue(0.1);
 
-            plugin.golfQueues.get(leavingPlayerTeam).updateQueuePosition();
+                    String team2 = PlayerConfig.get().getString("players." + player.getName() + ".team");
+
+                    List<String> teamPlayers = TeamsConfig.get().getStringList("teams." + team2 + ".players");
+
+                    for(String playerName : teamPlayers) {
+                        Player p = Bukkit.getPlayer(playerName);
+                        if(p != null){
+                            plugin.glowingEntities.setGlowing(cube, p, plugin.teamGlowColors.get(team));
+                        }
+                    }
+
+//                    String leavingPlayerTeam = PlayerConfig.get().getString("players." + player.getName() + ".team");
+//                    plugin.golfQueues.get(leavingPlayerTeam).updateQueuePosition();
+                }
+            }
         }
 
 

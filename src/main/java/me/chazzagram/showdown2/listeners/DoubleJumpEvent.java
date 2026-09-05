@@ -31,6 +31,7 @@ public class DoubleJumpEvent implements Listener {
 
         Player p = e.getPlayer();
         if ((e.getPlayer().getGameMode().equals(GameMode.ADVENTURE) || e.getPlayer().getGameMode().equals(GameMode.SURVIVAL)) && (plugin.currentMode.equals("Zoomo Go") || plugin.currentMode.equals("Slime Golf")) && plugin.doubleJumpEnabled) {
+            if(!e.getPlayer().getPassengers().isEmpty()) { e.setCancelled(true); return; }
             p.setAllowFlight(false);
             p.setFlying(false);
             if(plugin.currentMode.equals("Slime Golf") && plugin.currentRound > 1){

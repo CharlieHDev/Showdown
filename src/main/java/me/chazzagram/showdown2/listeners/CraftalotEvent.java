@@ -164,6 +164,7 @@ public class CraftalotEvent implements Listener {
                                     §7Next item to craft: §e§l""" + newItem + """
                                     §8
                                     """);
+                                p.sendTitle("§e§l" + newItem, "§fis your next item.", 0 , 40, 0);
                                 ItemStack[] kitItems = plugin.craftalotKit();
 
                                 for (int slot = 0; slot < p.getInventory().getSize(); slot++) {
