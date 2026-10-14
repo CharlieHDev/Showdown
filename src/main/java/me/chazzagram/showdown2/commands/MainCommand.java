@@ -3,6 +3,7 @@ package me.chazzagram.showdown2.commands;
 import me.chazzagram.showdown2.Showdown2;
 import me.chazzagram.showdown2.files.*;
 import me.chazzagram.showdown2.listeners.CrumbleKillData;
+import me.chazzagram.showdown2.recaps.DimensionDashRecap;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
@@ -368,6 +369,14 @@ public class MainCommand implements CommandExecutor {
                                                                         "§8]"
                                                         )
                                                 );
+
+                                                if (plugin.gameRecaps.get(args[1]) instanceof DimensionDashRecap dash) {
+                                                    dash.putRaceTimes(plugin.dashLapData.get(p.getName()));
+                                                }
+
+                                                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                                                    plugin.gameRecaps.get(args[1]).roundRecap();
+                                                }, 40L);
 
                                                 plugin.ghostManager.addGhostPlayer(p.getName());
                                                 plugin.revealAllOtherPlayers(p);
@@ -1644,6 +1653,26 @@ public class MainCommand implements CommandExecutor {
                         plugin.messagePlayer(p, "§6[§e!§6] §e§cPvP Practice Arena §eis currently not open.");
                     }
                     break;
+
+                case "incentive":
+                    if(args.length > 1) {
+                        String name = args[1];
+                        switch (name) {
+                            case "TNT":
+                            case "Size":
+                            case "Modifiers":
+                            case "Speed":
+                            case "Punch":
+                                plugin.incentivesHandler.displayIncentives(name);
+                                break;
+                            default:
+                                p.sendMessage("TNT, Size, Modifiers, Speed, Punch");
+                                break;
+                        }
+                    } else {
+                        p.sendMessage("TNT, Size, Modifiers, Speed, Punch");
+                    }
+                    break;
                 case "modeindiv":
                     boolean shown = true;
                     for(int i = 0; i <= 7; i++){
@@ -2604,14 +2633,14 @@ public class MainCommand implements CommandExecutor {
                                         if (!plugin.pausedTimers.contains(name)) {
                                             timeLeft--;
                                             plugin.runningTimers.get(name).setValue(timeLeft);
-                                            if(index <= 15 && timeLeft % 2 == 0){
-                                                summonBridgePiece(index, args[2], blocks);
-                                                index++;
-                                            }
+//                                            if(index <= 15 && timeLeft % 2 == 0){
+//                                                summonBridgePiece(index, args[2], blocks);
+//                                                index++;
+//                                            }
                                             if (timeLeft == 0) {
-                                                for(BlockDisplay bd : blocks){
-                                                    bd.remove();
-                                                }
+//                                                for(BlockDisplay bd : blocks){
+//                                                    bd.remove();
+//                                                }
                                                 Bukkit.getWorld("build").getBlockAt(x-11, -23, z-17).setType(Material.REDSTONE_BLOCK);
                                                 Bukkit.getWorld("build").getBlockAt(x-11, -23, z-17).setType(Material.AIR);
                                                 plugin.runningTimers.remove(name);
@@ -2659,6 +2688,7 @@ public class MainCommand implements CommandExecutor {
                                             p2.hidePlayer(p);
                                         }
                                     }
+                                    plugin.bbModes.put(args[2], "Parkour");
                                 }
                             }
                             plugin.bridgeCheckpoints.replace(Integer.parseInt(args[1]), placement + 1);

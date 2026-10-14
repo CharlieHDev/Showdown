@@ -6,6 +6,7 @@ import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Snow;
 import org.bukkit.damage.DamageType;
@@ -256,6 +257,13 @@ public class LastHitEvent implements Listener {
                 }
             }
         } else if (plugin.currentMode.equals("Craftalot")) {
+            if(plugin.incentivesActive.get("Punch")) {
+                if (e.getDamager() instanceof Player && e.getEntity() instanceof Player) {
+                    e.setDamage(0);
+                    e.setCancelled(false);
+                    return;
+                }
+            }
             e.setCancelled(true);
             if(e.getDamager() instanceof Player && (e.getEntity() instanceof Cow || e.getEntity() instanceof Sheep)) {
                 e.setCancelled(false);
@@ -418,97 +426,162 @@ public class LastHitEvent implements Listener {
     }
 
     @EventHandler
-    public void onPlayerSwing(PlayerAnimationEvent event) {
+    public void onPlayerSwing(PlayerAnimationEvent e) throws ReflectiveOperationException {
 
-        if(plugin.ghostManager.getGhostPlayers().contains(event.getPlayer().getName())) return;
+        if(!plugin.currentMode.equals("Slime Golf")) return;
 
-        if(plugin.currentMode.equals("Presents")) {
-            if (event.getAnimationType() != PlayerAnimationType.ARM_SWING) return;
+        if (e.getAnimationType() != PlayerAnimationType.ARM_SWING) return;
 
-            Player player = event.getPlayer();
+        if(e.getPlayer().getGameMode().equals(GameMode.SPECTATOR)) return;
 
-            // Perform ray trace to detect BlockDisplay
-            Location eyeLoc = player.getEyeLocation();
-            Vector direction = eyeLoc.getDirection();
+        Player player = e.getPlayer();
 
-            // raySize >0 needed to detect zero-hitbox BlockDisplays
-            RayTraceResult result = player.getWorld().rayTraceEntities(
-                    eyeLoc,
-                    direction,
-                    5.0,            // max distance
-                    0.5,            // ray "thickness" to catch zero-size entities
-                    entity -> entity instanceof BlockDisplay // only BlockDisplays
-            );
+        // Perform ray trace to detect BlockDisplay
+        Location eyeLoc = player.getEyeLocation();
+        Vector direction = eyeLoc.getDirection();
 
-            if (result == null) return;
+        // raySize >0 needed to detect zero-hitbox BlockDisplays
+        RayTraceResult result = player.getWorld().rayTraceEntities(
+                eyeLoc,
+                direction,
+                5.0,            // max distance
+                0.5,            // ray "thickness" to catch zero-size entities
+                entity -> entity instanceof SulfurCube // only SulfurCubes
+        );
 
-            BlockDisplay present = (BlockDisplay) result.getHitEntity();
+        if (result == null) return;
 
-            // Only handle tracked displays
-            if (!plugin.lobbyPresents.containsKey(present)) return;
+        SulfurCube cube = (SulfurCube) result.getHitEntity();
 
-            if (!plugin.lobbyPresents.get(present)) {
-                plugin.messagePlayer(player, "§eYou just found a present!");
-                plugin.earnPoints(player.getName(), 2, true);
-                plugin.lobbyPresents.replace(present, true);
-                if(present.isGlowing()) {
-                    present.setGlowing(false);
-                }
-                plugin.summonFirework(present.getLocation(), PlayerConfig.get().getString("players." + player.getName() + ".team"));
-            } else {
-                plugin.messagePlayer(player, "§cThis present has already been found!");
+        Player player2 = e.getPlayer();
+
+        Entity currentCarrier = cube.getVehicle();
+        if (currentCarrier != null) {
+            if (currentCarrier != player2) {
+                player2.sendMessage(ChatColor.RED + "[!] Someone else already has the cube!");
             }
-
-            if (plugin.runningTimers.containsKey("present" + present.getLocation().getX() + present.getLocation().getY())) {
-                plugin.runningTimers.get("present" + present.getLocation().getX() + present.getLocation().getY()).getKey().cancel();
-                plugin.runningTimers.remove("present" + present.getLocation().getX() + present.getLocation().getY());
-            }
-
-            Vector3f translation = new Vector3f(-0.5F, -0.5F, -0.5F);
-            Quaternionf leftRotation = new Quaternionf();
-            Quaternionf rightRotation = new Quaternionf();
-            Vector3f scaleVector = new Vector3f(1F, 1F, 1F);
-
-            Transformation transformation = new Transformation(translation, leftRotation, scaleVector, rightRotation);
-            present.setTransformation(transformation);
-
-            String name = "present" + present.getLocation().getX() + present.getLocation().getY();
-            BukkitTask task = new BukkitRunnable() {
-                int timeLeft = 10;
-
-                @Override
-                public void run() {
-                    if (plugin.runningTimers.containsKey(name)) {
-                        if (!plugin.pausedTimers.contains(name)) {
-                            timeLeft--;
-                            plugin.runningTimers.get(name).setValue(timeLeft);
-
-                            if(timeLeft == 5){
-                                present.setBlock(Material.COAL_BLOCK.createBlockData());
-                            }
-                            if (timeLeft > 4) {
-                                transformation.getScale().add(0.02F, 0.02F, 0.02F);
-                                transformation.getTranslation().sub(0.01F, 0.01F, 0.01F);
-                            } else {
-                                transformation.getScale().sub(0.02F, 0.02F, 0.02F);
-                                transformation.getTranslation().add(0.01F, 0.01F, 0.01F);
-                            }
-                            present.setTransformation(transformation);
-
-                            if (timeLeft == 0) {
-                                plugin.runningTimers.remove(name);
-                                cancel();
-                            }
-                        }
-                    } else {
-                        cancel();
-                    }
-                }
-
-            }.runTaskTimer(plugin, 0L, 1L);
-
-            plugin.runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, 11));
+            return;
         }
+
+        if (!cube.getPassengers().isEmpty()) return;
+        if (!player2.getPassengers().isEmpty()) return;
+
+        String team = PlayerConfig.get().getString("players." + player2.getName() + ".team");
+
+        if(plugin.finaleActive){
+            List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
+            String firstTeam = leaderteams.getFirst();
+            String secondTeam = leaderteams.get(1);
+
+            if(!Objects.equals(team, firstTeam) && !Objects.equals(team, secondTeam)) return;
+        }
+
+        Objects.requireNonNull(player2.getAttribute(Attribute.MOVEMENT_SPEED)).setBaseValue(0.03);
+        Objects.requireNonNull(player2.getAttribute(Attribute.AIR_DRAG_MODIFIER)).setBaseValue(5);
+        player2.playSound(player2.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2);
+        player2.sendMessage(ChatColor.YELLOW + "[!] You have picked up the cube!");
+
+        List<String> teamPlayers = TeamsConfig.get().getStringList("teams." + team + ".players");
+
+        for(String playerName : teamPlayers) {
+            Player p = Bukkit.getPlayer(playerName);
+            if(p != null){
+                plugin.messagePlayer(p, "§e[!] " + plugin.getPlayerDisplayName(player2.getName()) + " §ehas the cube!");
+                plugin.glowingEntities.unsetGlowing(cube, p);
+            }
+        }
+
+        player2.addPassenger(cube);
+
+//        if(plugin.ghostManager.getGhostPlayers().contains(event.getPlayer().getName())) return;
+
+//        if(plugin.currentMode.equals("Presents")) {
+//            if (event.getAnimationType() != PlayerAnimationType.ARM_SWING) return;
+//
+//            Player player = event.getPlayer();
+//
+//            // Perform ray trace to detect BlockDisplay
+//            Location eyeLoc = player.getEyeLocation();
+//            Vector direction = eyeLoc.getDirection();
+//
+//            // raySize >0 needed to detect zero-hitbox BlockDisplays
+//            RayTraceResult result = player.getWorld().rayTraceEntities(
+//                    eyeLoc,
+//                    direction,
+//                    5.0,            // max distance
+//                    0.5,            // ray "thickness" to catch zero-size entities
+//                    entity -> entity instanceof BlockDisplay // only BlockDisplays
+//            );
+//
+//            if (result == null) return;
+//
+//            BlockDisplay present = (BlockDisplay) result.getHitEntity();
+//
+//            // Only handle tracked displays
+//            if (!plugin.lobbyPresents.containsKey(present)) return;
+//
+//            if (!plugin.lobbyPresents.get(present)) {
+//                plugin.messagePlayer(player, "§eYou just found a present!");
+//                plugin.earnPoints(player.getName(), 2, true);
+//                plugin.lobbyPresents.replace(present, true);
+//                if(present.isGlowing()) {
+//                    present.setGlowing(false);
+//                }
+//                plugin.summonFirework(present.getLocation(), PlayerConfig.get().getString("players." + player.getName() + ".team"));
+//            } else {
+//                plugin.messagePlayer(player, "§cThis present has already been found!");
+//            }
+//
+//            if (plugin.runningTimers.containsKey("present" + present.getLocation().getX() + present.getLocation().getY())) {
+//                plugin.runningTimers.get("present" + present.getLocation().getX() + present.getLocation().getY()).getKey().cancel();
+//                plugin.runningTimers.remove("present" + present.getLocation().getX() + present.getLocation().getY());
+//            }
+//
+//            Vector3f translation = new Vector3f(-0.5F, -0.5F, -0.5F);
+//            Quaternionf leftRotation = new Quaternionf();
+//            Quaternionf rightRotation = new Quaternionf();
+//            Vector3f scaleVector = new Vector3f(1F, 1F, 1F);
+//
+//            Transformation transformation = new Transformation(translation, leftRotation, scaleVector, rightRotation);
+//            present.setTransformation(transformation);
+//
+//            String name = "present" + present.getLocation().getX() + present.getLocation().getY();
+//            BukkitTask task = new BukkitRunnable() {
+//                int timeLeft = 10;
+//
+//                @Override
+//                public void run() {
+//                    if (plugin.runningTimers.containsKey(name)) {
+//                        if (!plugin.pausedTimers.contains(name)) {
+//                            timeLeft--;
+//                            plugin.runningTimers.get(name).setValue(timeLeft);
+//
+//                            if(timeLeft == 5){
+//                                present.setBlock(Material.COAL_BLOCK.createBlockData());
+//                            }
+//                            if (timeLeft > 4) {
+//                                transformation.getScale().add(0.02F, 0.02F, 0.02F);
+//                                transformation.getTranslation().sub(0.01F, 0.01F, 0.01F);
+//                            } else {
+//                                transformation.getScale().sub(0.02F, 0.02F, 0.02F);
+//                                transformation.getTranslation().add(0.01F, 0.01F, 0.01F);
+//                            }
+//                            present.setTransformation(transformation);
+//
+//                            if (timeLeft == 0) {
+//                                plugin.runningTimers.remove(name);
+//                                cancel();
+//                            }
+//                        }
+//                    } else {
+//                        cancel();
+//                    }
+//                }
+//
+//            }.runTaskTimer(plugin, 0L, 1L);
+//
+//            plugin.runningTimers.put(name, new AbstractMap.SimpleEntry<>(task, 11));
+//        }
     }
 
     public void handlePlayerDamage(Player killer, Player victim, EntityDamageByEntityEvent e) {
@@ -1107,6 +1180,13 @@ public class LastHitEvent implements Listener {
 
     @EventHandler
     public void onEntityDamage(EntityDamageEvent e) {
+        if(plugin.currentMode.equals("Craftalot") && plugin.incentivesActive.get("Punch")) {
+            if (e instanceof EntityDamageByEntityEvent byEntity
+                    && byEntity.getDamager() instanceof Player) {
+                e.setCancelled(false);
+                return;
+            }
+        }
         if(plugin.currentMode.equals("Dimension Dash")
             || plugin.currentMode.equals("Bridge Builders")
             || plugin.currentMode.equals("Slime Golf")

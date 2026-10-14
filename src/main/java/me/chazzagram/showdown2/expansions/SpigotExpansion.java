@@ -2,6 +2,7 @@ package me.chazzagram.showdown2.expansions;
 
 import me.chazzagram.showdown2.Showdown2;
 import me.chazzagram.showdown2.files.*;
+import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -25,8 +26,29 @@ public class SpigotExpansion extends PlaceholderExpansion {
 
     private final Showdown2 plugin;
 
+    private final HashMap<String, List<String>> teamColours = new HashMap<>();
+    private final HashMap<String, String> largeTeamIcons = new HashMap<>();
+
     public SpigotExpansion(Showdown2 plugin) {
         this.plugin = plugin;
+
+        teamColours.put("RubyRaiders", List.of("§c", "#FDABAB", "#805757"));
+        teamColours.put("AmberAmbushers", List.of("§6", "#FED37C", "#856E40"));
+        teamColours.put("TopazTroopers", List.of("§e", "#FFFF92", "#808049"));
+        teamColours.put("KyaniteKillers", List.of("§a", "#B5FFB5", "#658F65"));
+        teamColours.put("DiamondDestroyers", List.of("§b", "#ADFBFB", "#5A8585"));
+        teamColours.put("SapphireSoldiers", List.of("§9", "#9E9EFF", "#515182"));
+        teamColours.put("SmithsoniteSlayers", List.of("§d", "#FFA8FF", "#825682"));
+        teamColours.put("CrystalCrashers", List.of("§f", "#E2E2D9", "#75756F"));
+
+        largeTeamIcons.put("RubyRaiders", "\uD835\uDFCF");
+        largeTeamIcons.put("AmberAmbushers", "\uD835\uDFD0");
+        largeTeamIcons.put("TopazTroopers", "\uD835\uDFD1");
+        largeTeamIcons.put("KyaniteKillers", "\uD835\uDFD2");
+        largeTeamIcons.put("DiamondDestroyers", "\uD835\uDFD3");
+        largeTeamIcons.put("SapphireSoldiers", "\uD835\uDFD4");
+        largeTeamIcons.put("SmithsoniteSlayers", "\uD835\uDFD5");
+        largeTeamIcons.put("CrystalCrashers", "\uD835\uDFD6");
     }
 
     @Override
@@ -54,6 +76,15 @@ public class SpigotExpansion extends PlaceholderExpansion {
         return true;
     }
 
+    public String getPlayerCard(Player receiver, String player, String team) {
+
+        String playerHead = PlaceholderAPI.setPlaceholders(receiver, "%chathead_other:" + player + "%");
+
+        if(Bukkit.getPlayer(player) == null) return playerHead + plugin.hex(teamColours.get(team).get(2)) + "§o " + player;
+        if(player.equals(receiver.getName())) return playerHead + teamColours.get(team).get(0) + " " + player;
+        else return playerHead + plugin.hex(teamColours.get(team).get(1)) + " " + player;
+    }
+
     @Override
     public String onPlaceholderRequest(Player p, String params) {
         List<String> leaderteams = new ArrayList<>(plugin.sortByValue().keySet());
@@ -78,6 +109,37 @@ public class SpigotExpansion extends PlaceholderExpansion {
         teamplayers.setLength(0);
         int index = 0;
         if (p == null) {
+            return "";
+        }
+        if (params.startsWith("teammate_")) {
+            String path = "players." + p.getName();
+            if (!PlayerConfig.get().contains(path)) return "";
+
+            String team = PlayerConfig.get().getString(path + ".team");
+            if (team == null) return "";
+
+            List<String> teamPlayers = TeamsConfig.get().getStringList("teams." + team + ".players");
+
+            int number;
+            try {
+                number = Integer.parseInt(params.substring("teammate_".length())) - 1;
+            } catch (NumberFormatException e) {
+                return "";
+            }
+
+            if (number < 0 || number >= teamPlayers.size()) {
+                return "§7§l  ⤷§f " + PlaceholderAPI.setPlaceholders(p, "%chathead_other:B1ttur%")
+                        + "§8 §8§m §8§m §8§m §8§m §8§m §8§m §8§m §8§m §8§m";
+            }
+
+            if (number == 3 && teamPlayers.size() > 4) {
+                return "§8§o..." + (teamPlayers.size() - 3) + " more.";
+            }
+
+            if (number <= 3) {
+                return "§7§l  ⤷§f " + getPlayerCard(p, teamPlayers.get(number), team);
+            }
+
             return "";
         }
         if (params.startsWith("indivplayer_")) {
@@ -165,6 +227,15 @@ public class SpigotExpansion extends PlaceholderExpansion {
 
         }
         switch (params) {
+            case "largeteamicon":
+                if(PlayerConfig.get().getConfigurationSection("players").getKeys(false).contains(p.getName())){
+                    String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
+                    return largeTeamIcons.get(team);
+                } else if (SpectatorConfig.get().getConfigurationSection("spectators").getKeys(false).contains(p.getName())) {
+                   return "\uD835\uDFCE";
+                } else {
+                    return "\uD835\uDFCE";
+                }
             case "player":
                 return p.getName();
             case "multiplier":
@@ -255,7 +326,7 @@ public class SpigotExpansion extends PlaceholderExpansion {
                 }
             case "displayteam":
                 if (SpectatorConfig.get().getConfigurationSection("spectators").getKeys(false).contains(p.getName())) {
-                    return "Spectator";
+                    return "§7§lsᴘᴇᴄᴛᴀᴛᴏʀ";
                 } else {
                     String team = PlayerConfig.get().getString("players." + p.getName() + ".team");
                     return Objects.requireNonNullElse(plugin.getTeamDisplayName(team), "No Team.");

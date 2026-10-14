@@ -8,6 +8,7 @@ C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\co
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\commands\TeamLeaderCommand.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\expansions\MongoManager.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\expansions\SpigotExpansion.java
+C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\expansions\TiltifyChecker.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\files\CraftalotConfig.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\files\DeathMessagesConfig.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\files\FontUtils.java
@@ -22,6 +23,7 @@ C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\fi
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\files\SpectatorConfig.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\files\TeamsConfig.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\files\TeleportConfig.java
+C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\files\TiltifyConfig.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\files\WishesConfig.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\ArrowDespawnEvent.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\BellDongEvent.java
@@ -37,8 +39,12 @@ C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\li
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\DismountEvent.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\DoubleJumpEvent.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\DropItemEvent.java
+C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\EventPlayer.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\FireballEvent.java
+C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\GameLeaveChecker.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\GhostManager.java
+C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\HarmlessTntListener.java
+C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\IncentivesHandler.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\InventoryEvent.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\ItemBox.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\LastHitEvent.java
@@ -55,4 +61,6 @@ C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\li
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\VoteFrozenManager.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\VoteSneakBombEvent.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\listeners\VoteWalkEvent.java
+C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\recaps\DimensionDashRecap.java
+C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\recaps\GameRecap.java
 C:\Users\Charlie\IdeaProjects\Showdown2\src\main\java\me\chazzagram\showdown2\Showdown2.java
